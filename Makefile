@@ -32,7 +32,8 @@ web-install:
 	cd web/portal && npm install
 
 web-dev:
-	cd web/portal && npm run dev
+	cd web/portal && npm run dev -- --host
+
 
 services-build:
 	cd services && ./gradlew build
