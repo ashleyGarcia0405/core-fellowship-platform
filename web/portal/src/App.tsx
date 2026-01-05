@@ -8,7 +8,7 @@ export default function App() {
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    getJson<Health>("/health")
+    getJson<Health>("/api/health")
       .then(setHealth)
       .catch((e) => setErr(e.message));
   }, []);
