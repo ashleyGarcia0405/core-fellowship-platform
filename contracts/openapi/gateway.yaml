@@ -1,0 +1,19 @@
+openapi: 3.0.3
+info:
+  title: CORE Fellowship Platform API
+  version: 0.1.0
+servers:
+  - url: http://localhost:8080
+paths:
+  /health:
+    get:
+      summary: Gateway health
+      responses:
+        "200":
+          description: OK
+  /v1/identity/health:
+    get:
+      summary: Identity health (via gateway)
+      responses:
+        "200":
+          description: OK
