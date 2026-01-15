@@ -1,0 +1,13 @@
+server:
+  port: ${GATEWAY_PORT:8080}
+
+services:
+  identity:
+    baseUrl: ${IDENTITY_BASE_URL:http://localhost:8082}
+  applications:
+    baseUrl: ${APPLICATIONS_BASE_URL:http://localhost:8083}
+
+jwt:
+  secret: ${JWT_SECRET}
+  issuer: ${JWT_ISSUER}
+  audience: ${JWT_AUDIENCE}
