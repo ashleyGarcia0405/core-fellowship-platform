@@ -24,3 +24,7 @@ out/
 
 # Logs
 *.log
+
+# GCS Credentials
+**/gcs-credentials.json
+services/gcs-credentials.json

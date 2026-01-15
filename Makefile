@@ -1,5 +1,11 @@
 SHELL := /bin/bash
 
+# Load environment variables from .env file
+ifneq (,$(wildcard ./.env))
+    include .env
+    export
+endif
+
 .PHONY: help up down logs clean \
         web-install web-dev \
         services-build services-run \
