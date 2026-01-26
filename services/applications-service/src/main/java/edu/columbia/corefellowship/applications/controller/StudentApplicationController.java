@@ -1,8 +1,12 @@
 package edu.columbia.corefellowship.applications.controller;
 
+import edu.columbia.corefellowship.applications.dto.CreateInterviewRequest;
 import edu.columbia.corefellowship.applications.dto.CreateStudentApplicationRequest;
 import edu.columbia.corefellowship.applications.dto.UpdateApplicationStatusRequest;
+import edu.columbia.corefellowship.applications.dto.UpdateInterviewRequest;
+import edu.columbia.corefellowship.applications.model.Interview;
 import edu.columbia.corefellowship.applications.model.StudentApplication;
+import edu.columbia.corefellowship.applications.repository.InterviewRepository;
 import edu.columbia.corefellowship.applications.repository.StudentApplicationRepository;
 import edu.columbia.corefellowship.applications.service.StorageService;
 import jakarta.validation.Valid;
@@ -23,12 +27,15 @@ public class StudentApplicationController {
 
   private final StudentApplicationRepository repository;
   private final StorageService storageService;
+  private final InterviewRepository interviewRepository;
 
   public StudentApplicationController(
       StudentApplicationRepository repository,
-      StorageService storageService) {
+      StorageService storageService,
+      InterviewRepository interviewRepository) {
     this.repository = repository;
     this.storageService = storageService;
+    this.interviewRepository = interviewRepository;
   }
 
   @PostMapping
@@ -265,5 +272,136 @@ public class StudentApplicationController {
 
     repository.deleteById(id);
     return ResponseEntity.ok(Map.of("message", "Application deleted successfully"));
+  }
+
+  // Interview endpoints
+
+  @PostMapping("/{id}/interview")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<Interview> createInterview(
+      @PathVariable String id,
+      @Valid @RequestBody CreateInterviewRequest request,
+      @RequestHeader(value = "X-User-Id", required = false) String userId,
+      @RequestHeader(value = "X-User-Email", required = false) String userEmail) {
+
+    // Verify application exists
+    StudentApplication application = repository.findById(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+            "Application not found"));
+
+    // Check if interview already exists
+    if (interviewRepository.existsByApplicationId(id)) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT,
+          "Interview already exists for this application. Use PATCH to update.");
+    }
+
+    // Create interview
+    Interview interview = new Interview();
+    interview.setApplicationId(id);
+    interview.setInterviewerId(userId);
+    interview.setInterviewerName(userEmail != null ? userEmail.split("@")[0] : "Admin");
+    interview.setInterviewDate(request.getInterviewDate());
+    interview.setTechnicalScore(request.getTechnicalScore());
+    interview.setCommunicationScore(request.getCommunicationScore());
+    interview.setMotivationScore(request.getMotivationScore());
+    interview.setCultureFitScore(request.getCultureFitScore());
+    interview.setStrengths(request.getStrengths());
+    interview.setConcerns(request.getConcerns());
+    interview.setNotes(request.getNotes());
+    interview.setRecommendation(request.getRecommendation());
+    interview.setCreatedAt(Instant.now());
+    interview.setUpdatedAt(Instant.now());
+
+    // Calculate overall score
+    interview.calculateOverallScore();
+
+    // Save interview
+    Interview saved = interviewRepository.save(interview);
+
+    // Update application status to INTERVIEWED
+    application.setStatus("interviewed");
+    application.setUpdatedAt(Instant.now());
+    repository.save(application);
+
+    return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+  }
+
+  @GetMapping("/{id}/interview")
+  public ResponseEntity<Interview> getInterview(
+      @PathVariable String id,
+      @RequestHeader(value = "X-User-Id", required = false) String userId,
+      @RequestHeader(value = "X-User-Role", required = false) String userRole) {
+
+    // Verify application exists
+    if (!repository.existsById(id)) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Application not found");
+    }
+
+    // Find interview
+    Interview interview = interviewRepository.findByApplicationId(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+            "No interview found for this application"));
+
+    // Only admins can view interviews
+    if (!"ROLE_ADMIN".equals(userRole)) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+          "Only admins can view interview data");
+    }
+
+    return ResponseEntity.ok(interview);
+  }
+
+  @PatchMapping("/{id}/interview")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<Interview> updateInterview(
+      @PathVariable String id,
+      @Valid @RequestBody UpdateInterviewRequest request) {
+
+    // Verify application exists
+    if (!repository.existsById(id)) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Application not found");
+    }
+
+    // Find existing interview
+    Interview interview = interviewRepository.findByApplicationId(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+            "No interview found for this application"));
+
+    // Update fields if provided
+    if (request.getInterviewDate() != null) {
+      interview.setInterviewDate(request.getInterviewDate());
+    }
+    if (request.getTechnicalScore() != null) {
+      interview.setTechnicalScore(request.getTechnicalScore());
+    }
+    if (request.getCommunicationScore() != null) {
+      interview.setCommunicationScore(request.getCommunicationScore());
+    }
+    if (request.getMotivationScore() != null) {
+      interview.setMotivationScore(request.getMotivationScore());
+    }
+    if (request.getCultureFitScore() != null) {
+      interview.setCultureFitScore(request.getCultureFitScore());
+    }
+    if (request.getStrengths() != null) {
+      interview.setStrengths(request.getStrengths());
+    }
+    if (request.getConcerns() != null) {
+      interview.setConcerns(request.getConcerns());
+    }
+    if (request.getNotes() != null) {
+      interview.setNotes(request.getNotes());
+    }
+    if (request.getRecommendation() != null) {
+      interview.setRecommendation(request.getRecommendation());
+    }
+
+    interview.setUpdatedAt(Instant.now());
+
+    // Recalculate overall score
+    interview.calculateOverallScore();
+
+    Interview updated = interviewRepository.save(interview);
+    return ResponseEntity.ok(updated);
   }
 }
