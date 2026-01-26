@@ -16,17 +16,45 @@ export default function StartupPortal() {
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      minHeight: '100vh',
-      gap: '20px'
+      minHeight: '100vh', gap: '20px',
+      background: 'var(--bg-blue)'
     }}>
-      <h1>You are in the startup portal</h1>
-      <p>Logged in as: {user?.email}</p>
-      <button
-        onClick={handleLogout}
-        style={{ padding: '10px 20px', fontSize: '16px', cursor: 'pointer' }}
-      >
-        Logout
-      </button>
+      <h1 style={{ fontSize: '36px' }}>Startup Portal</h1>
+      <p style={{ color: '#666' }}>Logged in as: {user?.email}</p>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', minWidth: '300px' }}>
+        <button
+          onClick={() => navigate('/startup/intake')}
+          style={{
+            padding: '14px 24px',
+            fontSize: '16px',
+            cursor: 'pointer',
+            background: '#54a1ff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontWeight: '600'
+          }}
+        >
+          Submit Intake Form
+        </button>
+
+        <button
+          onClick={handleLogout}
+          style={{
+            padding: '14px 24px',
+            fontSize: '16px',
+            cursor: 'pointer',
+            background: '#dc3545',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontWeight: '600'
+          }}
+        >
+          Logout
+        </button>
+      </div>
     </div>
   );
 }

@@ -7,6 +7,10 @@ import RegisterPage from './pages/RegisterPage';
 import AdminPortal from './pages/AdminPortal';
 import StudentPortal from './pages/StudentPortal';
 import StartupPortal from './pages/StartupPortal';
+import ApplicationsDashboard from './pages/admin/ApplicationsDashboard';
+import InterviewForm from './pages/admin/InterviewForm';
+import ApplicationForm from './pages/student/ApplicationForm';
+import IntakeForm from './pages/startup/IntakeForm';
 
 export default function App() {
   return (
@@ -25,6 +29,22 @@ export default function App() {
             }
           />
           <Route
+            path="/admin/applications"
+            element={
+              <ProtectedRoute>
+                <ApplicationsDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/interview/:applicationId"
+            element={
+              <ProtectedRoute>
+                <InterviewForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/student"
             element={
               <ProtectedRoute>
@@ -33,10 +53,26 @@ export default function App() {
             }
           />
           <Route
+            path="/student/apply"
+            element={
+              <ProtectedRoute>
+                <ApplicationForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/startup"
             element={
               <ProtectedRoute>
                 <StartupPortal />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/startup/intake"
+            element={
+              <ProtectedRoute>
+                <IntakeForm />
               </ProtectedRoute>
             }
           />

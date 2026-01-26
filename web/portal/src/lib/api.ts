@@ -97,3 +97,188 @@ export async function register(data: RegisterRequest): Promise<RegisterResponse>
 export function logout() {
   clearAuthToken();
 }
+
+// Interview types
+export type Recommendation = "STRONG_YES" | "YES" | "MAYBE" | "NO";
+
+export interface Interview {
+  id: string;
+  applicationId: string;
+  interviewerId: string;
+  interviewerName: string;
+  interviewDate: string;
+  technicalScore: number;
+  communicationScore: number;
+  motivationScore: number;
+  cultureFitScore: number;
+  overallScore: number;
+  strengths?: string;
+  concerns?: string;
+  notes?: string;
+  recommendation: Recommendation;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateInterviewRequest {
+  interviewDate: string;
+  technicalScore: number;
+  communicationScore: number;
+  motivationScore: number;
+  cultureFitScore: number;
+  strengths?: string;
+  concerns?: string;
+  notes?: string;
+  recommendation: Recommendation;
+}
+
+export interface UpdateInterviewRequest {
+  interviewDate?: string;
+  technicalScore?: number;
+  communicationScore?: number;
+  motivationScore?: number;
+  cultureFitScore?: number;
+  strengths?: string;
+  concerns?: string;
+  notes?: string;
+  recommendation?: Recommendation;
+}
+
+// Interview API
+export async function createInterview(applicationId: string, data: CreateInterviewRequest): Promise<Interview> {
+  return postJson<Interview>(`/v1/students/applications/${applicationId}/interview`, data);
+}
+
+export async function getInterview(applicationId: string): Promise<Interview> {
+  return getJson<Interview>(`/v1/students/applications/${applicationId}/interview`);
+}
+
+export async function updateInterview(applicationId: string, data: UpdateInterviewRequest): Promise<Interview> {
+  const res = await fetch(`${API_BASE}/v1/students/applications/${applicationId}/interview`, {
+    method: "PATCH",
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`HTTP ${res.status}: ${text}`);
+  }
+  return res.json() as Promise<Interview>;
+}
+
+// Application types
+export interface StudentApplication {
+  id: string;
+  userId: string;
+  fullName: string;
+  email: string;
+  gradYear: string;
+  major: string;
+  school?: string;
+  status: string;
+  submittedAt: string;
+  updatedAt: string;
+}
+
+// Application API
+export async function getApplications(): Promise<StudentApplication[]> {
+  return getJson<StudentApplication[]>("/v1/students/applications");
+}
+
+export interface CreateStudentApplicationRequest {
+  fullName: string;
+  pronouns?: string;
+  gradYear: string;
+  school?: string;
+  major: string;
+  email: string;
+  linkedinProfile?: string;
+  portfolioWebsite?: string;
+  resumeUrl?: string;
+  howDidYouHear?: string;
+  referralSource?: string;
+  rolePreferences?: string[];
+  videoSubmissionUrl: string;
+  industriesOfInterest: string;
+  projectExperience: string;
+  additionalComments?: string;
+  previouslyApplied: boolean;
+  previouslyParticipated?: boolean;
+  hasUpcomingInternshipOffers: boolean;
+}
+
+export async function createStudentApplication(data: CreateStudentApplicationRequest): Promise<StudentApplication> {
+  return postJson<StudentApplication>("/v1/students/applications", data);
+}
+
+export async function uploadResume(applicationId: string, file: File): Promise<{ message: string; resumeUrl: string }> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const token = getAuthToken();
+  const res = await fetch(`${API_BASE}/v1/students/applications/${applicationId}/resume`, {
+    method: 'POST',
+    headers: {
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`HTTP ${res.status}: ${text}`);
+  }
+
+  return res.json();
+}
+
+// Startup types and API
+export interface Startup {
+  id: string;
+  userId: string;
+  companyName: string;
+  email: string;
+  status: string;
+  submittedAt: string;
+}
+
+export interface Position {
+  roleType: string;
+  description: string;
+  requiredSkills?: string[];
+  timeCommitment?: string;
+}
+
+export interface CreateStartupRequest {
+  companyName: string;
+  website?: string;
+  industry?: string;
+  description?: string;
+  stage?: string;
+  teamSize?: string;
+  foundedYear?: string;
+  contactName: string;
+  contactTitle: string;
+  contactEmail: string;
+  contactPhone?: string;
+  operatingMode: string;
+  timeZone?: string;
+  internsSupervisor: string;
+  hasHiredInternsPreviously: boolean;
+  numberOfInternsNeeded?: number;
+  positions?: Position[];
+  willPayInterns: string;
+  payAmount?: string;
+  lookingForPermanentIntern: string;
+  projectDescriptionUrl?: string;
+  referralSource?: string;
+  commitmentAcknowledged?: boolean;
+}
+
+export async function createStartup(data: CreateStartupRequest): Promise<Startup> {
+  return postJson<Startup>("/v1/startups/intake", data);
+}
+
+export async function getStartups(): Promise<Startup[]> {
+  return getJson<Startup[]>("/v1/startups");
+}

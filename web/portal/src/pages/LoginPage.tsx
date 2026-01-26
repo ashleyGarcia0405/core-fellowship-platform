@@ -35,18 +35,21 @@ export default function LoginPage() {
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      minHeight: '100vh'
+      minHeight: '100vh',
+      background: 'var(--bg-blue)'
     }}>
-      <div style={{ width: '300px' }}>
-        <h1>Login</h1>
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div style={{ width: '400px', background: 'white', padding: '40px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
+        <h1 style={{ textAlign: 'center', marginBottom: '30px' }}>Login</h1>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
           <input
             type="email"
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            style={{ padding: '8px', fontSize: '14px' }}
+            style={{ padding: '12px', fontSize: '14px', border: '2px solid #e0e0e0', borderRadius: '6px', outline: 'none' }}
+            onFocus={(e) => e.target.style.borderColor = '#54a1ff'}
+            onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
           />
           <input
             type="password"
@@ -54,19 +57,21 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            style={{ padding: '8px', fontSize: '14px' }}
+            style={{ padding: '12px', fontSize: '14px', border: '2px solid #e0e0e0', borderRadius: '6px', outline: 'none' }}
+            onFocus={(e) => e.target.style.borderColor = '#54a1ff'}
+            onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
           />
-          {error && <div style={{ color: 'red', fontSize: '14px' }}>{error}</div>}
-          <button type="submit" style={{ padding: '10px', fontSize: '16px', cursor: 'pointer' }}>
+          {error && <div style={{ color: 'red', fontSize: '14px', padding: '10px', background: '#fee', borderRadius: '6px' }}>{error}</div>}
+          <button type="submit" style={{ padding: '14px', fontSize: '16px', cursor: 'pointer', background: '#54a1ff', color: 'white', border: 'none', borderRadius: '6px', fontWeight: '600', marginTop: '10px' }}>
             Login
           </button>
         </form>
-        <div style={{ marginTop: '10px', textAlign: 'center' }}>
+        <div style={{ marginTop: '20px', textAlign: 'center' }}>
           <button
             onClick={() => navigate('/')}
-            style={{ background: 'none', border: 'none', color: 'blue', cursor: 'pointer', textDecoration: 'underline' }}
+            style={{ background: 'none', border: 'none', color: '#0a468f', cursor: 'pointer', textDecoration: 'underline', fontSize: '14px' }}
           >
-            Back to Home
+            ← Back to Home
           </button>
         </div>
       </div>
