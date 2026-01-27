@@ -42,7 +42,8 @@ public class SecurityConfig {
     configuration.setAllowedOrigins(Arrays.asList(
       "http://localhost:8080",  // API Gateway
       "http://localhost:5173",  // Vite dev server
-      "http://localhost:3000"   // Alternative frontend port
+      "http://localhost:3000",  // Alternative frontend port
+      "https://core-fellowship.vercel.app"  // Production frontend
     ));
 
     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
