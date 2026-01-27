@@ -1,10 +1,10 @@
 server:
-  port: ${APPLICATIONS_PORT:8083}
+  port: ${PORT:8080}
 
 spring:
   data:
     mongodb:
-      uri: mongodb://${MONGO_USER:root}:${MONGO_PASS:example}@${MONGO_HOST:localhost}:${MONGO_PORT:27017}/applications?authSource=${MONGO_AUTH_DB:admin}
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb://root:example@localhost:27017/applications?authSource=admin}
   servlet:
     multipart:
       max-file-size: 5MB

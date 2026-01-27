@@ -70,7 +70,7 @@ public class ExportController {
     StringBuilder csv = new StringBuilder();
 
     // Header
-    csv.append("ID,Full Name,Pronouns,Email,Grad Year,School,Major,LinkedIn,Portfolio,Role Preferences,Video URL,How Did You Hear,Referral Source,Previously Applied,Previously Participated,Has Internship Offers,Term,Status,Submitted At\n");
+    csv.append("ID,Full Name,Pronouns,Email,Grad Year,School,Major,LinkedIn,Portfolio,Role Preferences,How Did You Hear,Referral Source,Previously Applied,Previously Participated,Has Internship Offers,Term,Status,Submitted At\n");
 
     // Data rows
     for (StudentApplication app : applications) {
@@ -84,7 +84,6 @@ public class ExportController {
       csv.append(escapeCsv(app.getLinkedinProfile())).append(",");
       csv.append(escapeCsv(app.getPortfolioWebsite())).append(",");
       csv.append(escapeCsv(app.getRolePreferences() != null ? String.join(";", app.getRolePreferences()) : "")).append(",");
-      csv.append(escapeCsv(app.getVideoSubmissionUrl())).append(",");
       csv.append(escapeCsv(app.getHowDidYouHear())).append(",");
       csv.append(escapeCsv(app.getReferralSource())).append(",");
       csv.append(app.getPreviouslyApplied() != null ? app.getPreviouslyApplied().toString() : "").append(",");

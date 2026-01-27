@@ -7,6 +7,7 @@ interface User {
   email: string;
   userType: UserType;
   role: UserRole;
+  fullName?: string;
 }
 
 interface AuthContextType {
@@ -35,6 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           email: payload.email,
           userType: payload.userType,
           role: payload.role,
+          fullName: payload.fullName,
         });
       } catch (error) {
         console.error('Failed to parse token:', error);
@@ -46,12 +48,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string): Promise<LoginResponse> => {
     const response = await apiLogin(email, password);
-    setUser({
-      userId: response.userId,
-      email: response.email,
-      userType: response.userType,
-      role: response.role,
-    });
+    // Decode JWT to get all user info including fullName
+    try {
+      const payload = JSON.parse(atob(response.accessToken.split('.')[1]));
+      setUser({
+        userId: response.userId,
+        email: response.email,
+        userType: response.userType,
+        role: response.role,
+        fullName: payload.fullName,
+      });
+    } catch (error) {
+      // Fallback if JWT decode fails
+      setUser({
+        userId: response.userId,
+        email: response.email,
+        userType: response.userType,
+        role: response.role,
+      });
+    }
     return response;
   };
 
