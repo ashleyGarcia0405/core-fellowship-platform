@@ -21,6 +21,7 @@ public class RegisterRequest {
 
   private String fullName; // For students
   private String companyName; // For startups
+  private String adminToken; // Secret token for admin registration
 
   // Getters and Setters
   public String getEmail() {
@@ -61,5 +62,13 @@ public class RegisterRequest {
 
   public void setCompanyName(String companyName) {
     this.companyName = companyName;
+  }
+
+  public String getAdminToken() {
+    return adminToken;
+  }
+
+  public void setAdminToken(String adminToken) {
+    this.adminToken = adminToken;
   }
 }

@@ -9,6 +9,7 @@ import edu.columbia.corefellowship.identity.model.User;
 import edu.columbia.corefellowship.identity.model.UserRole;
 import edu.columbia.corefellowship.identity.repository.UserRepository;
 import edu.columbia.corefellowship.identity.util.JwtUtil;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,9 @@ public class AuthService {
   private final PasswordEncoder passwordEncoder;
   private final JwtUtil jwtUtil;
   private final JwtProperties jwtProperties;
+
+  @Value("${admin.registration-token}")
+  private String adminRegistrationToken;
 
   public AuthService(UserRepository userRepository,
                     PasswordEncoder passwordEncoder,
@@ -44,12 +48,30 @@ public class AuthService {
           "Email already registered");
     }
 
+    // Check if attempting admin registration
+    boolean isAdminRegistration = request.getAdminToken() != null && !request.getAdminToken().isBlank();
+
+    if (isAdminRegistration) {
+      // Validate admin token
+      if (!adminRegistrationToken.equals(request.getAdminToken())) {
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+            "Invalid admin registration token");
+      }
+    }
+
     // Create new user
     User user = new User();
     user.setEmail(request.getEmail());
     user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
     user.setUserType(request.getUserType());
-    user.setRole(UserRole.ROLE_USER); // Default role for new users
+
+    // Set role based on admin token validation
+    if (isAdminRegistration) {
+      user.setRole(UserRole.ROLE_ADMIN);
+    } else {
+      user.setRole(UserRole.ROLE_USER);
+    }
+
     user.setFullName(request.getFullName());
     user.setCompanyName(request.getCompanyName());
     user.setEmailVerified(false);

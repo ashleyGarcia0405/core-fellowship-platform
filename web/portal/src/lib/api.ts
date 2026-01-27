@@ -71,6 +71,7 @@ export interface RegisterRequest {
   userType: UserType;
   fullName?: string;
   companyName?: string;
+  adminToken?: string;
 }
 
 export interface RegisterResponse {

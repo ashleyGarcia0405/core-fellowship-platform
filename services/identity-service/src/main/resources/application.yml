@@ -12,6 +12,9 @@ jwt:
   audience: ${JWT_AUDIENCE}
   expiration-hours: ${JWT_EXPIRATION_HOURS:24}
 
+admin:
+  registration-token: ${ADMIN_REGISTRATION_TOKEN}
+
 logging:
   level:
     org.springframework.security: DEBUG

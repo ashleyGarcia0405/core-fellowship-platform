@@ -1,18 +1,28 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import type { UserType } from '../lib/api';
 
 export default function RegisterPage() {
+  const [searchParams] = useSearchParams();
+  const adminToken = searchParams.get('adminToken');
+  const isAdminMode = !!adminToken;
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [userType, setUserType] = useState<UserType>('STUDENT');
+  const [userType, setUserType] = useState<UserType>(isAdminMode ? 'ADMIN' : 'STUDENT');
   const [fullName, setFullName] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
   const { register } = useAuth();
+
+  useEffect(() => {
+    if (isAdminMode) {
+      setUserType('ADMIN');
+    }
+  }, [isAdminMode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,13 +34,19 @@ export default function RegisterPage() {
       return;
     }
 
+    if (isAdminMode && !fullName.trim()) {
+      setError('Full name is required for admin registration.');
+      return;
+    }
+
     try {
       await register({
         email,
         password,
         userType,
-        fullName: userType === 'STUDENT' ? fullName : undefined,
+        fullName: (userType === 'STUDENT' || isAdminMode) ? fullName : undefined,
         companyName: userType === 'STARTUP' ? companyName : undefined,
+        adminToken: adminToken || undefined,
       });
 
       setSuccess(true);
@@ -50,7 +66,24 @@ export default function RegisterPage() {
       background: 'var(--bg-blue)'
     }}>
       <div style={{ width: '400px', background: 'white', padding: '40px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
-        <h1 style={{ textAlign: 'center', marginBottom: '30px' }}>Register</h1>
+        <h1 style={{ textAlign: 'center', marginBottom: isAdminMode ? '10px' : '30px' }}>
+          {isAdminMode ? 'Admin Registration' : 'Register'}
+        </h1>
+        {isAdminMode && (
+          <div style={{
+            background: '#e0e7ff',
+            border: '1px solid #93c5fd',
+            borderRadius: '6px',
+            padding: '12px',
+            marginBottom: '20px',
+            fontSize: '13px',
+            color: '#1e40af',
+            textAlign: 'center',
+            fontWeight: '500'
+          }}>
+            🔐 Admin Registration Mode
+          </div>
+        )}
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
           <input
             type="email"
@@ -76,19 +109,34 @@ export default function RegisterPage() {
             />
             <span style={{ fontSize: '12px', color: '#6b7280' }}>Password must be at least 8 characters.</span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '12px', color: '#6b7280' }}>Choose account type (required)</label>
-            <select
-              value={userType}
-              onChange={(e) => setUserType(e.target.value as UserType)}
-              style={{ padding: '12px', fontSize: '14px', border: '2px solid #e0e0e0', borderRadius: '6px', outline: 'none' }}
-            >
-              <option value="STUDENT">Student</option>
-              <option value="STARTUP">Startup</option>
-            </select>
-          </div>
+          {!isAdminMode && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '12px', color: '#6b7280' }}>Choose account type (required)</label>
+              <select
+                value={userType}
+                onChange={(e) => setUserType(e.target.value as UserType)}
+                style={{ padding: '12px', fontSize: '14px', border: '2px solid #e0e0e0', borderRadius: '6px', outline: 'none' }}
+              >
+                <option value="STUDENT">Student</option>
+                <option value="STARTUP">Startup</option>
+              </select>
+            </div>
+          )}
 
-          {userType === 'STUDENT' && (
+          {isAdminMode && (
+            <input
+              type="text"
+              placeholder="Full Name (required)"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required
+              style={{ padding: '12px', fontSize: '14px', border: '2px solid #e0e0e0', borderRadius: '6px', outline: 'none' }}
+              onFocus={(e) => e.target.style.borderColor = '#93c5fd'}
+              onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
+            />
+          )}
+
+          {!isAdminMode && userType === 'STUDENT' && (
             <input
               type="text"
               placeholder="Full Name"
@@ -100,7 +148,7 @@ export default function RegisterPage() {
             />
           )}
 
-          {userType === 'STARTUP' && (
+          {!isAdminMode && userType === 'STARTUP' && (
             <input
               type="text"
               placeholder="Company Name"
