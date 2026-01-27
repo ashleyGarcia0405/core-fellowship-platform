@@ -87,8 +87,12 @@ public class StudentApplicationController {
 
     // Short Answer Questions
     application.setVideoSubmissionUrl(request.getVideoSubmissionUrl());
-    application.setIndustriesOfInterest(request.getIndustriesOfInterest());
-    application.setProjectExperience(request.getProjectExperience());
+    application.setStartupsAndIndustries(request.getStartupsAndIndustries());
+    application.setContributionAndExperience(request.getContributionAndExperience());
+    application.setWorkMode(request.getWorkMode());
+    application.setTimeCommitment(request.getTimeCommitment());
+    application.setIsUSCitizen(request.getIsUSCitizen());
+    application.setWorkAuthorization(request.getWorkAuthorization());
 
     // Miscellaneous
     application.setAdditionalComments(request.getAdditionalComments());

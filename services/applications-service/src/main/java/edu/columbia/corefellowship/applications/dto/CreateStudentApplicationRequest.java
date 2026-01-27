@@ -42,11 +42,22 @@ public class CreateStudentApplicationRequest {
   @NotBlank(message = "Video submission URL is required")
   private String videoSubmissionUrl; // YouTube link - 60 second pitch
 
-  @NotBlank(message = "Industries of interest is required")
-  private String industriesOfInterest; // Industries/companies interested in and why
+  @NotBlank(message = "Startups and industries is required")
+  private String startupsAndIndustries; // Startups/industries interested in and why
 
-  @NotBlank(message = "Project experience is required")
-  private String projectExperience; // Current/past project with tangible skills
+  @NotBlank(message = "Contribution and experience is required")
+  private String contributionAndExperience; // What they can contribute + project experience
+
+  @NotBlank(message = "Work mode is required")
+  private String workMode; // Hybrid, Remote, In person (NYC), Anything
+
+  @NotBlank(message = "Time commitment is required")
+  private String timeCommitment; // Days/hours available for internship
+
+  @NotBlank(message = "US citizen status is required")
+  private String isUSCitizen; // Yes/No
+
+  private String workAuthorization; // If not US citizen, visa/work auth details
 
   // Miscellaneous
   private String additionalComments;
@@ -164,20 +175,52 @@ public class CreateStudentApplicationRequest {
     this.videoSubmissionUrl = videoSubmissionUrl;
   }
 
-  public String getIndustriesOfInterest() {
-    return industriesOfInterest;
+  public String getStartupsAndIndustries() {
+    return startupsAndIndustries;
   }
 
-  public void setIndustriesOfInterest(String industriesOfInterest) {
-    this.industriesOfInterest = industriesOfInterest;
+  public void setStartupsAndIndustries(String startupsAndIndustries) {
+    this.startupsAndIndustries = startupsAndIndustries;
   }
 
-  public String getProjectExperience() {
-    return projectExperience;
+  public String getContributionAndExperience() {
+    return contributionAndExperience;
   }
 
-  public void setProjectExperience(String projectExperience) {
-    this.projectExperience = projectExperience;
+  public void setContributionAndExperience(String contributionAndExperience) {
+    this.contributionAndExperience = contributionAndExperience;
+  }
+
+  public String getWorkMode() {
+    return workMode;
+  }
+
+  public void setWorkMode(String workMode) {
+    this.workMode = workMode;
+  }
+
+  public String getTimeCommitment() {
+    return timeCommitment;
+  }
+
+  public void setTimeCommitment(String timeCommitment) {
+    this.timeCommitment = timeCommitment;
+  }
+
+  public String getIsUSCitizen() {
+    return isUSCitizen;
+  }
+
+  public void setIsUSCitizen(String isUSCitizen) {
+    this.isUSCitizen = isUSCitizen;
+  }
+
+  public String getWorkAuthorization() {
+    return workAuthorization;
+  }
+
+  public void setWorkAuthorization(String workAuthorization) {
+    this.workAuthorization = workAuthorization;
   }
 
   public String getAdditionalComments() {
