@@ -153,8 +153,14 @@ public class SecurityConfig {
     // Allow all HTTP methods
     configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
-    // Allow all headers
-    configuration.setAllowedHeaders(Arrays.asList("*"));
+    // Allow required headers (explicit to ensure Authorization is accepted in preflight)
+    configuration.setAllowedHeaders(Arrays.asList(
+      "Authorization",
+      "Content-Type",
+      "Accept",
+      "Origin",
+      "X-Requested-With"
+    ));
 
     // Disable credentials for stateless JWT auth (no cookies)
     configuration.setAllowCredentials(false);
