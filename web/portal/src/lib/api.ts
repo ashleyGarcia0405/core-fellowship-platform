@@ -198,9 +198,12 @@ export interface CreateStudentApplicationRequest {
   howDidYouHear?: string;
   referralSource?: string;
   rolePreferences?: string[];
-  videoSubmissionUrl: string;
-  industriesOfInterest: string;
-  projectExperience: string;
+  startupsAndIndustries: string;
+  contributionAndExperience: string;
+  workMode: string;
+  timeCommitment: string;
+  isUSCitizen: string;
+  workAuthorization?: string;
   additionalComments?: string;
   previouslyApplied: boolean;
   previouslyParticipated?: boolean;

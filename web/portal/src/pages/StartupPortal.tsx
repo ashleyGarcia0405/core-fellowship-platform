@@ -29,7 +29,7 @@ export default function StartupPortal() {
             padding: '14px 24px',
             fontSize: '16px',
             cursor: 'pointer',
-            background: '#54a1ff',
+            background: '#93c5fd',
             color: 'white',
             border: 'none',
             borderRadius: '8px',

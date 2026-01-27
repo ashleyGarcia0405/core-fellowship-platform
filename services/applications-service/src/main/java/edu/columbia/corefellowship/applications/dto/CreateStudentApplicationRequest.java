@@ -39,9 +39,6 @@ public class CreateStudentApplicationRequest {
   private List<String> rolePreferences; // Creative, Business, Tech
 
   // Short Answer Questions
-  @NotBlank(message = "Video submission URL is required")
-  private String videoSubmissionUrl; // YouTube link - 60 second pitch
-
   @NotBlank(message = "Startups and industries is required")
   private String startupsAndIndustries; // Startups/industries interested in and why
 
@@ -165,14 +162,6 @@ public class CreateStudentApplicationRequest {
 
   public void setRolePreferences(List<String> rolePreferences) {
     this.rolePreferences = rolePreferences;
-  }
-
-  public String getVideoSubmissionUrl() {
-    return videoSubmissionUrl;
-  }
-
-  public void setVideoSubmissionUrl(String videoSubmissionUrl) {
-    this.videoSubmissionUrl = videoSubmissionUrl;
   }
 
   public String getStartupsAndIndustries() {

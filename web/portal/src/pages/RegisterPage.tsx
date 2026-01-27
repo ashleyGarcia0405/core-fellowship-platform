@@ -54,7 +54,7 @@ export default function RegisterPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
             style={{ padding: '12px', fontSize: '14px', border: '2px solid #e0e0e0', borderRadius: '6px', outline: 'none' }}
-            onFocus={(e) => e.target.style.borderColor = '#54a1ff'}
+            onFocus={(e) => e.target.style.borderColor = '#93c5fd'}
             onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
           />
           <input
@@ -64,7 +64,7 @@ export default function RegisterPage() {
             onChange={(e) => setPassword(e.target.value)}
             required
             style={{ padding: '12px', fontSize: '14px', border: '2px solid #e0e0e0', borderRadius: '6px', outline: 'none' }}
-            onFocus={(e) => e.target.style.borderColor = '#54a1ff'}
+            onFocus={(e) => e.target.style.borderColor = '#93c5fd'}
             onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
           />
           <select
@@ -83,7 +83,7 @@ export default function RegisterPage() {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               style={{ padding: '12px', fontSize: '14px', border: '2px solid #e0e0e0', borderRadius: '6px', outline: 'none' }}
-              onFocus={(e) => e.target.style.borderColor = '#54a1ff'}
+              onFocus={(e) => e.target.style.borderColor = '#93c5fd'}
               onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
             />
           )}
@@ -95,7 +95,7 @@ export default function RegisterPage() {
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               style={{ padding: '12px', fontSize: '14px', border: '2px solid #e0e0e0', borderRadius: '6px', outline: 'none' }}
-              onFocus={(e) => e.target.style.borderColor = '#54a1ff'}
+              onFocus={(e) => e.target.style.borderColor = '#93c5fd'}
               onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
             />
           )}
@@ -103,7 +103,7 @@ export default function RegisterPage() {
           {error && <div style={{ color: 'red', fontSize: '14px', padding: '10px', background: '#fee', borderRadius: '6px' }}>{error}</div>}
           {success && <div style={{ color: 'green', fontSize: '14px', padding: '10px', background: '#d4edda', borderRadius: '6px' }}>Registration successful! Redirecting to login...</div>}
 
-          <button type="submit" style={{ padding: '14px', fontSize: '16px', cursor: 'pointer', background: '#54a1ff', color: 'white', border: 'none', borderRadius: '6px', fontWeight: '600', marginTop: '10px' }}>
+          <button type="submit" style={{ padding: '14px', fontSize: '16px', cursor: 'pointer', background: '#93c5fd', color: 'white', border: 'none', borderRadius: '6px', fontWeight: '600', marginTop: '10px' }}>
             Register
           </button>
         </form>

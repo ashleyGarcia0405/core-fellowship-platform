@@ -160,7 +160,7 @@ export default function ApplicationsDashboard() {
         <h3 style={{ marginTop: 0 }}>Summary</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px' }}>
           <div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#54a1ff' }}>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#93c5fd' }}>
               {applications.length}
             </div>
             <div style={{ color: '#666' }}>Total Applications</div>
@@ -198,7 +198,7 @@ function getStatusColor(status: string): string {
     case 'finalist':
       return '#17a2b8';
     case 'matched':
-      return '#54a1ff';
+      return '#93c5fd';
     case 'rejected':
       return '#dc3545';
     default:

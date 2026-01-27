@@ -5,7 +5,7 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import AdminPortal from './pages/AdminPortal';
-import StudentPortal from './pages/StudentPortal';
+import StudentDashboard from './pages/student/StudentDashboard';
 import StartupPortal from './pages/StartupPortal';
 import ApplicationsDashboard from './pages/admin/ApplicationsDashboard';
 import InterviewForm from './pages/admin/InterviewForm';
@@ -48,7 +48,7 @@ export default function App() {
             path="/student"
             element={
               <ProtectedRoute>
-                <StudentPortal />
+                <StudentDashboard />
               </ProtectedRoute>
             }
           />

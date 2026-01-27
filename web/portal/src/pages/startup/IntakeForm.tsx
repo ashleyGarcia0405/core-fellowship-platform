@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createStartup } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -38,10 +38,13 @@ export default function IntakeForm() {
   const [loading, setLoading] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
+  const hasPromptedForDraft = useRef(false);
+
   // Load draft from localStorage on mount
   useEffect(() => {
     const draft = localStorage.getItem(DRAFT_KEY);
-    if (draft) {
+    if (draft && !hasPromptedForDraft.current) {
+      hasPromptedForDraft.current = true;
       try {
         const parsed = JSON.parse(draft);
         const savedDate = new Date(parsed.savedAt);
@@ -219,7 +222,7 @@ export default function IntakeForm() {
             borderRadius: '8px',
             marginBottom: '30px',
             lineHeight: '1.6',
-            border: '2px solid #54a1ff'
+            border: '2px solid #93c5fd'
           }}>
             <p style={{ marginTop: 0, marginBottom: 0, color: '#333' }}>
               Please fill out this form to request a CORE Fellow for <strong>Summer 2025 (June 2nd - August 1st officially)</strong>, although internships may be extended based on discussions with fellow.
@@ -480,7 +483,7 @@ export default function IntakeForm() {
             background: '#f8fbff',
             padding: '20px',
             borderRadius: '8px',
-            border: '2px solid #54a1ff',
+            border: '2px solid #93c5fd',
             marginBottom: '15px'
           }}>
             <h4 style={{ marginTop: 0, color: '#0a468f' }}>Intern Position {index + 1}</h4>
@@ -698,7 +701,7 @@ export default function IntakeForm() {
               padding: '12px 24px',
               fontSize: '16px',
               cursor: loading ? 'not-allowed' : 'pointer',
-              background: loading ? '#ccc' : '#54a1ff',
+              background: loading ? '#ccc' : '#93c5fd',
               color: 'white',
               border: 'none',
               borderRadius: '5px'

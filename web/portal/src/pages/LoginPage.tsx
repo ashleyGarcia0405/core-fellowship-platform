@@ -25,7 +25,12 @@ export default function LoginPage() {
         navigate('/startup');
       }
     } catch (err: any) {
-      setError(err.message || 'Login failed. Please check your credentials.');
+      // Check if it's a 401 (authentication failure)
+      if (err.message && err.message.includes('401')) {
+        setError('Incorrect email or password. Please try again.');
+      } else {
+        setError('Login failed. Please check your credentials and try again.');
+      }
     }
   };
 
@@ -48,7 +53,7 @@ export default function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
             style={{ padding: '12px', fontSize: '14px', border: '2px solid #e0e0e0', borderRadius: '6px', outline: 'none' }}
-            onFocus={(e) => e.target.style.borderColor = '#54a1ff'}
+            onFocus={(e) => e.target.style.borderColor = '#93c5fd'}
             onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
           />
           <input
@@ -58,11 +63,11 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             required
             style={{ padding: '12px', fontSize: '14px', border: '2px solid #e0e0e0', borderRadius: '6px', outline: 'none' }}
-            onFocus={(e) => e.target.style.borderColor = '#54a1ff'}
+            onFocus={(e) => e.target.style.borderColor = '#93c5fd'}
             onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
           />
           {error && <div style={{ color: 'red', fontSize: '14px', padding: '10px', background: '#fee', borderRadius: '6px' }}>{error}</div>}
-          <button type="submit" style={{ padding: '14px', fontSize: '16px', cursor: 'pointer', background: '#54a1ff', color: 'white', border: 'none', borderRadius: '6px', fontWeight: '600', marginTop: '10px' }}>
+          <button type="submit" style={{ padding: '14px', fontSize: '16px', cursor: 'pointer', background: '#93c5fd', color: 'white', border: 'none', borderRadius: '6px', fontWeight: '600', marginTop: '10px' }}>
             Login
           </button>
         </form>

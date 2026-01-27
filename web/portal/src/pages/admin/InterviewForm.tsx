@@ -194,7 +194,7 @@ export default function InterviewForm() {
               padding: '10px 20px',
               fontSize: '16px',
               cursor: loading ? 'not-allowed' : 'pointer',
-              background: loading ? '#ccc' : '#54a1ff',
+              background: loading ? '#ccc' : '#93c5fd',
               color: 'white',
               border: 'none',
               borderRadius: '5px'

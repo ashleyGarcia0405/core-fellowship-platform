@@ -86,7 +86,6 @@ public class StudentApplicationController {
     application.setRolePreferences(request.getRolePreferences());
 
     // Short Answer Questions
-    application.setVideoSubmissionUrl(request.getVideoSubmissionUrl());
     application.setStartupsAndIndustries(request.getStartupsAndIndustries());
     application.setContributionAndExperience(request.getContributionAndExperience());
     application.setWorkMode(request.getWorkMode());

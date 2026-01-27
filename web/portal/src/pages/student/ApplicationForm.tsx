@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createStudentApplication, uploadResume } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -20,9 +20,12 @@ export default function ApplicationForm() {
   const [howDidYouHear, setHowDidYouHear] = useState('');
   const [referralSource, setReferralSource] = useState('');
   const [rolePreferences, setRolePreferences] = useState<string[]>([]);
-  const [videoSubmissionUrl, setVideoSubmissionUrl] = useState('');
-  const [industriesOfInterest, setIndustriesOfInterest] = useState('');
-  const [projectExperience, setProjectExperience] = useState('');
+  const [startupsAndIndustries, setStartupsAndIndustries] = useState('');
+  const [contributionAndExperience, setContributionAndExperience] = useState('');
+  const [workMode, setWorkMode] = useState('');
+  const [timeCommitment, setTimeCommitment] = useState('');
+  const [isUSCitizen, setIsUSCitizen] = useState('');
+  const [workAuthorization, setWorkAuthorization] = useState('');
   const [additionalComments, setAdditionalComments] = useState('');
   const [previouslyApplied, setPreviouslyApplied] = useState(false);
   const [previouslyParticipated, setPreviouslyParticipated] = useState(false);
@@ -33,10 +36,13 @@ export default function ApplicationForm() {
   const [loading, setLoading] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
+  const hasPromptedForDraft = useRef(false);
+
   // Load draft from localStorage on mount
   useEffect(() => {
     const draft = localStorage.getItem(DRAFT_KEY);
-    if (draft) {
+    if (draft && !hasPromptedForDraft.current) {
+      hasPromptedForDraft.current = true;
       try {
         const parsed = JSON.parse(draft);
         const savedDate = new Date(parsed.savedAt);
@@ -56,9 +62,12 @@ export default function ApplicationForm() {
           setHowDidYouHear(parsed.howDidYouHear || '');
           setReferralSource(parsed.referralSource || '');
           setRolePreferences(parsed.rolePreferences || []);
-          setVideoSubmissionUrl(parsed.videoSubmissionUrl || '');
-          setIndustriesOfInterest(parsed.industriesOfInterest || '');
-          setProjectExperience(parsed.projectExperience || '');
+          setStartupsAndIndustries(parsed.startupsAndIndustries || '');
+          setContributionAndExperience(parsed.contributionAndExperience || '');
+          setWorkMode(parsed.workMode || '');
+          setTimeCommitment(parsed.timeCommitment || '');
+          setIsUSCitizen(parsed.isUSCitizen || '');
+          setWorkAuthorization(parsed.workAuthorization || '');
           setAdditionalComments(parsed.additionalComments || '');
           setPreviouslyApplied(parsed.previouslyApplied || false);
           setPreviouslyParticipated(parsed.previouslyParticipated || false);
@@ -77,7 +86,7 @@ export default function ApplicationForm() {
   // Auto-save to localStorage whenever form fields change
   useEffect(() => {
     // Only save if user has started filling the form
-    if (fullName || email || major || videoSubmissionUrl || industriesOfInterest || projectExperience) {
+    if (fullName || email || major || startupsAndIndustries || contributionAndExperience) {
       const draft = {
         fullName,
         pronouns,
@@ -90,9 +99,12 @@ export default function ApplicationForm() {
         howDidYouHear,
         referralSource,
         rolePreferences,
-        videoSubmissionUrl,
-        industriesOfInterest,
-        projectExperience,
+        startupsAndIndustries,
+        contributionAndExperience,
+        workMode,
+        timeCommitment,
+        isUSCitizen,
+        workAuthorization,
         additionalComments,
         previouslyApplied,
         previouslyParticipated,
@@ -105,8 +117,9 @@ export default function ApplicationForm() {
   }, [
     fullName, pronouns, gradYear, school, major, email,
     linkedinProfile, portfolioWebsite, howDidYouHear, referralSource,
-    rolePreferences, videoSubmissionUrl, industriesOfInterest,
-    projectExperience, additionalComments, previouslyApplied,
+    rolePreferences, startupsAndIndustries,
+    contributionAndExperience, workMode, timeCommitment, isUSCitizen,
+    workAuthorization, additionalComments, previouslyApplied,
     previouslyParticipated, hasUpcomingInternshipOffers
   ]);
 
@@ -137,9 +150,12 @@ export default function ApplicationForm() {
         howDidYouHear: howDidYouHear || undefined,
         referralSource: referralSource || undefined,
         rolePreferences: rolePreferences.length > 0 ? rolePreferences : undefined,
-        videoSubmissionUrl,
-        industriesOfInterest,
-        projectExperience,
+        startupsAndIndustries,
+        contributionAndExperience,
+        workMode,
+        timeCommitment,
+        isUSCitizen,
+        workAuthorization: workAuthorization || undefined,
         additionalComments: additionalComments || undefined,
         previouslyApplied,
         previouslyParticipated: previouslyParticipated || undefined,
@@ -189,10 +205,10 @@ export default function ApplicationForm() {
             borderRadius: '8px',
             marginBottom: '30px',
             lineHeight: '1.6',
-            border: '2px solid #54a1ff'
+            border: '2px solid #93c5fd'
           }}>
         <p style={{ marginTop: 0 }}>
-          <strong>CORE Fellows</strong> (previously Almaworks Fellows) are matched with startups founded by Columbia alumni and around NYC for an ~8 week internship. We will be considering applications for the <strong>Spring 2026 CORE Fellowship</strong>, with a deadline of <strong>Friday, February 14th, 2026 at 11:59pm EST</strong>. We encourage you to sign up as soon as possible since there will be no exceptions to this deadline. No prior startup experience is required to participate.
+          <strong>CORE Fellows</strong> (previously Almaworks Fellows) are matched with startups founded by Columbia alumni and around NYC for an ~8 week internship. We will be considering applications for the <strong>Spring 2026 CORE Fellowship</strong>, with a deadline of <strong>Friday, February 1st, 2026 at 11:59pm EST</strong>. We encourage you to sign up as soon as possible. No prior startup experience is required to participate.
         </p>
 
         <p>
@@ -229,7 +245,7 @@ export default function ApplicationForm() {
         </p>
 
         <p style={{ marginBottom: 0 }}>
-          Please direct any questions to Kavya at ka3041@columbia.edu or Diya at dw3101@columbia.edu.
+          Please direct any questions to Kavya at ka3041@columbia.edu or Ashley at ag4647@columbia.edu.
         </p>
       </div>
 
@@ -427,55 +443,116 @@ export default function ApplicationForm() {
 
         <div>
           <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-            Video Submission *
+            Startups and Industries of Interest *
           </label>
           <p style={{ margin: '5px 0 10px 0', color: '#555', fontSize: '14px' }}>
-            Sell yourself to us in 60 seconds. What can you contribute to the CORE Fellowship and a startup?
+            List startups you would love to work at and what you would do. Talk about startups you love, upcoming ones you are excited for, your dream role and if your ideas for them. Are there any industries or companies that you are particularly knowledgeable or curious about? Tell us why you are interested in that industry/company in particular, and how you've acted on that interest so far.
           </p>
-          <p style={{ margin: '5px 0 10px 0', color: '#555', fontSize: '14px' }}>
-            Please send a video submission in the form of a YouTube link. Please make sure the video link is accessible by anybody, it may be an unlisted YouTube video.
+          <p style={{ margin: '5px 0 10px 0', color: '#999', fontSize: '13px', fontStyle: 'italic' }}>
+            100-250 words
           </p>
-          <input
-            type="url"
-            value={videoSubmissionUrl}
-            onChange={(e) => setVideoSubmissionUrl(e.target.value)}
+          <textarea
+            value={startupsAndIndustries}
+            onChange={(e) => setStartupsAndIndustries(e.target.value)}
             required
-            placeholder="https://youtube.com/watch?v=..."
+            rows={6}
             style={{ width: '100%', padding: '8px', fontSize: '14px' }}
           />
         </div>
 
         <div>
           <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-            Industries/Companies of Interest *
+            What Can You Contribute? *
           </label>
           <p style={{ margin: '5px 0 10px 0', color: '#555', fontSize: '14px' }}>
-            Are there any industries or companies that you are particularly knowledgeable or curious about? Tell us why you are interested in that industry/company in particular, and how you've acted on that interest so far.
+            Sell yourself to us. What can you contribute? Additionally, tell us about a current or past project you work/worked on and highlight any tangible skills you used in this project that would help you succeed in this role.
+          </p>
+          <p style={{ margin: '5px 0 10px 0', color: '#999', fontSize: '13px', fontStyle: 'italic' }}>
+            100-250 words
           </p>
           <textarea
-            value={industriesOfInterest}
-            onChange={(e) => setIndustriesOfInterest(e.target.value)}
+            value={contributionAndExperience}
+            onChange={(e) => setContributionAndExperience(e.target.value)}
             required
-            rows={5}
+            rows={6}
             style={{ width: '100%', padding: '8px', fontSize: '14px' }}
           />
         </div>
 
         <div>
+          <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>
+            What is your preferred mode of work? *
+          </label>
+          {['Hybrid', 'Remote', 'In person (NYC)', 'Anything'].map(option => (
+            <div key={option} style={{ marginBottom: '8px' }}>
+              <label>
+                <input
+                  type="radio"
+                  name="workMode"
+                  value={option}
+                  checked={workMode === option}
+                  onChange={(e) => setWorkMode(e.target.value)}
+                  required
+                  style={{ marginRight: '8px' }}
+                />
+                {option}
+              </label>
+            </div>
+          ))}
+        </div>
+
+        <div>
           <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-            Project Experience *
+            How much time could you commit to your internship this spring? *
           </label>
           <p style={{ margin: '5px 0 10px 0', color: '#555', fontSize: '14px' }}>
-            Can you tell us about a current or past project you work/worked on and highlight any tangible skills you used in this project that would help you succeed in this role?
+            Be sure to include what days of the week, time periods, etc. work for you. This is just preliminary, you can let us know if anything changes during your interview.
           </p>
           <textarea
-            value={projectExperience}
-            onChange={(e) => setProjectExperience(e.target.value)}
+            value={timeCommitment}
+            onChange={(e) => setTimeCommitment(e.target.value)}
             required
-            rows={5}
+            rows={3}
             style={{ width: '100%', padding: '8px', fontSize: '14px' }}
           />
         </div>
+
+        <div>
+          <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>
+            Are you a US Citizen? *
+          </label>
+          {['Yes', 'No'].map(option => (
+            <div key={option} style={{ marginBottom: '8px' }}>
+              <label>
+                <input
+                  type="radio"
+                  name="isUSCitizen"
+                  value={option}
+                  checked={isUSCitizen === option}
+                  onChange={(e) => setIsUSCitizen(e.target.value)}
+                  required
+                  style={{ marginRight: '8px' }}
+                />
+                {option}
+              </label>
+            </div>
+          ))}
+        </div>
+
+        {isUSCitizen === 'No' && (
+          <div>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+              If not, please elaborate on your status and work authorization.
+            </label>
+            <textarea
+              value={workAuthorization}
+              onChange={(e) => setWorkAuthorization(e.target.value)}
+              rows={3}
+              placeholder="Please describe your current visa status and work authorization..."
+              style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+            />
+          </div>
+        )}
 
         <h3>Miscellaneous</h3>
 
@@ -538,7 +615,7 @@ export default function ApplicationForm() {
               padding: '12px 24px',
               fontSize: '16px',
               cursor: loading ? 'not-allowed' : 'pointer',
-              background: loading ? '#ccc' : '#54a1ff',
+              background: loading ? '#ccc' : '#93c5fd',
               color: 'white',
               border: 'none',
               borderRadius: '5px'
