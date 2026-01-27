@@ -225,7 +225,7 @@ export default function IntakeForm() {
             border: '2px solid #93c5fd'
           }}>
             <p style={{ marginTop: 0, marginBottom: 0, color: '#333' }}>
-              Please fill out this form to request a CORE Fellow for <strong>Summer 2025 (June 2nd - August 1st officially)</strong>, although internships may be extended based on discussions with fellow.
+              Please fill out this form to request a CORE Fellow for <strong>Spring 2025 (February - May approximately)</strong>, although internships may be extended based on discussions with fellow.
             </p>
           </div>
 

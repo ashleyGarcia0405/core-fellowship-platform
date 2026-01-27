@@ -19,9 +19,9 @@ export default function StartupPortal() {
       status: 'completed'
     },
     {
-      date: 'Feb 3',
+      date: 'TBD',
       title: 'Intake Deadline',
-      description: 'Submit by Feb 3rd at 11:59 PM EST to be considered for the 2026 matching cycle.',
+      description: 'Submit your intake form to be considered for the 2026 matching cycle.',
       status: 'upcoming'
     },
     {
