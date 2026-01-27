@@ -469,13 +469,25 @@ export default function IntakeForm() {
           </label>
           <input
             type="number"
+            list="intern-count-options"
             value={numberOfInternsNeeded}
             onChange={(e) => setNumberOfInternsNeeded(e.target.value)}
-            min="1"
-            placeholder="1"
+            min="0"
+            placeholder="0"
             required
             style={{ width: '100%', padding: '8px', fontSize: '14px' }}
           />
+          <datalist id="intern-count-options">
+            <option value="0" />
+            <option value="1" />
+            <option value="2" />
+            <option value="3" />
+            <option value="4" />
+            <option value="5" />
+          </datalist>
+          <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '6px' }}>
+            Type any number or pick a suggestion.
+          </div>
         </div>
 
         {positions.map((position, index) => (

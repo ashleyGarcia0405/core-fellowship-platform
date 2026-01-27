@@ -57,24 +57,31 @@ export default function RegisterPage() {
             onFocus={(e) => e.target.style.borderColor = '#93c5fd'}
             onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
           />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            style={{ padding: '12px', fontSize: '14px', border: '2px solid #e0e0e0', borderRadius: '6px', outline: 'none' }}
-            onFocus={(e) => e.target.style.borderColor = '#93c5fd'}
-            onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
-          />
-          <select
-            value={userType}
-            onChange={(e) => setUserType(e.target.value as UserType)}
-            style={{ padding: '12px', fontSize: '14px', border: '2px solid #e0e0e0', borderRadius: '6px', outline: 'none' }}
-          >
-            <option value="STUDENT">Student</option>
-            <option value="STARTUP">Startup</option>
-          </select>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              minLength={8}
+              required
+              style={{ padding: '12px', fontSize: '14px', border: '2px solid #e0e0e0', borderRadius: '6px', outline: 'none' }}
+              onFocus={(e) => e.target.style.borderColor = '#93c5fd'}
+              onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
+            />
+            <span style={{ fontSize: '12px', color: '#6b7280' }}>Password must be at least 8 characters.</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '12px', color: '#6b7280' }}>Choose account type (required)</label>
+            <select
+              value={userType}
+              onChange={(e) => setUserType(e.target.value as UserType)}
+              style={{ padding: '12px', fontSize: '14px', border: '2px solid #e0e0e0', borderRadius: '6px', outline: 'none' }}
+            >
+              <option value="STUDENT">Student</option>
+              <option value="STARTUP">Startup</option>
+            </select>
+          </div>
 
           {userType === 'STUDENT' && (
             <input
