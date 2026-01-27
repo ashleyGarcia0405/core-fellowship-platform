@@ -309,7 +309,7 @@ export default function ApplicationForm() {
             type="text"
             value={school}
             onChange={(e) => setSchool(e.target.value)}
-            placeholder="Columbia University"
+            placeholder="CC, SEAS, Barnard, GS, etc."
             style={{ width: '100%', padding: '8px', fontSize: '14px' }}
           />
         </div>
