@@ -37,6 +37,8 @@ public class JwtUtil {
         .claim("email", user.getEmail())
         .claim("userType", user.getUserType().name())
         .claim("role", user.getRole().name())
+        .claim("fullName", user.getFullName())
+        .claim("companyName", user.getCompanyName())
         .issuer(jwtProperties.getIssuer())
         .audience().add(jwtProperties.getAudience()).and()
         .issuedAt(Date.from(now))
