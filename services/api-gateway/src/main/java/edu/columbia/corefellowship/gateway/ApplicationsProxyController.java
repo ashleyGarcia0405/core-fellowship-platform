@@ -2,6 +2,7 @@ package edu.columbia.corefellowship.gateway;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestClient;
@@ -70,10 +71,11 @@ public class ApplicationsProxyController {
       @RequestBody Map<String, Object> body,
       HttpServletRequest request) {
     RestClient.RequestBodySpec spec = client.post().uri("/v1/students/applications");
-    return addUserHeadersToBody(spec, request)
+    ResponseEntity<String> response = addUserHeadersToBody(spec, request)
         .body(body)
         .retrieve()
-        .toEntity(Object.class);
+        .toEntity(String.class);
+    return forwardResponse(response);
   }
 
   @GetMapping("/students/applications")
@@ -91,9 +93,10 @@ public class ApplicationsProxyController {
     }
 
     RestClient.RequestHeadersUriSpec<?> spec = client.get();
-    return addUserHeadersToGet(spec.uri(uri.toString()), request)
+    ResponseEntity<String> response = addUserHeadersToGet(spec.uri(uri.toString()), request)
         .retrieve()
-        .toEntity(Object.class);
+        .toEntity(String.class);
+    return forwardResponse(response);
   }
 
   @GetMapping("/students/applications/{id}")
@@ -101,9 +104,10 @@ public class ApplicationsProxyController {
       @PathVariable String id,
       HttpServletRequest request) {
     RestClient.RequestHeadersUriSpec<?> spec = client.get();
-    return addUserHeadersToGet(spec.uri("/v1/students/applications/" + id), request)
+    ResponseEntity<String> response = addUserHeadersToGet(spec.uri("/v1/students/applications/" + id), request)
         .retrieve()
-        .toEntity(Object.class);
+        .toEntity(String.class);
+    return forwardResponse(response);
   }
 
   @PatchMapping("/students/applications/{id}")
@@ -112,10 +116,11 @@ public class ApplicationsProxyController {
       @RequestBody Map<String, Object> body,
       HttpServletRequest request) {
     RestClient.RequestBodySpec spec = client.patch().uri("/v1/students/applications/" + id);
-    return addUserHeadersToBody(spec, request)
+    ResponseEntity<String> response = addUserHeadersToBody(spec, request)
         .body(body)
         .retrieve()
-        .toEntity(Object.class);
+        .toEntity(String.class);
+    return forwardResponse(response);
   }
 
   @PostMapping("/students/applications/{id}/resume")
@@ -150,10 +155,11 @@ public class ApplicationsProxyController {
         new org.springframework.http.client.MultipartBodyBuilder();
     builder.part("file", file.getResource());
 
-    return spec
+    ResponseEntity<String> response = spec
         .body(builder.build())
         .retrieve()
-        .toEntity(Object.class);
+        .toEntity(String.class);
+    return forwardResponse(response);
   }
 
   @GetMapping("/students/applications/{id}/resume")
@@ -161,9 +167,10 @@ public class ApplicationsProxyController {
       @PathVariable String id,
       HttpServletRequest request) {
     RestClient.RequestHeadersUriSpec<?> spec = client.get();
-    return addUserHeadersToGet(spec.uri("/v1/students/applications/" + id + "/resume"), request)
+    ResponseEntity<String> response = addUserHeadersToGet(spec.uri("/v1/students/applications/" + id + "/resume"), request)
         .retrieve()
-        .toEntity(Object.class);
+        .toEntity(String.class);
+    return forwardResponse(response);
   }
 
   // Startup Endpoints
@@ -172,10 +179,11 @@ public class ApplicationsProxyController {
       @RequestBody Map<String, Object> body,
       HttpServletRequest request) {
     RestClient.RequestBodySpec spec = client.post().uri("/v1/startups/intake");
-    return addUserHeadersToBody(spec, request)
+    ResponseEntity<String> response = addUserHeadersToBody(spec, request)
         .body(body)
         .retrieve()
-        .toEntity(Object.class);
+        .toEntity(String.class);
+    return forwardResponse(response);
   }
 
   @GetMapping("/startups")
@@ -193,9 +201,10 @@ public class ApplicationsProxyController {
     }
 
     RestClient.RequestHeadersUriSpec<?> spec = client.get();
-    return addUserHeadersToGet(spec.uri(uri.toString()), request)
+    ResponseEntity<String> response = addUserHeadersToGet(spec.uri(uri.toString()), request)
         .retrieve()
-        .toEntity(Object.class);
+        .toEntity(String.class);
+    return forwardResponse(response);
   }
 
   @GetMapping("/startups/{id}")
@@ -203,9 +212,10 @@ public class ApplicationsProxyController {
       @PathVariable String id,
       HttpServletRequest request) {
     RestClient.RequestHeadersUriSpec<?> spec = client.get();
-    return addUserHeadersToGet(spec.uri("/v1/startups/" + id), request)
+    ResponseEntity<String> response = addUserHeadersToGet(spec.uri("/v1/startups/" + id), request)
         .retrieve()
-        .toEntity(Object.class);
+        .toEntity(String.class);
+    return forwardResponse(response);
   }
 
   // Export Endpoints
@@ -224,9 +234,10 @@ public class ApplicationsProxyController {
     }
 
     RestClient.RequestHeadersUriSpec<?> spec = client.get();
-    return addUserHeadersToGet(spec.uri(uri.toString()), request)
+    ResponseEntity<String> response = addUserHeadersToGet(spec.uri(uri.toString()), request)
         .retrieve()
-        .toEntity(Object.class);
+        .toEntity(String.class);
+    return forwardResponse(response);
   }
 
   @GetMapping("/export/students.csv")
@@ -244,9 +255,10 @@ public class ApplicationsProxyController {
     }
 
     RestClient.RequestHeadersUriSpec<?> spec = client.get();
-    return addUserHeadersToGet(spec.uri(uri.toString()), request)
+    ResponseEntity<String> response = addUserHeadersToGet(spec.uri(uri.toString()), request)
         .retrieve()
         .toEntity(String.class);
+    return forwardResponseString(response);
   }
 
   @GetMapping("/export/startups.json")
@@ -264,9 +276,10 @@ public class ApplicationsProxyController {
     }
 
     RestClient.RequestHeadersUriSpec<?> spec = client.get();
-    return addUserHeadersToGet(spec.uri(uri.toString()), request)
+    ResponseEntity<String> response = addUserHeadersToGet(spec.uri(uri.toString()), request)
         .retrieve()
-        .toEntity(Object.class);
+        .toEntity(String.class);
+    return forwardResponse(response);
   }
 
   @GetMapping("/export/startups.csv")
@@ -284,8 +297,31 @@ public class ApplicationsProxyController {
     }
 
     RestClient.RequestHeadersUriSpec<?> spec = client.get();
-    return addUserHeadersToGet(spec.uri(uri.toString()), request)
+    ResponseEntity<String> response = addUserHeadersToGet(spec.uri(uri.toString()), request)
         .retrieve()
         .toEntity(String.class);
+    return forwardResponseString(response);
+  }
+
+  private ResponseEntity<Object> forwardResponse(ResponseEntity<String> response) {
+    HttpHeaders headers = new HttpHeaders();
+    if (response.getHeaders().getContentType() != null) {
+      headers.setContentType(response.getHeaders().getContentType());
+    }
+    return ResponseEntity
+        .status(response.getStatusCode())
+        .headers(headers)
+        .body(response.getBody());
+  }
+
+  private ResponseEntity<String> forwardResponseString(ResponseEntity<String> response) {
+    HttpHeaders headers = new HttpHeaders();
+    if (response.getHeaders().getContentType() != null) {
+      headers.setContentType(response.getHeaders().getContentType());
+    }
+    return ResponseEntity
+        .status(response.getStatusCode())
+        .headers(headers)
+        .body(response.getBody());
   }
 }

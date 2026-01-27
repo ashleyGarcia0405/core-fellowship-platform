@@ -1,5 +1,4 @@
-i donhellll
-CORE Fellowship Platform
+# webCORE Fellowship Platform
 
 A modern full-stack platform built with a microservices architecture, featuring a React frontend, Spring Boot backend services, and MongoDB database.
 
@@ -8,28 +7,30 @@ A modern full-stack platform built with a microservices architecture, featuring 
 ```
 ┌─────────────────────┐
 │  Vite + React       │  Port 5173
-│  (TypeScript)       │  Proxy: /api/* → :8080
+│  (TypeScript)       │
 └──────────┬──────────┘
            │
            ▼
 ┌─────────────────────┐
 │  API Gateway        │  Port 8080
-│  (Spring Boot)      │  Routes requests to services
+│  (Spring Boot)      │  JWT validation & routing
 └──────────┬──────────┘
            │
-           ├────────────────────┐
-           │                    │
-           ▼                    ▼
-┌──────────────────┐   ┌────────────────┐
-│ Identity Service │   │ Future Services│
-│ Port 8082        │   │                │
-└────────┬─────────┘   └────────────────┘
-         │
-         ▼
-┌─────────────────────┐
-│  MongoDB + UI       │  Ports 27017, 8081
-│  (Docker Compose)   │
-└─────────────────────┘
+           ├──────────────────────────┐
+           │                          │
+           ▼                          ▼
+┌──────────────────────┐   ┌──────────────────────┐
+│ Identity Service     │   │ Applications Service │
+│ Port 8082            │   │ Port 8083            │
+│ Auth & User Mgmt     │   │ Student & Startups   │
+└──────────┬───────────┘   └──────────┬───────────┘
+           │                          │
+           └──────────┬───────────────┘
+                      ▼
+           ┌─────────────────────┐
+           │  MongoDB + UI       │  Ports 27017, 8081
+           │  (Docker Compose)   │
+           └─────────────────────┘
 ```
 
 ## Tech Stack
@@ -194,7 +195,7 @@ cd web/portal && npm install
 
 ### 5. Run Everything
 
-Open **4 separate terminal windows:**
+Open **5 separate terminal windows:**
 
 #### Terminal 1: Infrastructure (if not already running)
 ```bash
@@ -227,7 +228,20 @@ cd services/identity-service && ../gradlew bootRun
 Started IdentityApplication in X.XXX seconds
 ```
 
-#### Terminal 4: Web Application
+#### Terminal 4: Applications Service
+```bash
+make applications-run
+
+# Or manually
+cd services/applications-service && ../gradlew bootRun
+```
+
+**Wait for startup message:**
+```
+Started ApplicationsServiceApplication in X.XXX seconds
+```
+
+#### Terminal 5: Web Application
 ```bash
 make web-dev
 
@@ -252,7 +266,6 @@ curl http://localhost:8080/v1/identity/health
 
 # Open web app
 open http://localhost:5173
-```
 
 ## Available Commands
 
@@ -268,9 +281,10 @@ make clean          # Stop infrastructure and remove volumes
 make web-install    # Install web dependencies
 make web-dev        # Run web app (Vite dev server)
 
-make services-build # Build all Java services
-make gateway-run    # Run API gateway
-make identity-run   # Run identity service
+make services-build    # Build all Java services
+make gateway-run       # Run API gateway
+make identity-run      # Run identity service
+make applications-run  # Run applications service
 ```
 
 ### Gradle Commands
@@ -278,12 +292,13 @@ make identity-run   # Run identity service
 ```bash
 # From services/ directory
 
-./gradlew build                        # Build all services
-./gradlew clean build                  # Clean and build
-./gradlew :api-gateway:bootRun        # Run gateway
-./gradlew :identity-service:bootRun   # Run identity service
-./gradlew test                         # Run all tests
-./gradlew :api-gateway:test           # Run gateway tests only
+./gradlew build                            # Build all services
+./gradlew clean build                      # Clean and build
+./gradlew :api-gateway:bootRun            # Run gateway
+./gradlew :identity-service:bootRun       # Run identity service
+./gradlew :applications-service:bootRun   # Run applications service
+./gradlew test                             # Run all tests
+./gradlew :api-gateway:test               # Run gateway tests only
 ```
 
 ### Docker Commands

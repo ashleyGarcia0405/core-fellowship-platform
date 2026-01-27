@@ -7,7 +7,7 @@ import RegisterPage from './pages/RegisterPage';
 import AdminPortal from './pages/AdminPortal';
 import StudentDashboard from './pages/student/StudentDashboard';
 import StartupPortal from './pages/StartupPortal';
-import ApplicationsDashboard from './pages/admin/ApplicationsDashboard';
+import AdminDashboard from './pages/admin/AdminDashboard';
 import InterviewForm from './pages/admin/InterviewForm';
 import ApplicationForm from './pages/student/ApplicationForm';
 import IntakeForm from './pages/startup/IntakeForm';
@@ -32,7 +32,7 @@ export default function App() {
             path="/admin/applications"
             element={
               <ProtectedRoute>
-                <ApplicationsDashboard />
+                <AdminDashboard />
               </ProtectedRoute>
             }
           />

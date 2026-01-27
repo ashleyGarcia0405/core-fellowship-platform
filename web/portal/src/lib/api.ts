@@ -235,6 +235,10 @@ export async function uploadResume(applicationId: string, file: File): Promise<{
   return res.json();
 }
 
+export async function getResumeSignedUrl(applicationId: string): Promise<{ signedUrl: string; expiresIn: string }> {
+  return getJson<{ signedUrl: string; expiresIn: string }>(`/v1/students/applications/${applicationId}/resume`);
+}
+
 // Startup types and API
 export interface Startup {
   id: string;
@@ -284,4 +288,51 @@ export async function createStartup(data: CreateStartupRequest): Promise<Startup
 
 export async function getStartups(): Promise<Startup[]> {
   return getJson<Startup[]>("/v1/startups");
+}
+
+// Admin API functions
+export async function getAllApplications(params?: {
+  status?: string;
+  term?: string;
+}): Promise<any[]> {
+  const query = params ? `?${new URLSearchParams(params as any).toString()}` : '';
+  return getJson<any[]>(`/v1/students/applications${query}`);
+}
+
+export async function updateApplicationStatus(
+  applicationId: string,
+  status: 'submitted' | 'under_review' | 'accepted' | 'rejected',
+  reviewNotes?: string
+): Promise<void> {
+  const res = await fetch(`${API_BASE}/v1/students/applications/${applicationId}`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify({ status, reviewNotes }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`HTTP ${res.status}: ${text}`);
+  }
+}
+
+export async function exportApplicationsCSV(): Promise<Blob> {
+  const res = await fetch(`${API_BASE}/v1/export/students.csv`, {
+    headers: getHeaders(),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`HTTP ${res.status}: ${text}`);
+  }
+  return res.blob();
+}
+
+export async function exportApplicationsJSON(): Promise<Blob> {
+  const res = await fetch(`${API_BASE}/v1/export/students.json`, {
+    headers: getHeaders(),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`HTTP ${res.status}: ${text}`);
+  }
+  return res.blob();
 }

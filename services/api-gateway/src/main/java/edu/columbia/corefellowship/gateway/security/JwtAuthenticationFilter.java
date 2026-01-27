@@ -7,11 +7,11 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.lang.NonNull;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -26,7 +26,6 @@ import java.util.Collections;
  * 3. Creates Spring Security Authentication
  * 4. Adds X-User-Id and X-User-Role headers for downstream services
  */
-@Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private final JwtUtil jwtUtil;
@@ -41,11 +40,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       @NonNull HttpServletResponse response,
       @NonNull FilterChain filterChain) throws ServletException, IOException {
 
+    String path = request.getRequestURI();
+    String method = request.getMethod();
+
     // Skip filter for OPTIONS requests (CORS preflight)
-    if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+    if ("OPTIONS".equalsIgnoreCase(method)) {
+      System.out.println("JwtFilter: Skipping OPTIONS request for " + path);
       filterChain.doFilter(request, response);
       return;
     }
+
+    // Skip filter for public auth endpoints
+    if (path.startsWith("/v1/auth/") || path.equals("/health")) {
+      System.out.println("JwtFilter: Skipping auth endpoint " + path);
+      // Set anonymous authentication so Spring Security allows permitAll
+      AnonymousAuthenticationToken anonymousAuth = new AnonymousAuthenticationToken(
+          "anonymous", "anonymous", Collections.singletonList(new SimpleGrantedAuthority("ROLE_ANONYMOUS"))
+      );
+      SecurityContextHolder.getContext().setAuthentication(anonymousAuth);
+      filterChain.doFilter(request, response);
+      return;
+    }
+
+    System.out.println("JwtFilter: Processing " + method + " " + path);
 
     // Extract Authorization header
     String authHeader = request.getHeader("Authorization");

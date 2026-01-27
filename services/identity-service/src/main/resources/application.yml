@@ -11,3 +11,8 @@ jwt:
   issuer: ${JWT_ISSUER}
   audience: ${JWT_AUDIENCE}
   expiration-hours: ${JWT_EXPIRATION_HOURS:24}
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.security.web.access: DEBUG

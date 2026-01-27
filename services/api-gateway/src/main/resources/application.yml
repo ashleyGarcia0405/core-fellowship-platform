@@ -11,3 +11,10 @@ jwt:
   secret: ${JWT_SECRET}
   issuer: ${JWT_ISSUER}
   audience: ${JWT_AUDIENCE}
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.security.web.csrf: DEBUG
+    org.springframework.security.web.access: DEBUG
+    org.springframework.security.web.FilterChainProxy: DEBUG

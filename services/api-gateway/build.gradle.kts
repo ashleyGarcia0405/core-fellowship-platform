@@ -7,6 +7,7 @@ plugins {
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-webflux") // For MultipartBodyBuilder
 
     // JWT support
     implementation("io.jsonwebtoken:jjwt-api:0.12.5")
