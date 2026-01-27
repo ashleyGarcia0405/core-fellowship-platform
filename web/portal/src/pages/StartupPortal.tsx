@@ -1,10 +1,12 @@
+import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { FiFileText, FiEdit3, FiBriefcase, FiSettings, FiLogOut, FiCalendar, FiCheckCircle } from 'react-icons/fi';
+import { FiFileText, FiEdit3, FiBriefcase, FiSettings, FiLogOut, FiCalendar, FiCheckCircle, FiMenu, FiX } from 'react-icons/fi';
 
 export default function StartupPortal() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -45,12 +47,50 @@ export default function StartupPortal() {
   ];
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-blue)' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-blue)', position: 'relative' }}>
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        style={{
+          position: 'fixed',
+          top: '20px',
+          left: '20px',
+          zIndex: 1001,
+          display: 'none',
+          background: 'white',
+          border: '2px solid #e0e0e0',
+          borderRadius: '8px',
+          padding: '10px',
+          cursor: 'pointer',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        }}
+        className="mobile-menu-btn"
+      >
+        {sidebarOpen ? <FiX size={24} color="#0a468f" /> : <FiMenu size={24} color="#0a468f" />}
+      </button>
+
+      {/* Overlay for mobile */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            zIndex: 999,
+            display: 'none'
+          }}
+          className="mobile-overlay"
+        />
+      )}
+
       {/* Sidebar */}
       <div style={{
-        width: '18%',
-        minWidth: '220px',
-        maxWidth: '280px',
+        width: '280px',
+        minWidth: '280px',
         background: 'white',
         borderRight: '2px solid #e0e0e0',
         padding: '20px',
@@ -60,8 +100,10 @@ export default function StartupPortal() {
         position: 'sticky',
         top: 0,
         overflow: 'hidden',
-        boxSizing: 'border-box'
-      }}>
+        boxSizing: 'border-box',
+        zIndex: 1000
+      }}
+      className="sidebar">
         <div style={{ marginBottom: '20px', textAlign: 'center', flexShrink: 0 }}>
           <img src="/core-fellowship.png" alt="CORE Logo" style={{ width: '160px', height: 'auto' }} />
         </div>
@@ -90,7 +132,10 @@ export default function StartupPortal() {
               <FiFileText size={18} /> Overview
             </button>
             <button
-              onClick={() => navigate('/startup/intake')}
+              onClick={() => {
+                navigate('/startup/intake');
+                setSidebarOpen(false);
+              }}
               style={{
                 padding: '10px 15px',
                 textAlign: 'left',
@@ -159,7 +204,10 @@ export default function StartupPortal() {
               <FiSettings size={18} /> Profile Settings
             </button>
             <button
-              onClick={handleLogout}
+              onClick={() => {
+                handleLogout();
+                setSidebarOpen(false);
+              }}
               style={{
                 padding: '10px 15px',
                 textAlign: 'left',
@@ -184,10 +232,10 @@ export default function StartupPortal() {
       </div>
 
       {/* Main Content */}
-      <div style={{ flex: 1, padding: '40px 60px', overflow: 'auto' }}>
+      <div style={{ flex: 1, padding: '40px 60px', overflow: 'auto' }} className="main-content">
         <div style={{ maxWidth: '900px' }}>
           <h1 style={{ fontSize: '32px', color: '#0a468f', marginBottom: '10px' }}>
-            Welcome, {user?.fullName || user?.email?.split('@')[0] || 'Startup Team'}!
+            Welcome, {user?.companyName || user?.fullName || user?.email?.split('@')[0] || 'Startup Team'}!
           </h1>
           <p style={{ color: '#666', marginBottom: '30px' }}>
             This is your startup dashboard for CORE Fellowship partnerships and matching.
@@ -202,9 +250,10 @@ export default function StartupPortal() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '20px'
+            gap: '20px',
+            flexWrap: 'wrap'
           }}>
-            <div>
+            <div style={{ flex: '1 1 300px' }}>
               <h2 style={{ fontSize: '20px', color: '#0a468f', marginBottom: '8px' }}>
                 Complete your startup intake
               </h2>
@@ -223,7 +272,8 @@ export default function StartupPortal() {
                 border: 'none',
                 borderRadius: '8px',
                 fontWeight: '600',
-                whiteSpace: 'nowrap'
+                whiteSpace: 'nowrap',
+                flexShrink: 0
               }}
             >
               Go to Intake Form
@@ -241,14 +291,14 @@ export default function StartupPortal() {
               Startup Partnership Timeline
             </h2>
             <p style={{ color: '#666', lineHeight: '1.6', marginBottom: '20px' }}>
-              Track the key dates for intake, matching, and onboarding. We’ll notify you by email if anything changes.
+              Track the key dates for intake, matching, and onboarding. We'll notify you by email if anything changes.
             </p>
 
             {/* Timeline */}
             <div style={{ marginTop: '30px' }}>
               {timeline.map((item, index) => (
                 <div key={index} style={{ display: 'flex', gap: '20px', marginBottom: '30px' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '40px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '40px', flexShrink: 0 }}>
                     <div style={{
                       width: '36px',
                       height: '36px',
@@ -259,7 +309,8 @@ export default function StartupPortal() {
                       justifyContent: 'center',
                       color: 'white',
                       fontWeight: 'bold',
-                      fontSize: '16px'
+                      fontSize: '16px',
+                      flexShrink: 0
                     }}>
                       {item.status === 'completed' ? <FiCheckCircle size={20} /> : <FiCalendar size={18} />}
                     </div>
@@ -313,6 +364,30 @@ export default function StartupPortal() {
           </div>
         </div>
       </div>
+
+      {/* Responsive Styles */}
+      <style>{`
+        @media (max-width: 768px) {
+          .mobile-menu-btn {
+            display: block !important;
+          }
+          .mobile-overlay {
+            display: block !important;
+          }
+          .sidebar {
+            position: fixed !important;
+            left: ${sidebarOpen ? '0' : '-280px'} !important;
+            transition: left 0.3s ease;
+            height: 100vh !important;
+            width: 280px !important;
+            min-width: 280px !important;
+          }
+          .main-content {
+            padding: 80px 20px 40px 20px !important;
+            margin-left: 0 !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

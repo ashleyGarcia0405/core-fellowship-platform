@@ -154,7 +154,7 @@ export default function AdminPortal() {
       <div style={{ flex: 1, padding: '40px 60px', overflow: 'auto' }}>
         <div style={{ maxWidth: '1200px' }}>
           <h1 style={{ fontSize: '32px', color: '#0a468f', marginBottom: '10px' }}>
-            Welcome, Admin!
+            Welcome, {user?.fullName || 'Admin'}!
           </h1>
           <p style={{ color: '#666', marginBottom: '40px' }}>
             Manage CORE Fellowship applications and operations.
