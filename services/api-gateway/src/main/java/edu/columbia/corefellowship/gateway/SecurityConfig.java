@@ -31,8 +31,9 @@ public class SecurityConfig {
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http
       .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+      .csrf(csrf -> csrf.disable())
       .authorizeHttpRequests(auth -> auth
-        // Public endpoints
+        // Public endpoints - allow without authentication
         .requestMatchers("/health", "/v1/auth/**").permitAll()
         // Admin-only endpoints
         .requestMatchers("/v1/export/**").hasRole("ADMIN")
@@ -44,7 +45,6 @@ public class SecurityConfig {
       .sessionManagement(session ->
         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
       )
-      .csrf(csrf -> csrf.disable())
       .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
