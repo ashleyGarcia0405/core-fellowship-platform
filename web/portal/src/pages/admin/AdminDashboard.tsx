@@ -178,8 +178,12 @@ export default function AdminDashboard() {
     try {
       setLoading(true);
       const data = await getAllApplications();
-      setApplications(data);
-      calculateStats(data);
+      const normalized = data.map(app => ({
+        ...app,
+        userType: 'STUDENT',
+      }));
+      setApplications(normalized);
+      calculateStats(normalized);
     } catch (err: any) {
       setError(err.message || 'Failed to load applications');
     } finally {
