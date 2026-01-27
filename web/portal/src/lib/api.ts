@@ -244,9 +244,35 @@ export interface Startup {
   id: string;
   userId: string;
   companyName: string;
-  email: string;
+  email?: string;
+  website?: string;
+  industry?: string;
+  description?: string;
+  stage?: string;
+  teamSize?: string;
+  foundedYear?: string;
+  contactName?: string;
+  contactTitle?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  operatingMode?: string;
+  timeZone?: string;
+  internsSupervisor?: string;
+  hasHiredInternsPreviously?: boolean;
+  numberOfInternsNeeded?: number;
+  positions?: Position[];
+  willPayInterns?: string;
+  payAmount?: string;
+  lookingForPermanentIntern?: string;
+  projectDescriptionUrl?: string;
+  referralSource?: string;
+  commitmentAcknowledged?: boolean;
+  term?: string;
   status: string;
   submittedAt: string;
+  updatedAt?: string;
+  reviewedBy?: string;
+  reviewNotes?: string;
 }
 
 export interface Position {

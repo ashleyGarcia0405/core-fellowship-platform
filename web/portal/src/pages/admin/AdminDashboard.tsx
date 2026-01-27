@@ -7,8 +7,10 @@ import {
   updateApplicationStatus,
   exportApplicationsCSV,
   exportApplicationsJSON,
-  getResumeSignedUrl
+  getResumeSignedUrl,
+  getStartups
 } from '../../lib/api';
+import type { Startup } from '../../lib/api';
 
 interface Application {
   id: string;
@@ -56,6 +58,14 @@ interface Stats {
   rejected: number;
 }
 
+interface StartupStats {
+  total: number;
+  submitted: number;
+  approved: number;
+  active: number;
+  inactive: number;
+}
+
 const STATUS_STYLES = {
   submitted: { bg: '#fef3c7', color: '#92400e', border: '#fcd34d' },
   under_review: { bg: '#dbeafe', color: '#1e40af', border: '#93c5fd' },
@@ -70,9 +80,24 @@ const STATUS_LABELS = {
   rejected: 'Rejected',
 };
 
+const STARTUP_STATUS_STYLES: Record<string, { bg: string; color: string; border: string }> = {
+  submitted: { bg: '#fef3c7', color: '#92400e', border: '#fcd34d' },
+  approved: { bg: '#d1fae5', color: '#065f46', border: '#6ee7b7' },
+  active: { bg: '#dbeafe', color: '#1e40af', border: '#93c5fd' },
+  inactive: { bg: '#fee2e2', color: '#991b1b', border: '#fca5a5' },
+};
+
+const STARTUP_STATUS_LABELS: Record<string, string> = {
+  submitted: 'Submitted',
+  approved: 'Approved',
+  active: 'Active',
+  inactive: 'Inactive',
+};
+
 export default function AdminDashboard() {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<'students' | 'startups'>('students');
   const [applications, setApplications] = useState<Application[]>([]);
   const [filteredApps, setFilteredApps] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,6 +114,20 @@ export default function AdminDashboard() {
     accepted: 0,
     rejected: 0,
   });
+  const [startups, setStartups] = useState<Startup[]>([]);
+  const [filteredStartups, setFilteredStartups] = useState<Startup[]>([]);
+  const [startupLoading, setStartupLoading] = useState(false);
+  const [startupError, setStartupError] = useState('');
+  const [startupSearchTerm, setStartupSearchTerm] = useState('');
+  const [startupStatusFilter, setStartupStatusFilter] = useState('all');
+  const [selectedStartup, setSelectedStartup] = useState<Startup | null>(null);
+  const [startupStats, setStartupStats] = useState<StartupStats>({
+    total: 0,
+    submitted: 0,
+    approved: 0,
+    active: 0,
+    inactive: 0,
+  });
 
   const handleLogout = () => {
     logout();
@@ -102,6 +141,21 @@ export default function AdminDashboard() {
   useEffect(() => {
     filterApplications();
   }, [applications, searchTerm, statusFilter, typeFilter]);
+
+  useEffect(() => {
+    if (activeTab === 'startups' && startups.length === 0) {
+      loadStartups();
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    filterStartups();
+  }, [startups, startupSearchTerm, startupStatusFilter]);
+
+  useEffect(() => {
+    setSelectedApp(null);
+    setSelectedStartup(null);
+  }, [activeTab]);
 
   useEffect(() => {
     async function fetchResumeUrl() {
@@ -133,6 +187,19 @@ export default function AdminDashboard() {
     }
   }
 
+  async function loadStartups() {
+    try {
+      setStartupLoading(true);
+      const data = await getStartups();
+      setStartups(data);
+      calculateStartupStats(data);
+    } catch (err: any) {
+      setStartupError(err.message || 'Failed to load startup intakes');
+    } finally {
+      setStartupLoading(false);
+    }
+  }
+
   function calculateStats(apps: Application[]) {
     setStats({
       total: apps.length,
@@ -140,6 +207,16 @@ export default function AdminDashboard() {
       under_review: apps.filter(a => a.status === 'under_review').length,
       accepted: apps.filter(a => a.status === 'accepted').length,
       rejected: apps.filter(a => a.status === 'rejected').length,
+    });
+  }
+
+  function calculateStartupStats(items: Startup[]) {
+    setStartupStats({
+      total: items.length,
+      submitted: items.filter(s => s.status === 'submitted').length,
+      approved: items.filter(s => s.status === 'approved').length,
+      active: items.filter(s => s.status === 'active').length,
+      inactive: items.filter(s => s.status === 'inactive').length,
     });
   }
 
@@ -167,6 +244,25 @@ export default function AdminDashboard() {
     }
 
     setFilteredApps(filtered);
+  }
+
+  function filterStartups() {
+    let filtered = [...startups];
+
+    if (startupSearchTerm) {
+      const term = startupSearchTerm.toLowerCase();
+      filtered = filtered.filter(startup =>
+        (startup.companyName?.toLowerCase().includes(term)) ||
+        (startup.contactName?.toLowerCase().includes(term)) ||
+        (startup.contactEmail?.toLowerCase().includes(term))
+      );
+    }
+
+    if (startupStatusFilter !== 'all') {
+      filtered = filtered.filter(startup => startup.status === startupStatusFilter);
+    }
+
+    setFilteredStartups(filtered);
   }
 
   async function handleExportCSV() {
@@ -211,7 +307,7 @@ export default function AdminDashboard() {
     }
   }
 
-  if (loading) {
+  if (activeTab === 'students' && loading) {
     return (
       <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-blue)', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ fontSize: '20px', color: '#0a468f' }}>Loading...</div>
@@ -268,40 +364,52 @@ export default function AdminDashboard() {
               <FiHome size={18} /> Dashboard
             </button>
             <button
+              onClick={() => setActiveTab('students')}
               style={{
                 padding: '10px 15px',
                 textAlign: 'left',
-                background: '#e8f4ff',
+                background: activeTab === 'students' ? '#e8f4ff' : 'transparent',
                 border: 'none',
                 borderRadius: '6px',
                 cursor: 'pointer',
                 fontSize: '14px',
                 fontWeight: '500',
-                color: '#0a468f',
+                color: activeTab === 'students' ? '#0a468f' : '#333',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px'
+              }}
+              onMouseEnter={(e) => {
+                if (activeTab !== 'students') e.currentTarget.style.background = '#f5f5f5';
+              }}
+              onMouseLeave={(e) => {
+                if (activeTab !== 'students') e.currentTarget.style.background = 'transparent';
               }}
             >
               <FiUsers size={18} /> Student Applications
             </button>
             <button
+              onClick={() => setActiveTab('startups')}
               style={{
                 padding: '10px 15px',
                 textAlign: 'left',
-                background: 'transparent',
+                background: activeTab === 'startups' ? '#e8f4ff' : 'transparent',
                 border: 'none',
                 borderRadius: '6px',
                 cursor: 'pointer',
                 fontSize: '14px',
                 fontWeight: '500',
-                color: '#333',
+                color: activeTab === 'startups' ? '#0a468f' : '#333',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = '#f5f5f5'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+              onMouseEnter={(e) => {
+                if (activeTab !== 'startups') e.currentTarget.style.background = '#f5f5f5';
+              }}
+              onMouseLeave={(e) => {
+                if (activeTab !== 'startups') e.currentTarget.style.background = 'transparent';
+              }}
             >
               <FiBriefcase size={18} /> Startup Applications
             </button>
@@ -361,6 +469,8 @@ export default function AdminDashboard() {
       {/* Main Content */}
       <div style={{ flex: 1, padding: '40px 60px', overflow: 'auto' }}>
         <div style={{ maxWidth: '1400px' }}>
+          {activeTab === 'students' ? (
+            <>
           <h1 style={{ fontSize: '32px', color: '#0a468f', marginBottom: '10px' }}>
             Student Applications
           </h1>
@@ -667,6 +777,259 @@ export default function AdminDashboard() {
               </table>
             </div>
           </div>
+            </>
+          ) : (
+            <>
+              <h1 style={{ fontSize: '32px', color: '#0a468f', marginBottom: '10px' }}>
+                Startup Intake Submissions
+              </h1>
+              <p style={{ color: '#666', marginBottom: '30px' }}>
+                Review submitted startup intake forms and partnership details.
+              </p>
+
+              {startupError && (
+                <div style={{
+                  marginBottom: '20px',
+                  background: '#fee',
+                  border: '1px solid #fcc',
+                  color: '#c33',
+                  padding: '15px',
+                  borderRadius: '8px'
+                }}>
+                  {startupError}
+                </div>
+              )}
+
+              {startupLoading ? (
+                <div style={{
+                  background: 'white',
+                  borderRadius: '10px',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                  padding: '40px',
+                  textAlign: 'center',
+                  color: '#0a468f'
+                }}>
+                  Loading startup intakes...
+                </div>
+              ) : (
+                <>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                    gap: '15px',
+                    marginBottom: '30px'
+                  }}>
+                    <div style={{ background: 'white', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', padding: '20px' }}>
+                      <div style={{ fontSize: '13px', fontWeight: '500', color: '#666' }}>Total Startups</div>
+                      <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#0a468f', marginTop: '8px' }}>{startupStats.total}</div>
+                    </div>
+                    <div style={{ background: 'white', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', padding: '20px' }}>
+                      <div style={{ fontSize: '13px', fontWeight: '500', color: '#666' }}>Submitted</div>
+                      <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#f59e0b', marginTop: '8px' }}>{startupStats.submitted}</div>
+                    </div>
+                    <div style={{ background: 'white', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', padding: '20px' }}>
+                      <div style={{ fontSize: '13px', fontWeight: '500', color: '#666' }}>Approved</div>
+                      <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#10b981', marginTop: '8px' }}>{startupStats.approved}</div>
+                    </div>
+                    <div style={{ background: 'white', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', padding: '20px' }}>
+                      <div style={{ fontSize: '13px', fontWeight: '500', color: '#666' }}>Active</div>
+                      <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#2563eb', marginTop: '8px' }}>{startupStats.active}</div>
+                    </div>
+                    <div style={{ background: 'white', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', padding: '20px' }}>
+                      <div style={{ fontSize: '13px', fontWeight: '500', color: '#666' }}>Inactive</div>
+                      <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#ef4444', marginTop: '8px' }}>{startupStats.inactive}</div>
+                    </div>
+                  </div>
+
+                  <div style={{
+                    background: 'white',
+                    borderRadius: '10px',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                    padding: '25px',
+                    marginBottom: '25px'
+                  }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
+                      <input
+                        type="text"
+                        placeholder="Search by company or contact..."
+                        value={startupSearchTerm}
+                        onChange={(e) => setStartupSearchTerm(e.target.value)}
+                        style={{
+                          flex: 1,
+                          minWidth: '250px',
+                          padding: '10px 15px',
+                          border: '1px solid #ddd',
+                          borderRadius: '6px',
+                          fontSize: '14px',
+                          outline: 'none'
+                        }}
+                      />
+                      <select
+                        value={startupStatusFilter}
+                        onChange={(e) => setStartupStatusFilter(e.target.value)}
+                        style={{
+                          padding: '10px 15px',
+                          border: '1px solid #ddd',
+                          borderRadius: '6px',
+                          fontSize: '14px',
+                          outline: 'none',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <option value="all">All Status</option>
+                        <option value="submitted">Submitted</option>
+                        <option value="approved">Approved</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div style={{
+                    background: 'white',
+                    borderRadius: '10px',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                    overflow: 'hidden'
+                  }}>
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead>
+                          <tr style={{ background: '#f8f9fa', borderBottom: '2px solid #e0e0e0' }}>
+                            <th style={{
+                              padding: '15px 20px',
+                              textAlign: 'left',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              color: '#666',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.5px'
+                            }}>
+                              Company
+                            </th>
+                            <th style={{
+                              padding: '15px 20px',
+                              textAlign: 'left',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              color: '#666',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.5px'
+                            }}>
+                              Contact
+                            </th>
+                            <th style={{
+                              padding: '15px 20px',
+                              textAlign: 'left',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              color: '#666',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.5px'
+                            }}>
+                              Status
+                            </th>
+                            <th style={{
+                              padding: '15px 20px',
+                              textAlign: 'left',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              color: '#666',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.5px'
+                            }}>
+                              Submitted
+                            </th>
+                            <th style={{
+                              padding: '15px 20px',
+                              textAlign: 'left',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              color: '#666',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.5px'
+                            }}>
+                              Actions
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredStartups.length === 0 ? (
+                            <tr>
+                              <td colSpan={5} style={{
+                                padding: '60px 20px',
+                                textAlign: 'center',
+                                color: '#999',
+                                fontSize: '14px'
+                              }}>
+                                No startup intakes found
+                              </td>
+                            </tr>
+                          ) : (
+                            filteredStartups.map((startup) => {
+                              const style = STARTUP_STATUS_STYLES[startup.status] || { bg: '#f3f4f6', color: '#374151', border: '#e5e7eb' };
+                              return (
+                                <tr key={startup.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                                  <td style={{ padding: '15px 20px' }}>
+                                    <div style={{ fontSize: '14px', fontWeight: '500', color: '#333', marginBottom: '4px' }}>
+                                      {startup.companyName || 'Unnamed Startup'}
+                                    </div>
+                                    {startup.industry && (
+                                      <div style={{ fontSize: '12px', color: '#999' }}>{startup.industry}</div>
+                                    )}
+                                  </td>
+                                  <td style={{ padding: '15px 20px' }}>
+                                    <div style={{ fontSize: '14px', color: '#333', marginBottom: '4px' }}>
+                                      {startup.contactName || 'No contact name'}
+                                    </div>
+                                    <div style={{ fontSize: '12px', color: '#666' }}>
+                                      {startup.contactEmail || startup.email || 'No email'}
+                                    </div>
+                                  </td>
+                                  <td style={{ padding: '15px 20px' }}>
+                                    <span style={{
+                                      padding: '4px 12px',
+                                      fontSize: '11px',
+                                      fontWeight: '600',
+                                      borderRadius: '12px',
+                                      border: '1px solid',
+                                      background: style.bg,
+                                      color: style.color,
+                                      borderColor: style.border
+                                    }}>
+                                      {STARTUP_STATUS_LABELS[startup.status] || startup.status || 'Unknown'}
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: '15px 20px', fontSize: '14px', color: '#666' }}>
+                                    {startup.submittedAt ? new Date(startup.submittedAt).toLocaleDateString() : '—'}
+                                  </td>
+                                  <td style={{ padding: '15px 20px' }}>
+                                    <button
+                                      onClick={() => setSelectedStartup(startup)}
+                                      style={{
+                                        fontSize: '14px',
+                                        fontWeight: '500',
+                                        color: '#0a468f',
+                                        background: 'none',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        textDecoration: 'underline'
+                                      }}
+                                    >
+                                      View Intake
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              )}
+            </>
+          )}
         </div>
       </div>
 
@@ -1033,6 +1396,304 @@ export default function AdminDashboard() {
             }}>
               <button
                 onClick={() => setSelectedApp(null)}
+                style={{
+                  padding: '10px 20px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#333',
+                  background: 'white',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#f5f5f5'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Startup Intake Detail Modal */}
+      {selectedStartup && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.6)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            maxWidth: '1200px',
+            width: '100%',
+            maxHeight: '90vh',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
+          }}>
+            <div style={{
+              background: 'white',
+              borderBottom: '1px solid #e0e0e0',
+              padding: '20px 25px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderTopLeftRadius: '12px',
+              borderTopRightRadius: '12px',
+              flexShrink: 0
+            }}>
+              <div>
+                <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#0a468f', marginBottom: '4px' }}>
+                  {selectedStartup.companyName || 'Startup Intake'}
+                </h2>
+                <p style={{ fontSize: '14px', color: '#666' }}>
+                  {selectedStartup.contactEmail || selectedStartup.email || 'No contact email'}
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedStartup(null)}
+                style={{
+                  fontSize: '24px',
+                  color: '#999',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '0',
+                  width: '30px',
+                  height: '30px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ padding: '25px', overflow: 'auto' }}>
+              <div style={{ marginBottom: '25px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#0a468f', marginBottom: '15px', borderBottom: '2px solid #93c5fd', paddingBottom: '8px' }}>
+                  Company Information
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Company Name</div>
+                    <div style={{ fontSize: '14px', color: '#333' }}>{selectedStartup.companyName || '—'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Website</div>
+                    <div style={{ fontSize: '14px', color: '#333' }}>{selectedStartup.website || '—'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Industry</div>
+                    <div style={{ fontSize: '14px', color: '#333' }}>{selectedStartup.industry || '—'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Stage</div>
+                    <div style={{ fontSize: '14px', color: '#333' }}>{selectedStartup.stage || '—'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Team Size</div>
+                    <div style={{ fontSize: '14px', color: '#333' }}>{selectedStartup.teamSize || '—'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Founded Year</div>
+                    <div style={{ fontSize: '14px', color: '#333' }}>{selectedStartup.foundedYear || '—'}</div>
+                  </div>
+                </div>
+                {selectedStartup.description && (
+                  <div style={{ marginTop: '15px' }}>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Company Description</div>
+                    <div style={{ fontSize: '14px', color: '#333', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
+                      {selectedStartup.description}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div style={{ marginBottom: '25px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#0a468f', marginBottom: '15px', borderBottom: '2px solid #93c5fd', paddingBottom: '8px' }}>
+                  Contact Information
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Contact Name</div>
+                    <div style={{ fontSize: '14px', color: '#333' }}>{selectedStartup.contactName || '—'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Contact Title</div>
+                    <div style={{ fontSize: '14px', color: '#333' }}>{selectedStartup.contactTitle || '—'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Contact Email</div>
+                    <div style={{ fontSize: '14px', color: '#333' }}>{selectedStartup.contactEmail || selectedStartup.email || '—'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Contact Phone</div>
+                    <div style={{ fontSize: '14px', color: '#333' }}>{selectedStartup.contactPhone || '—'}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '25px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#0a468f', marginBottom: '15px', borderBottom: '2px solid #93c5fd', paddingBottom: '8px' }}>
+                  Operating Details
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Operating Mode</div>
+                    <div style={{ fontSize: '14px', color: '#333' }}>{selectedStartup.operatingMode || '—'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Time Zone</div>
+                    <div style={{ fontSize: '14px', color: '#333' }}>{selectedStartup.timeZone || '—'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Intern Supervisor</div>
+                    <div style={{ fontSize: '14px', color: '#333' }}>{selectedStartup.internsSupervisor || '—'}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '25px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#0a468f', marginBottom: '15px', borderBottom: '2px solid #93c5fd', paddingBottom: '8px' }}>
+                  Internship Details
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Hired Interns Before</div>
+                    <div style={{ fontSize: '14px', color: '#333' }}>
+                      {selectedStartup.hasHiredInternsPreviously === undefined ? '—' : selectedStartup.hasHiredInternsPreviously ? 'Yes' : 'No'}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Number of Interns</div>
+                    <div style={{ fontSize: '14px', color: '#333' }}>{selectedStartup.numberOfInternsNeeded ?? '—'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Will Pay Interns</div>
+                    <div style={{ fontSize: '14px', color: '#333' }}>{selectedStartup.willPayInterns || '—'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Pay Amount</div>
+                    <div style={{ fontSize: '14px', color: '#333' }}>{selectedStartup.payAmount || '—'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Looking for Permanent Intern</div>
+                    <div style={{ fontSize: '14px', color: '#333' }}>{selectedStartup.lookingForPermanentIntern || '—'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Project Description URL</div>
+                    <div style={{ fontSize: '14px', color: '#333' }}>{selectedStartup.projectDescriptionUrl || '—'}</div>
+                  </div>
+                </div>
+
+                {selectedStartup.positions && selectedStartup.positions.length > 0 && (
+                  <div style={{ marginTop: '10px' }}>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '8px' }}>Positions</div>
+                    <div style={{ display: 'grid', gap: '12px' }}>
+                      {selectedStartup.positions.map((position, index) => (
+                        <div key={index} style={{
+                          border: '1px solid #e0e0e0',
+                          borderRadius: '8px',
+                          padding: '12px',
+                          background: '#f9fafb'
+                        }}>
+                          <div style={{ fontSize: '14px', fontWeight: '600', color: '#0a468f', marginBottom: '6px' }}>
+                            {position.roleType || 'Role'} {position.timeCommitment ? `• ${position.timeCommitment}` : ''}
+                          </div>
+                          <div style={{ fontSize: '13px', color: '#333', lineHeight: '1.6', marginBottom: '6px', whiteSpace: 'pre-wrap' }}>
+                            {position.description || 'No description provided.'}
+                          </div>
+                          {position.requiredSkills && position.requiredSkills.length > 0 && (
+                            <div style={{ fontSize: '12px', color: '#666' }}>
+                              Skills: {position.requiredSkills.join(', ')}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div style={{ marginBottom: '25px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#0a468f', marginBottom: '15px', borderBottom: '2px solid #93c5fd', paddingBottom: '8px' }}>
+                  Discovery & Commitment
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Referral Source</div>
+                    <div style={{ fontSize: '14px', color: '#333' }}>{selectedStartup.referralSource || '—'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Commitment Acknowledged</div>
+                    <div style={{ fontSize: '14px', color: '#333' }}>
+                      {selectedStartup.commitmentAcknowledged === undefined ? '—' : selectedStartup.commitmentAcknowledged ? 'Yes' : 'No'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#0a468f', marginBottom: '15px', borderBottom: '2px solid #93c5fd', paddingBottom: '8px' }}>
+                  Administrative
+                </h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Term</div>
+                    <div style={{ fontSize: '14px', color: '#333' }}>{selectedStartup.term || '—'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Status</div>
+                    <div style={{ fontSize: '14px', color: '#333' }}>{selectedStartup.status || '—'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Submitted</div>
+                    <div style={{ fontSize: '14px', color: '#333' }}>
+                      {selectedStartup.submittedAt ? new Date(selectedStartup.submittedAt).toLocaleString() : '—'}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Last Updated</div>
+                    <div style={{ fontSize: '14px', color: '#333' }}>
+                      {selectedStartup.updatedAt ? new Date(selectedStartup.updatedAt).toLocaleString() : '—'}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Reviewed By</div>
+                    <div style={{ fontSize: '14px', color: '#333' }}>{selectedStartup.reviewedBy || '—'}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Review Notes</div>
+                    <div style={{ fontSize: '14px', color: '#333', whiteSpace: 'pre-wrap' }}>{selectedStartup.reviewNotes || '—'}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{
+              borderTop: '1px solid #e0e0e0',
+              padding: '15px 25px',
+              background: '#f8f9fa',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              borderBottomLeftRadius: '12px',
+              borderBottomRightRadius: '12px',
+              flexShrink: 0
+            }}>
+              <button
+                onClick={() => setSelectedStartup(null)}
                 style={{
                   padding: '10px 20px',
                   fontSize: '14px',

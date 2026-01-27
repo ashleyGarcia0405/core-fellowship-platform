@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FiHome, FiUsers, FiBriefcase, FiDownload, FiSettings, FiLogOut } from 'react-icons/fi';
 
 export default function AdminPortal() {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
