@@ -15,6 +15,7 @@ export default function RegisterPage() {
   const [companyName, setCompanyName] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
   const { register } = useAuth();
 
@@ -29,6 +30,10 @@ export default function RegisterPage() {
     setError('');
     setSuccess(false);
 
+    if (submitting) {
+      return;
+    }
+
     if (password.length < 8) {
       setError('Password must be at least 8 characters.');
       return;
@@ -40,6 +45,7 @@ export default function RegisterPage() {
     }
 
     try {
+      setSubmitting(true);
       await register({
         email,
         password,
@@ -53,6 +59,8 @@ export default function RegisterPage() {
       setTimeout(() => navigate('/login'), 2000);
     } catch (err: any) {
       setError(err.message || 'Registration failed. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -164,8 +172,23 @@ export default function RegisterPage() {
           {error && <div style={{ color: 'red', fontSize: '14px', padding: '10px', background: '#fee', borderRadius: '6px' }}>{error}</div>}
           {success && <div style={{ color: 'green', fontSize: '14px', padding: '10px', background: '#d4edda', borderRadius: '6px' }}>Registration successful! Redirecting to login...</div>}
 
-          <button type="submit" style={{ padding: '14px', fontSize: '16px', cursor: 'pointer', background: '#93c5fd', color: 'white', border: 'none', borderRadius: '6px', fontWeight: '600', marginTop: '10px' }}>
-            Register
+          <button
+            type="submit"
+            disabled={submitting}
+            style={{
+              padding: '14px',
+              fontSize: '16px',
+              cursor: submitting ? 'not-allowed' : 'pointer',
+              background: submitting ? '#a5b4fc' : '#93c5fd',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              fontWeight: '600',
+              marginTop: '10px',
+              opacity: submitting ? 0.8 : 1
+            }}
+          >
+            {submitting ? 'Registering...' : 'Register'}
           </button>
         </form>
         <div style={{ marginTop: '20px', textAlign: 'center' }}>
