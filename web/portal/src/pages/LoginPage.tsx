@@ -41,9 +41,10 @@ export default function LoginPage() {
       alignItems: 'center',
       justifyContent: 'center',
       minHeight: '100vh',
-      background: 'var(--bg-blue)'
+      background: 'var(--bg-blue)',
+      padding: '20px'
     }}>
-      <div style={{ width: '400px', background: 'white', padding: '40px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
+      <div style={{ maxWidth: '400px', width: '100%', background: 'white', padding: '40px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }} className="login-box">
         <h1 style={{ textAlign: 'center', marginBottom: '30px' }}>Login</h1>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
           <input
@@ -80,6 +81,44 @@ export default function LoginPage() {
           </button>
         </div>
       </div>
+
+      {/* Footer */}
+      <div style={{
+        marginTop: '30px',
+        maxWidth: '400px',
+        width: '100%',
+        textAlign: 'center',
+        padding: '20px',
+        background: 'white',
+        borderRadius: '8px',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+      }}>
+        <p style={{ fontSize: '13px', color: '#666', margin: '0 0 8px 0' }}>
+          Having technical difficulties?
+        </p>
+        <p style={{ fontSize: '14px', color: '#0a468f', margin: 0 }}>
+          Contact Ashley Garcia at{' '}
+          <a href="mailto:ag4647@columbia.edu" style={{ color: '#0a468f', fontWeight: '600', textDecoration: 'underline' }}>
+            ag4647@columbia.edu
+          </a>
+        </p>
+      </div>
+
+      {/* Responsive Styles */}
+      <style>{`
+        @media (max-width: 768px) {
+          .login-box {
+            padding: 30px 24px !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .login-box {
+            padding: 24px 16px !important;
+            border-radius: 8px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
