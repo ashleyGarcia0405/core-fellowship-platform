@@ -63,9 +63,10 @@ export default function RegisterPage() {
       alignItems: 'center',
       justifyContent: 'center',
       minHeight: '100vh',
-      background: 'var(--bg-blue)'
+      background: 'var(--bg-blue)',
+      padding: '20px'
     }}>
-      <div style={{ width: '400px', background: 'white', padding: '40px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
+      <div style={{ maxWidth: '400px', width: '100%', background: 'white', padding: '40px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }} className="register-box">
         <h1 style={{ textAlign: 'center', marginBottom: isAdminMode ? '10px' : '30px' }}>
           {isAdminMode ? 'Admin Registration' : 'Register'}
         </h1>
@@ -176,6 +177,22 @@ export default function RegisterPage() {
           </button>
         </div>
       </div>
+
+      {/* Responsive Styles */}
+      <style>{`
+        @media (max-width: 768px) {
+          .register-box {
+            padding: 30px 24px !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .register-box {
+            padding: 24px 16px !important;
+            border-radius: 8px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
