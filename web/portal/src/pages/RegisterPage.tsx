@@ -58,7 +58,16 @@ export default function RegisterPage() {
       setSuccess(true);
       setTimeout(() => navigate('/login'), 2000);
     } catch (err: any) {
-      setError(err.message || 'Registration failed. Please try again.');
+      // Check if it's a conflict error (409) - user already exists
+      if (err.message && err.message.includes('409')) {
+        setSuccess(true);
+        setError('');
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
+      } else {
+        setError(err.message || 'Registration failed. Please try again.');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -170,7 +179,7 @@ export default function RegisterPage() {
           )}
 
           {error && <div style={{ color: 'red', fontSize: '14px', padding: '10px', background: '#fee', borderRadius: '6px' }}>{error}</div>}
-          {success && <div style={{ color: 'green', fontSize: '14px', padding: '10px', background: '#d4edda', borderRadius: '6px' }}>Registration successful! Redirecting to login...</div>}
+          {success && <div style={{ color: 'green', fontSize: '14px', padding: '10px', background: '#d4edda', borderRadius: '6px' }}>Redirecting to login...</div>}
 
           <button
             type="submit"
