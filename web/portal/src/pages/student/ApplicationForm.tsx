@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createStudentApplication, uploadResume } from '../../lib/api';
+import { createStudentApplication, uploadResume, getApplications } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 
 const DRAFT_KEY = 'student-application-draft';
@@ -36,7 +36,28 @@ export default function ApplicationForm() {
   const [loading, setLoading] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
+  const [checkingExisting, setCheckingExisting] = useState(true);
+  const [hasSubmittedApplication, setHasSubmittedApplication] = useState(false);
+
   const hasPromptedForDraft = useRef(false);
+
+  // Check if user has already submitted an application
+  useEffect(() => {
+    const checkExistingApplication = async () => {
+      try {
+        const applications = await getApplications();
+        if (applications && applications.length > 0) {
+          setHasSubmittedApplication(true);
+        }
+      } catch (err) {
+        console.error('Failed to check existing applications:', err);
+      } finally {
+        setCheckingExisting(false);
+      }
+    };
+
+    checkExistingApplication();
+  }, []);
 
   // Load draft from localStorage on mount
   useEffect(() => {
@@ -178,6 +199,59 @@ export default function ApplicationForm() {
       setLoading(false);
     }
   };
+
+  // Show loading while checking for existing applications
+  if (checkingExisting) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--bg-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ background: 'white', borderRadius: '12px', padding: '40px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', textAlign: 'center' }}>
+          <p style={{ fontSize: '16px', color: '#666' }}>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show "Already Submitted" message if application exists
+  if (hasSubmittedApplication) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--bg-blue)', paddingBottom: '40px' }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto', padding: '40px 20px' }}>
+          <div style={{ background: 'white', borderRadius: '12px', padding: '40px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', textAlign: 'center' }}>
+            <h1 style={{ marginTop: 0, marginBottom: '20px', color: '#0a468f' }}>Application Already Submitted</h1>
+            <div style={{
+              background: '#d4edda',
+              border: '1px solid #c3e6cb',
+              borderRadius: '8px',
+              padding: '20px',
+              marginBottom: '30px'
+            }}>
+              <p style={{ fontSize: '16px', color: '#155724', margin: '0 0 10px 0' }}>
+                ✓ You have already submitted your application for CORE Fellowship.
+              </p>
+              <p style={{ fontSize: '14px', color: '#155724', margin: 0 }}>
+                We have received your application and will review it soon. You will be notified via email about the next steps.
+              </p>
+            </div>
+            <button
+              onClick={() => navigate('/student')}
+              style={{
+                padding: '12px 24px',
+                fontSize: '16px',
+                cursor: 'pointer',
+                background: '#0a468f',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: '600'
+              }}
+            >
+              Back to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-blue)', paddingBottom: '40px' }}>
