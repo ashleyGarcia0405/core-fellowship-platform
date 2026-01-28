@@ -252,7 +252,7 @@ export default function StartupPortal() {
             justifyContent: 'space-between',
             gap: '20px',
             flexWrap: 'wrap'
-          }}>
+          }} className="intake-card">
             <div style={{ flex: '1 1 300px' }}>
               <h2 style={{ fontSize: '20px', color: '#0a468f', marginBottom: '8px' }}>
                 Complete your startup intake
@@ -286,7 +286,7 @@ export default function StartupPortal() {
             borderRadius: '12px',
             boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
             marginBottom: '30px'
-          }}>
+          }} className="timeline-card">
             <h2 style={{ fontSize: '20px', color: '#0a468f', marginBottom: '20px' }}>
               Startup Partnership Timeline
             </h2>
@@ -385,6 +385,27 @@ export default function StartupPortal() {
           .main-content {
             padding: 80px 20px 40px 20px !important;
             margin-left: 0 !important;
+          }
+          .intake-card {
+            padding: 20px !important;
+          }
+          .timeline-card {
+            padding: 20px !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .main-content h1 {
+            font-size: 24px !important;
+          }
+          .main-content h2 {
+            font-size: 18px !important;
+          }
+          .intake-card {
+            padding: 16px !important;
+          }
+          .timeline-card {
+            padding: 16px !important;
           }
         }
       `}</style>
