@@ -37,7 +37,7 @@ export default function HomePage() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '1.5vh',
+        gap: '4vh',
         padding: '4vh 2vw'
       }}>
         <div style={{
@@ -55,7 +55,7 @@ export default function HomePage() {
               height: 'auto',
               position: 'absolute',
               top: '-25%',
-              left: '0'
+              left: '0',
             }}
           />
         </div>
