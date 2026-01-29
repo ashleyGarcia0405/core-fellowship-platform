@@ -42,8 +42,10 @@ public class AuthService {
    * Register a new user
    */
   public RegisterResponse register(RegisterRequest request) {
+    String normalizedEmail = request.getEmail().trim().toLowerCase();
+
     // Check if email already exists
-    if (userRepository.existsByEmail(request.getEmail())) {
+    if (userRepository.existsByEmail(normalizedEmail)) {
       throw new ResponseStatusException(HttpStatus.CONFLICT,
           "Email already registered");
     }
@@ -61,7 +63,7 @@ public class AuthService {
 
     // Create new user
     User user = new User();
-    user.setEmail(request.getEmail());
+    user.setEmail(normalizedEmail);
     user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
     user.setUserType(request.getUserType());
 
@@ -94,8 +96,10 @@ public class AuthService {
    * Authenticate user and return JWT token
    */
   public LoginResponse login(LoginRequest request) {
+    String normalizedEmail = request.getEmail().trim().toLowerCase();
+
     // Find user by email
-    User user = userRepository.findByEmail(request.getEmail())
+    User user = userRepository.findByEmail(normalizedEmail)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED,
             "Invalid email or password"));
 
