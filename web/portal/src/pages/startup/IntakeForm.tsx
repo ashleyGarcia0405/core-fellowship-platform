@@ -48,11 +48,18 @@ export default function IntakeForm() {
     const checkExistingIntake = async () => {
       try {
         const startups = await getStartups();
+        console.log('Fetched startups:', startups); // Debug log
         if (startups && startups.length > 0) {
+          console.log('User has already submitted an intake form');
           setHasSubmittedIntake(true);
+        } else {
+          console.log('No existing intake forms found');
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to check existing intake forms:', err);
+        console.error('Error message:', err.message);
+        // If the API call fails, we'll still let them try to submit
+        // The backend will catch duplicates with a 409 error
       } finally {
         setCheckingExisting(false);
       }
@@ -211,7 +218,14 @@ export default function IntakeForm() {
       alert('Startup intake form submitted successfully!');
       navigate('/startup');
     } catch (err: any) {
-      setError(err.message || 'Failed to submit intake form');
+      // Check if it's a conflict error (409) - already submitted
+      if (err.message && err.message.includes('409')) {
+        console.log('Caught 409 error - user already submitted');
+        setHasSubmittedIntake(true);
+        setCheckingExisting(false);
+      } else {
+        setError(err.message || 'Failed to submit intake form');
+      }
     } finally {
       setLoading(false);
     }

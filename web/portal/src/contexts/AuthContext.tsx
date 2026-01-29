@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { login as apiLogin, register as apiRegister, logout as apiLogout, getAuthToken } from '../lib/api';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { login as apiLogin, register as apiRegister, logout as apiLogout, getAuthToken, isTokenExpired, setOnAuthExpired } from '../lib/api';
 import type { LoginResponse, RegisterRequest, RegisterResponse, UserType, UserRole } from '../lib/api';
 
 interface User {
@@ -25,10 +25,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const logout = useCallback(() => {
+    apiLogout();
+    setUser(null);
+  }, []);
+
+  useEffect(() => {
+    // Register callback for API 401 responses
+    setOnAuthExpired(logout);
+  }, [logout]);
+
   useEffect(() => {
     // Check if user is already logged in on mount
     const token = getAuthToken();
     if (token) {
+      // Check if token is expired
+      if (isTokenExpired(token)) {
+        apiLogout();
+        setLoading(false);
+        return;
+      }
       // Parse JWT to get user info (simple base64 decode of payload)
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
@@ -75,11 +91,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = async (data: RegisterRequest): Promise<RegisterResponse> => {
     return apiRegister(data);
-  };
-
-  const logout = () => {
-    apiLogout();
-    setUser(null);
   };
 
   return (

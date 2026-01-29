@@ -15,6 +15,31 @@ export function clearAuthToken() {
   localStorage.removeItem(TOKEN_KEY);
 }
 
+export function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    if (!payload.exp) return false;
+    // exp is in seconds, Date.now() is in milliseconds
+    return Date.now() >= payload.exp * 1000;
+  } catch {
+    return true; // Invalid token = treat as expired
+  }
+}
+
+// Callback for handling auth expiration (set by AuthContext)
+let onAuthExpired: (() => void) | null = null;
+
+export function setOnAuthExpired(callback: () => void) {
+  onAuthExpired = callback;
+}
+
+function handleUnauthorized() {
+  clearAuthToken();
+  if (onAuthExpired) {
+    onAuthExpired();
+  }
+}
+
 // HTTP helpers
 function getHeaders(): HeadersInit {
   const headers: HeadersInit = {
@@ -32,6 +57,9 @@ export async function getJson<T>(path: string): Promise<T> {
     headers: getHeaders(),
   });
   if (!res.ok) {
+    if (res.status === 401) {
+      handleUnauthorized();
+    }
     const text = await res.text();
     throw new Error(`HTTP ${res.status}: ${text}`);
   }
@@ -45,6 +73,9 @@ export async function postJson<T>(path: string, body: unknown): Promise<T> {
     body: JSON.stringify(body),
   });
   if (!res.ok) {
+    if (res.status === 401) {
+      handleUnauthorized();
+    }
     const text = await res.text();
     throw new Error(`HTTP ${res.status}: ${text}`);
   }
@@ -161,6 +192,9 @@ export async function updateInterview(applicationId: string, data: UpdateIntervi
     body: JSON.stringify(data),
   });
   if (!res.ok) {
+    if (res.status === 401) {
+      handleUnauthorized();
+    }
     const text = await res.text();
     throw new Error(`HTTP ${res.status}: ${text}`);
   }
@@ -229,6 +263,9 @@ export async function uploadResume(applicationId: string, file: File): Promise<{
   });
 
   if (!res.ok) {
+    if (res.status === 401) {
+      handleUnauthorized();
+    }
     const text = await res.text();
     throw new Error(`HTTP ${res.status}: ${text}`);
   }
@@ -337,6 +374,9 @@ export async function updateApplicationStatus(
     body: JSON.stringify({ status, reviewNotes }),
   });
   if (!res.ok) {
+    if (res.status === 401) {
+      handleUnauthorized();
+    }
     const text = await res.text();
     throw new Error(`HTTP ${res.status}: ${text}`);
   }
@@ -347,6 +387,9 @@ export async function exportApplicationsCSV(): Promise<Blob> {
     headers: getHeaders(),
   });
   if (!res.ok) {
+    if (res.status === 401) {
+      handleUnauthorized();
+    }
     const text = await res.text();
     throw new Error(`HTTP ${res.status}: ${text}`);
   }
@@ -358,6 +401,9 @@ export async function exportApplicationsJSON(): Promise<Blob> {
     headers: getHeaders(),
   });
   if (!res.ok) {
+    if (res.status === 401) {
+      handleUnauthorized();
+    }
     const text = await res.text();
     throw new Error(`HTTP ${res.status}: ${text}`);
   }
