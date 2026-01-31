@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { FiHome, FiUsers, FiBriefcase, FiSettings, FiLogOut, FiMenu, FiX } from 'react-icons/fi';
+import { FiHome, FiUsers, FiBriefcase, FiSettings, FiLogOut } from 'react-icons/fi';
 import {
   getAllApplications,
   updateApplicationStatus,
@@ -97,7 +97,6 @@ const STARTUP_STATUS_LABELS: Record<string, string> = {
 export default function AdminDashboard() {
   const { logout } = useAuth();
   const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'students' | 'startups'>('students');
   const [applications, setApplications] = useState<Application[]>([]);
   const [filteredApps, setFilteredApps] = useState<Application[]>([]);
