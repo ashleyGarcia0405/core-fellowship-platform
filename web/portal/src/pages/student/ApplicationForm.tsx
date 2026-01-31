@@ -155,6 +155,12 @@ export default function ApplicationForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!resumeFile) {
+      setError('Please upload your resume (PDF)');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -442,11 +448,12 @@ export default function ApplicationForm() {
 
         <div>
           <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-            Resume (PDF)
+            Resume (PDF) *
           </label>
           <input
             type="file"
             accept=".pdf"
+            required
             onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
             style={{ width: '100%', padding: '8px', fontSize: '14px' }}
           />
