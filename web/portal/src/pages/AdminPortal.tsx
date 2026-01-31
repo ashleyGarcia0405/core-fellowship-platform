@@ -1,10 +1,12 @@
+import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { FiHome, FiUsers, FiBriefcase, FiDownload, FiSettings, FiLogOut } from 'react-icons/fi';
+import { FiHome, FiUsers, FiBriefcase, FiDownload, FiSettings, FiLogOut, FiMenu, FiX } from 'react-icons/fi';
 
 export default function AdminPortal() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -12,7 +14,46 @@ export default function AdminPortal() {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-blue)' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-blue)', position: 'relative' }}>
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        style={{
+          position: 'fixed',
+          top: '20px',
+          left: '20px',
+          zIndex: 1001,
+          display: 'none',
+          background: 'white',
+          border: '2px solid #e0e0e0',
+          borderRadius: '8px',
+          padding: '10px',
+          cursor: 'pointer',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        }}
+        className="mobile-menu-btn"
+      >
+        {sidebarOpen ? <FiX size={24} color="#0a468f" /> : <FiMenu size={24} color="#0a468f" />}
+      </button>
+
+      {/* Overlay for mobile */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            zIndex: 999,
+            display: 'none'
+          }}
+          className="mobile-overlay"
+        />
+      )}
+
       {/* Sidebar */}
       <div style={{
         width: '18%',
@@ -27,8 +68,10 @@ export default function AdminPortal() {
         position: 'sticky',
         top: 0,
         overflow: 'hidden',
-        boxSizing: 'border-box'
-      }}>
+        boxSizing: 'border-box',
+        zIndex: 1000
+      }}
+      className="sidebar">
         <div style={{ marginBottom: '20px', textAlign: 'center', flexShrink: 0 }}>
           <img src="/core-fellowship.png" alt="CORE Logo" style={{ width: '160px', height: 'auto' }} />
         </div>
@@ -39,6 +82,9 @@ export default function AdminPortal() {
           </h3>
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <button
+              onClick={() => {
+                setSidebarOpen(false);
+              }}
               style={{
                 padding: '10px 15px',
                 textAlign: 'left',
@@ -57,7 +103,10 @@ export default function AdminPortal() {
               <FiHome size={18} /> Dashboard
             </button>
             <button
-              onClick={() => navigate('/admin/applications')}
+              onClick={() => {
+                navigate('/admin/applications');
+                setSidebarOpen(false);
+              }}
               style={{
                 padding: '10px 15px',
                 textAlign: 'left',
@@ -78,6 +127,9 @@ export default function AdminPortal() {
               <FiUsers size={18} /> Student Applications
             </button>
             <button
+              onClick={() => {
+                setSidebarOpen(false);
+              }}
               style={{
                 padding: '10px 15px',
                 textAlign: 'left',
@@ -106,6 +158,9 @@ export default function AdminPortal() {
           </h3>
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <button
+              onClick={() => {
+                setSidebarOpen(false);
+              }}
               style={{
                 padding: '10px 15px',
                 textAlign: 'left',
@@ -126,7 +181,10 @@ export default function AdminPortal() {
               <FiSettings size={18} /> Settings
             </button>
             <button
-              onClick={handleLogout}
+              onClick={() => {
+                handleLogout();
+                setSidebarOpen(false);
+              }}
               style={{
                 padding: '10px 15px',
                 textAlign: 'left',
@@ -151,7 +209,7 @@ export default function AdminPortal() {
       </div>
 
       {/* Main Content */}
-      <div style={{ flex: 1, padding: '40px 60px', overflow: 'auto' }}>
+      <div style={{ flex: 1, padding: '40px 60px', overflow: 'auto' }} className="main-content">
         <div style={{ maxWidth: '1200px' }}>
           <h1 style={{ fontSize: '32px', color: '#0a468f', marginBottom: '10px' }}>
             Welcome, {user?.fullName || 'Admin'}!
@@ -261,6 +319,30 @@ export default function AdminPortal() {
           </div>
         </div>
       </div>
+
+      {/* Responsive Styles */}
+      <style>{`
+        @media (max-width: 768px) {
+          .mobile-menu-btn {
+            display: block !important;
+          }
+          .mobile-overlay {
+            display: block !important;
+          }
+          .sidebar {
+            position: fixed !important;
+            left: ${sidebarOpen ? '0' : '-280px'} !important;
+            transition: left 0.3s ease;
+            height: 100vh !important;
+            width: 280px !important;
+            min-width: 280px !important;
+          }
+          .main-content {
+            padding: 80px 20px 40px 20px !important;
+            margin-left: 0 !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

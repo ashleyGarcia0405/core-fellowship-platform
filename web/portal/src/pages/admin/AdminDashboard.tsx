@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { FiHome, FiUsers, FiBriefcase, FiSettings, FiLogOut } from 'react-icons/fi';
+import { FiHome, FiUsers, FiBriefcase, FiSettings, FiLogOut, FiMenu, FiX } from 'react-icons/fi';
 import {
   getAllApplications,
   updateApplicationStatus,
@@ -97,6 +97,7 @@ const STARTUP_STATUS_LABELS: Record<string, string> = {
 export default function AdminDashboard() {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'students' | 'startups'>('students');
   const [applications, setApplications] = useState<Application[]>([]);
   const [filteredApps, setFilteredApps] = useState<Application[]>([]);
@@ -320,23 +321,41 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-blue)' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-blue)', position: 'relative' }}>
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="mobile-menu-btn"
+      >
+        {sidebarOpen ? <FiX size={24} color="#0a468f" /> : <FiMenu size={24} color="#0a468f" />}
+      </button>
+
+      {/* Overlay for mobile */}
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          className="mobile-overlay"
+        />
+      )}
+
       {/* Sidebar */}
-      <div style={{
-        width: '18%',
-        minWidth: '220px',
-        maxWidth: '280px',
-        background: 'white',
-        borderRight: '2px solid #e0e0e0',
-        padding: '20px',
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100vh',
-        position: 'sticky',
-        top: 0,
-        overflow: 'hidden',
-        boxSizing: 'border-box'
-      }}>
+      <div
+        className="sidebar"
+        style={{
+          width: '280px',
+          minWidth: '280px',
+          background: 'white',
+          borderRight: '2px solid #e0e0e0',
+          padding: '20px',
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100vh',
+          position: 'sticky',
+          top: 0,
+          overflow: 'hidden',
+          boxSizing: 'border-box',
+          zIndex: 1000
+        }}>
         <div style={{ marginBottom: '20px', textAlign: 'center', flexShrink: 0 }}>
           <img src="/core-fellowship.png" alt="CORE Logo" style={{ width: '160px', height: 'auto' }} />
         </div>
@@ -347,7 +366,10 @@ export default function AdminDashboard() {
           </h3>
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <button
-              onClick={() => navigate('/admin')}
+              onClick={() => {
+                navigate('/admin');
+                setSidebarOpen(false);
+              }}
               style={{
                 padding: '10px 15px',
                 textAlign: 'left',
@@ -368,7 +390,10 @@ export default function AdminDashboard() {
               <FiHome size={18} /> Dashboard
             </button>
             <button
-              onClick={() => setActiveTab('students')}
+              onClick={() => {
+                setActiveTab('students');
+                setSidebarOpen(false);
+              }}
               style={{
                 padding: '10px 15px',
                 textAlign: 'left',
@@ -393,7 +418,10 @@ export default function AdminDashboard() {
               <FiUsers size={18} /> Student Applications
             </button>
             <button
-              onClick={() => setActiveTab('startups')}
+              onClick={() => {
+                setActiveTab('startups');
+                setSidebarOpen(false);
+              }}
               style={{
                 padding: '10px 15px',
                 textAlign: 'left',
@@ -446,7 +474,10 @@ export default function AdminDashboard() {
               <FiSettings size={18} /> Settings
             </button>
             <button
-              onClick={handleLogout}
+              onClick={() => {
+                handleLogout();
+                setSidebarOpen(false);
+              }}
               style={{
                 padding: '10px 15px',
                 textAlign: 'left',
@@ -471,7 +502,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Main Content */}
-      <div style={{ flex: 1, padding: '40px 60px', overflow: 'auto' }}>
+      <div className="main-content" style={{ flex: 1, padding: '40px 60px', overflow: 'auto' }}>
         <div style={{ maxWidth: '1400px' }}>
           {activeTab === 'students' ? (
             <>
@@ -1717,6 +1748,53 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
+      {/* Responsive Styles */}
+      <style>{`
+        .mobile-menu-btn {
+          display: none;
+          position: fixed;
+          top: 20px;
+          left: 20px;
+          z-index: 1001;
+          background: white;
+          border: 2px solid #e0e0e0;
+          border-radius: 8px;
+          padding: 10px;
+          cursor: pointer;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .mobile-overlay {
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0,0,0,0.5);
+          z-index: 999;
+        }
+        @media (max-width: 768px) {
+          .mobile-menu-btn {
+            display: block;
+          }
+          .mobile-overlay {
+            display: block;
+          }
+          .sidebar {
+            position: fixed !important;
+            left: ${sidebarOpen ? '0' : '-280px'};
+            transition: left 0.3s ease;
+            height: 100vh !important;
+            width: 280px !important;
+            min-width: 280px !important;
+          }
+          .main-content {
+            padding: 80px 20px 40px 20px !important;
+            margin-left: 0 !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
