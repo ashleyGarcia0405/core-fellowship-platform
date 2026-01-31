@@ -130,6 +130,18 @@ export function logout() {
   clearAuthToken();
 }
 
+export async function resetPassword(token: string, newPassword: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/v1/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, newPassword }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "Failed to reset password");
+  }
+}
+
 // Interview types
 export type Recommendation = "STRONG_YES" | "YES" | "MAYBE" | "NO";
 
