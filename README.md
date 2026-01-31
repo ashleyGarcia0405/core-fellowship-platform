@@ -1,4 +1,4 @@
-# webCORE Fellowship Platform
+# CORE Fellowship Platform
 
 A modern full-stack platform built with a microservices architecture, featuring a React frontend, Spring Boot backend services, and MongoDB database.
 
