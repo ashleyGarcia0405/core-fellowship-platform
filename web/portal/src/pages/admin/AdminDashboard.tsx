@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { FiHome, FiUsers, FiBriefcase, FiSettings, FiLogOut, FiMenu, FiX } from 'react-icons/fi';
@@ -108,6 +108,9 @@ export default function AdminDashboard() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [resumeSignedUrl, setResumeSignedUrl] = useState<string | null>(null);
+  const [splitPercent, setSplitPercent] = useState(55);
+  const [isResizing, setIsResizing] = useState(false);
+  const contentRef = useRef<HTMLDivElement | null>(null);
   const [stats, setStats] = useState<Stats>({
     total: 0,
     submitted: 0,
@@ -159,6 +162,27 @@ export default function AdminDashboard() {
   }, [activeTab]);
 
   useEffect(() => {
+    if (!selectedApp) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      const target = event.target as HTMLElement | null;
+      const tag = target?.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        selectAdjacentApplication(1);
+      } else if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        selectAdjacentApplication(-1);
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedApp, filteredApps]);
+
+  useEffect(() => {
     async function fetchResumeUrl() {
       if (selectedApp?.resumeUrl && selectedApp.userType === 'STUDENT') {
         try {
@@ -174,6 +198,29 @@ export default function AdminDashboard() {
     }
     fetchResumeUrl();
   }, [selectedApp]);
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    function handleMouseMove(event: MouseEvent) {
+      if (!contentRef.current) return;
+      const rect = contentRef.current.getBoundingClientRect();
+      const rawPercent = ((event.clientX - rect.left) / rect.width) * 100;
+      const clamped = Math.min(70, Math.max(35, rawPercent));
+      setSplitPercent(clamped);
+    }
+
+    function handleMouseUp() {
+      setIsResizing(false);
+    }
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
 
   async function loadApplications() {
     try {
@@ -251,6 +298,15 @@ export default function AdminDashboard() {
     setFilteredApps(filtered);
   }
 
+  function selectAdjacentApplication(direction: -1 | 1) {
+    if (!selectedApp || filteredApps.length === 0) return;
+    const currentIndex = filteredApps.findIndex(app => app.id === selectedApp.id);
+    if (currentIndex === -1) return;
+    const nextIndex = currentIndex + direction;
+    if (nextIndex < 0 || nextIndex >= filteredApps.length) return;
+    setSelectedApp(filteredApps[nextIndex]);
+  }
+
   function filterStartups() {
     let filtered = [...startups];
 
@@ -311,6 +367,11 @@ export default function AdminDashboard() {
       alert('Failed to update status: ' + err.message);
     }
   }
+
+  const selectedIndex = selectedApp ? filteredApps.findIndex(app => app.id === selectedApp.id) : -1;
+  const canGoPrev = selectedIndex > 0;
+  const canGoNext = selectedIndex >= 0 && selectedIndex < filteredApps.length - 1;
+  const resumeGutter = '2.2vw';
 
   if (activeTab === 'students' && loading) {
     return (
@@ -1091,8 +1152,53 @@ export default function AdminDashboard() {
             maxHeight: '90vh',
             display: 'flex',
             flexDirection: 'column',
+            position: 'relative',
             boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
           }}>
+            <button
+              onClick={() => selectAdjacentApplication(-1)}
+              disabled={!canGoPrev}
+              aria-label="Previous application"
+              style={{
+                position: 'absolute',
+                left: '-46px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: '36px',
+                height: '36px',
+                borderRadius: '18px',
+                border: '1px solid #ddd',
+                background: 'white',
+                color: '#0a468f',
+                cursor: 'pointer',
+                opacity: canGoPrev ? 1 : 0.4,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+              }}
+            >
+              ‹
+            </button>
+            <button
+              onClick={() => selectAdjacentApplication(1)}
+              disabled={!canGoNext}
+              aria-label="Next application"
+              style={{
+                position: 'absolute',
+                right: '-46px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: '36px',
+                height: '36px',
+                borderRadius: '18px',
+                border: '1px solid #ddd',
+                background: 'white',
+                color: '#0a468f',
+                cursor: 'pointer',
+                opacity: canGoNext ? 1 : 0.4,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+              }}
+            >
+              ›
+            </button>
             {/* Header */}
             <div style={{
               background: 'white',
@@ -1110,6 +1216,9 @@ export default function AdminDashboard() {
                   {selectedApp.fullName || selectedApp.companyName}
                 </h2>
                 <p style={{ fontSize: '14px', color: '#666' }}>{selectedApp.email}</p>
+                <p style={{ fontSize: '12px', color: '#999' }}>
+                  {selectedIndex >= 0 ? `${selectedIndex + 1} of ${filteredApps.length}` : '—'} · Use ← → to navigate
+                </p>
               </div>
               <button
                 onClick={() => setSelectedApp(null)}
@@ -1132,11 +1241,21 @@ export default function AdminDashboard() {
             </div>
 
             {/* Content */}
-            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+            <div
+              ref={contentRef}
+              style={{
+                display: 'flex',
+                flex: 1,
+                overflow: 'hidden',
+                userSelect: isResizing ? 'none' : 'auto',
+                paddingRight: resumeGutter,
+                boxSizing: 'border-box'
+              }}
+            >
               {/* Left Side - Application Details */}
               <div style={{
-                flex: selectedApp.resumeUrl ? '0 0 60%' : '1',
-                padding: '25px',
+                flex: selectedApp.resumeUrl ? `0 0 ${splitPercent}%` : '1',
+                padding: '2vw',
                 overflow: 'auto'
               }}>
                 {/* Personal Information */}
@@ -1332,15 +1451,42 @@ export default function AdminDashboard() {
 
               {/* Right Side - Resume Viewer */}
               {selectedApp.userType === 'STUDENT' && (
+                <div
+                  onMouseDown={() => setIsResizing(true)}
+                  style={{
+                    width: '0.6vw',
+                    cursor: 'col-resize',
+                    background: 'transparent',
+                    position: 'relative',
+                    flexShrink: 0
+                  }}
+                >
+                  <div style={{
+                    position: 'absolute',
+                    left: '0.25vw',
+                    top: '10%',
+                    bottom: '10%',
+                    width: '0.2vw',
+                    background: '#d1d5db',
+                    borderRadius: '2px'
+                  }} />
+                </div>
+              )}
+
+              {selectedApp.userType === 'STUDENT' && (
                 <div style={{
-                  flex: '0 0 40%',
+                  flex: `0 0 calc(${100 - splitPercent}% - ${resumeGutter})`,
+                  marginRight: resumeGutter,
                   borderLeft: '1px solid #e0e0e0',
+                  borderRight: '1px solid #e0e0e0',
                   display: 'flex',
                   flexDirection: 'column',
-                  background: '#f8f9fa'
+                  background: '#f8f9fa',
+                  paddingRight: '0',
+                  boxSizing: 'border-box'
                 }}>
                   <div style={{
-                    padding: '20px 25px',
+                    padding: '1.6vw',
                     borderBottom: '1px solid #e0e0e0',
                     background: 'white'
                   }}>
@@ -1390,14 +1536,17 @@ export default function AdminDashboard() {
                       </div>
                     )}
                   </div>
-                  <div style={{ flex: 1, overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ flex: 1, overflow: 'hidden', position: 'relative', padding: '1.4vw 1.6vw', boxSizing: 'border-box' }}>
                     {resumeSignedUrl ? (
                       <iframe
                         src={resumeSignedUrl}
                         style={{
                           width: '100%',
                           height: '100%',
-                          border: 'none'
+                          border: 'none',
+                          borderRadius: '8px',
+                          boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
+                          background: 'white'
                         }}
                         title="Resume Preview"
                       />
