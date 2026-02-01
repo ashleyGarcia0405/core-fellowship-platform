@@ -69,6 +69,27 @@ public class IdentityProxyController {
     }
   }
 
+  /**
+   * Proxy endpoint for password reset.
+   * Forwards to identity-service POST /api/auth/reset-password
+   */
+  @PostMapping("/v1/auth/reset-password")
+  public ResponseEntity<Object> resetPassword(@RequestBody Map<String, Object> request) {
+    System.out.println(">>> IdentityProxyController.resetPassword called");
+    try {
+      ResponseEntity<String> response = client.post()
+          .uri("/api/auth/reset-password")
+          .body(request)
+          .retrieve()
+          .toEntity(String.class);
+      return forwardResponse(response);
+    } catch (HttpClientErrorException | HttpServerErrorException ex) {
+      System.out.println(">>> IdentityProxyController.resetPassword downstream status "
+          + ex.getStatusCode() + " body=" + ex.getResponseBodyAsString());
+      throw ex;
+    }
+  }
+
   private ResponseEntity<Object> forwardResponse(ResponseEntity<String> response) {
     HttpHeaders headers = new HttpHeaders();
     if (response.getHeaders().getContentType() != null) {

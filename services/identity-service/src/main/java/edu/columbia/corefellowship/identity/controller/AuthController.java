@@ -4,6 +4,7 @@ import edu.columbia.corefellowship.identity.dto.LoginRequest;
 import edu.columbia.corefellowship.identity.dto.LoginResponse;
 import edu.columbia.corefellowship.identity.dto.RegisterRequest;
 import edu.columbia.corefellowship.identity.dto.RegisterResponse;
+import edu.columbia.corefellowship.identity.dto.ResetPasswordRequest;
 import edu.columbia.corefellowship.identity.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -32,5 +33,12 @@ public class AuthController {
       @Valid @RequestBody LoginRequest request) {
     LoginResponse response = authService.login(request);
     return ResponseEntity.ok(response);
+  }
+
+  @PostMapping("/reset-password")
+  public ResponseEntity<String> resetPassword(
+      @Valid @RequestBody ResetPasswordRequest request) {
+    authService.resetPassword(request);
+    return ResponseEntity.ok("Password reset successfully");
   }
 }

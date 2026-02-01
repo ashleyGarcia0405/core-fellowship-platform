@@ -5,6 +5,7 @@ import edu.columbia.corefellowship.identity.dto.LoginRequest;
 import edu.columbia.corefellowship.identity.dto.LoginResponse;
 import edu.columbia.corefellowship.identity.dto.RegisterRequest;
 import edu.columbia.corefellowship.identity.dto.RegisterResponse;
+import edu.columbia.corefellowship.identity.dto.ResetPasswordRequest;
 import edu.columbia.corefellowship.identity.model.User;
 import edu.columbia.corefellowship.identity.model.UserRole;
 import edu.columbia.corefellowship.identity.repository.UserRepository;
@@ -139,5 +140,29 @@ public class AuthService {
         user.getUserType(),
         user.getRole()
     );
+  }
+
+  /**
+   * Reset password using a signed token
+   */
+  public void resetPassword(ResetPasswordRequest request) {
+    // Validate token and extract email
+    String email;
+    try {
+      email = jwtUtil.validateResetToken(request.getToken());
+    } catch (Exception e) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+          "Invalid or expired reset token");
+    }
+
+    // Find user by email
+    User user = userRepository.findByEmail(email.toLowerCase())
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+            "User not found"));
+
+    // Update password
+    user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+    user.setUpdatedAt(Instant.now());
+    userRepository.save(user);
   }
 }

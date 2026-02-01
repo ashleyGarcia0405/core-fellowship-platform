@@ -147,7 +147,9 @@ public class SecurityConfig {
       "http://localhost:5173",
       "http://localhost:3000",
       "https://core-fellowship.vercel.app",
-      "https://core-fellowship-evuj4bra7-ashley-garcias-projects.vercel.app"
+      "https://core-fellowship-evuj4bra7-ashley-garcias-projects.vercel.app",
+      "https://core-fellowship.com",
+      "https://www.core-fellowship.com"
     ));
 
     // Allow all HTTP methods

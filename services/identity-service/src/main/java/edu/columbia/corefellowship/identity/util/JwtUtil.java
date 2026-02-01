@@ -83,4 +83,25 @@ public class JwtUtil {
     Claims claims = validateToken(token);
     return claims.get("role", String.class);
   }
+
+  /**
+   * Validate a password reset token and return the email
+   */
+  public String validateResetToken(String token) {
+    Claims claims = Jwts.parser()
+        .verifyWith(secretKey)
+        .requireIssuer(jwtProperties.getIssuer())
+        .requireAudience(jwtProperties.getAudience())
+        .build()
+        .parseSignedClaims(token)
+        .getPayload();
+
+    // Verify this is a password reset token
+    String purpose = claims.get("purpose", String.class);
+    if (!"password-reset".equals(purpose)) {
+      throw new IllegalArgumentException("Invalid token purpose");
+    }
+
+    return claims.get("email", String.class);
+  }
 }
