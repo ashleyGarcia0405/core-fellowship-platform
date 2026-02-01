@@ -1,17 +1,99 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { FiHome, FiUsers, FiBriefcase, FiDownload, FiSettings, FiLogOut, FiMenu, FiX } from 'react-icons/fi';
+import { getAllApplications, getStartups } from '../lib/api';
+import type { Startup } from '../lib/api';
+
+type Stats = {
+  total: number;
+  submitted: number;
+  under_review: number;
+  accepted: number;
+};
+type StartupStats = {
+  total: number;
+  submitted: number;
+  approved: number;
+  active: number;
+};
 
 export default function AdminPortal() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [stats, setStats] = useState<Stats>({
+    total: 0,
+    submitted: 0,
+    under_review: 0,
+    accepted: 0,
+  });
+  const [startupStats, setStartupStats] = useState<StartupStats>({
+    total: 0,
+    submitted: 0,
+    approved: 0,
+    active: 0,
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsError, setStatsError] = useState('');
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadStats() {
+      try {
+        setStatsLoading(true);
+        setStatsError('');
+        const [applications, startups] = await Promise.all([
+          getAllApplications(),
+          getStartups(),
+        ]);
+        if (!isMounted) return;
+        const total = applications.length;
+        const submitted = applications.filter(app => app.status === 'submitted').length;
+        const underReview = applications.filter(app => app.status === 'under_review').length;
+        const accepted = applications.filter(app => app.status === 'accepted').length;
+        const startupStats = calculateStartupStats(startups);
+        setStats({
+          total,
+          submitted,
+          under_review: underReview,
+          accepted,
+        });
+        setStartupStats(startupStats);
+      } catch (err: any) {
+        if (!isMounted) return;
+        setStatsError(err.message || 'Failed to load application stats');
+      } finally {
+        if (isMounted) {
+          setStatsLoading(false);
+        }
+      }
+    }
+
+    loadStats();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const statValue = (value: number) => (statsLoading ? '—' : value.toString());
+  const startupValue = (value: number) => (statsLoading ? '—' : value.toString());
+
+  function calculateStartupStats(items: Startup[]): StartupStats {
+    return {
+      total: items.length,
+      submitted: items.filter(s => s.status === 'submitted').length,
+      approved: items.filter(s => s.status === 'approved').length,
+      active: items.filter(s => s.status === 'active').length,
+    };
+  }
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-blue)', position: 'relative' }}>
@@ -219,53 +301,127 @@ export default function AdminPortal() {
           </p>
 
           {/* Stats Overview */}
+          <h2 style={{ fontSize: '18px', color: '#0a468f', marginBottom: '12px' }}>
+            Student Applications
+          </h2>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-            gap: '20px',
-            marginBottom: '30px'
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '12px',
+            marginBottom: '20px'
           }}>
             <div style={{
               background: 'white',
-              padding: '25px',
-              borderRadius: '12px',
+              padding: '16px',
+              borderRadius: '10px',
               boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
             }}>
-              <div style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>Total Applications</div>
-              <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#0a468f' }}>—</div>
-              <div style={{ fontSize: '12px', color: '#999', marginTop: '8px' }}>All submissions</div>
+              <div style={{ fontSize: '12px', color: '#666', marginBottom: '6px' }}>Total Applications</div>
+              <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#0a468f' }}>
+                {statValue(stats.total)}
+              </div>
+              <div style={{ fontSize: '11px', color: '#999', marginTop: '6px' }}>All submissions</div>
             </div>
             <div style={{
               background: 'white',
-              padding: '25px',
-              borderRadius: '12px',
+              padding: '16px',
+              borderRadius: '10px',
               boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
             }}>
-              <div style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>Pending Review</div>
-              <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#ffc107' }}>—</div>
-              <div style={{ fontSize: '12px', color: '#999', marginTop: '8px' }}>Awaiting action</div>
+              <div style={{ fontSize: '12px', color: '#666', marginBottom: '6px' }}>Pending Review</div>
+              <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#ffc107' }}>
+                {statValue(stats.submitted)}
+              </div>
+              <div style={{ fontSize: '11px', color: '#999', marginTop: '6px' }}>Awaiting action</div>
             </div>
             <div style={{
               background: 'white',
-              padding: '25px',
-              borderRadius: '12px',
+              padding: '16px',
+              borderRadius: '10px',
               boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
             }}>
-              <div style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>Under Review</div>
-              <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#17a2b8' }}>—</div>
-              <div style={{ fontSize: '12px', color: '#999', marginTop: '8px' }}>In progress</div>
+              <div style={{ fontSize: '12px', color: '#666', marginBottom: '6px' }}>Under Review</div>
+              <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#17a2b8' }}>
+                {statValue(stats.under_review)}
+              </div>
+              <div style={{ fontSize: '11px', color: '#999', marginTop: '6px' }}>In progress</div>
             </div>
             <div style={{
               background: 'white',
-              padding: '25px',
-              borderRadius: '12px',
+              padding: '16px',
+              borderRadius: '10px',
               boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
             }}>
-              <div style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>Accepted</div>
-              <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#28a745' }}>—</div>
-              <div style={{ fontSize: '12px', color: '#999', marginTop: '8px' }}>Admitted students</div>
+              <div style={{ fontSize: '12px', color: '#666', marginBottom: '6px' }}>Accepted</div>
+              <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#28a745' }}>
+                {statValue(stats.accepted)}
+              </div>
+              <div style={{ fontSize: '11px', color: '#999', marginTop: '6px' }}>Admitted students</div>
             </div>
           </div>
+          <h2 style={{ fontSize: '18px', color: '#0a468f', marginBottom: '12px' }}>
+            Startup Applications
+          </h2>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '12px',
+            marginBottom: '20px'
+          }}>
+            <div style={{
+              background: 'white',
+              padding: '16px',
+              borderRadius: '10px',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+            }}>
+              <div style={{ fontSize: '12px', color: '#666', marginBottom: '6px' }}>Total Startups</div>
+              <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#0a468f' }}>
+                {startupValue(startupStats.total)}
+              </div>
+              <div style={{ fontSize: '11px', color: '#999', marginTop: '6px' }}>All submissions</div>
+            </div>
+            <div style={{
+              background: 'white',
+              padding: '16px',
+              borderRadius: '10px',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+            }}>
+              <div style={{ fontSize: '12px', color: '#666', marginBottom: '6px' }}>Submitted</div>
+              <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#ffc107' }}>
+                {startupValue(startupStats.submitted)}
+              </div>
+              <div style={{ fontSize: '11px', color: '#999', marginTop: '6px' }}>Awaiting review</div>
+            </div>
+            <div style={{
+              background: 'white',
+              padding: '16px',
+              borderRadius: '10px',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+            }}>
+              <div style={{ fontSize: '12px', color: '#666', marginBottom: '6px' }}>Approved</div>
+              <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#28a745' }}>
+                {startupValue(startupStats.approved)}
+              </div>
+              <div style={{ fontSize: '11px', color: '#999', marginTop: '6px' }}>Accepted startups</div>
+            </div>
+            <div style={{
+              background: 'white',
+              padding: '16px',
+              borderRadius: '10px',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+            }}>
+              <div style={{ fontSize: '12px', color: '#666', marginBottom: '6px' }}>Active</div>
+              <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#17a2b8' }}>
+                {startupValue(startupStats.active)}
+              </div>
+              <div style={{ fontSize: '11px', color: '#999', marginTop: '6px' }}>Currently active</div>
+            </div>
+          </div>
+          {statsError ? (
+            <div style={{ color: '#dc3545', marginBottom: '20px', fontSize: '14px' }}>
+              {statsError}
+            </div>
+          ) : null}
 
           {/* Quick Actions */}
           <div style={{
