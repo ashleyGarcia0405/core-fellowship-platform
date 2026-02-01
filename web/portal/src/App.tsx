@@ -12,6 +12,8 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import InterviewForm from './pages/admin/InterviewForm';
 import ApplicationForm from './pages/student/ApplicationForm';
 import IntakeForm from './pages/startup/IntakeForm';
+import InterviewScheduling from './pages/student/InterviewScheduling';
+import InterviewSignup from './pages/admin/InterviewSignup';
 
 export default function App() {
   return (
@@ -47,6 +49,14 @@ export default function App() {
             }
           />
           <Route
+            path="/admin/interviews"
+            element={
+              <ProtectedRoute>
+                <InterviewSignup />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/student"
             element={
               <ProtectedRoute>
@@ -59,6 +69,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <ApplicationForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/interview"
+            element={
+              <ProtectedRoute>
+                <InterviewScheduling />
               </ProtectedRoute>
             }
           />

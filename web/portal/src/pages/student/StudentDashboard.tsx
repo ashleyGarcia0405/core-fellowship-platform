@@ -1,17 +1,31 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { FiFileText, FiEdit3, FiBarChart2, FiSettings, FiLogOut, FiCalendar, FiCheckCircle, FiMenu, FiX } from 'react-icons/fi';
+import { getApplications } from '../../lib/api';
 
 export default function StudentDashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [interviewEligible, setInterviewEligible] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
+
+  useEffect(() => {
+    async function loadEligibility() {
+      try {
+        const apps = await getApplications();
+        setInterviewEligible(apps.some(app => app.interviewEligible));
+      } catch (err) {
+        setInterviewEligible(false);
+      }
+    }
+    loadEligibility();
+  }, []);
 
   const timeline = [
     {
@@ -156,6 +170,32 @@ export default function StudentDashboard() {
             >
               <FiEdit3 size={18} /> Application
             </button>
+            {interviewEligible && (
+              <button
+                onClick={() => {
+                  navigate('/student/interview');
+                  setSidebarOpen(false);
+                }}
+                style={{
+                  padding: '10px 15px',
+                  textAlign: 'left',
+                  background: 'transparent',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#333',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#f5f5f5'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+              >
+                <FiCalendar size={18} /> Interview
+              </button>
+            )}
             <button
               style={{
                 padding: '10px 15px',

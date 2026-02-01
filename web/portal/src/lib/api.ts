@@ -223,8 +223,45 @@ export interface StudentApplication {
   major: string;
   school?: string;
   status: string;
+  interviewEligible?: boolean;
+  rolePreferences?: string[];
   submittedAt: string;
   updatedAt: string;
+}
+
+export interface InterviewBooking {
+  id: string;
+  applicationId: string;
+  studentName: string;
+  studentEmail: string;
+  interviewType: 'technical' | 'non-technical';
+  startTime: string;
+  endTime: string;
+  status: 'scheduled' | 'completed' | 'cancelled';
+  interviewers: { userId: string; name: string; email: string }[];
+}
+
+export async function getInterviewBookings(): Promise<InterviewBooking[]> {
+  return getJson<InterviewBooking[]>('/v1/admin/interviews');
+}
+
+export async function updateInterviewBooking(
+  interviewId: string,
+  data: { addInterviewer?: boolean }
+): Promise<InterviewBooking> {
+  const res = await fetch(`${API_BASE}/v1/admin/interviews/${interviewId}`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    if (res.status === 401) {
+      handleUnauthorized();
+    }
+    const text = await res.text();
+    throw new Error(`HTTP ${res.status}: ${text}`);
+  }
+  return res.json() as Promise<InterviewBooking>;
 }
 
 // Application API
@@ -241,7 +278,7 @@ export interface CreateStudentApplicationRequest {
   email: string;
   linkedinProfile?: string;
   portfolioWebsite?: string;
-  resumeUrl?: string;
+  resumeUrl: string;
   howDidYouHear?: string;
   referralSource?: string;
   rolePreferences?: string[];
@@ -259,6 +296,30 @@ export interface CreateStudentApplicationRequest {
 
 export async function createStudentApplication(data: CreateStudentApplicationRequest): Promise<StudentApplication> {
   return postJson<StudentApplication>("/v1/students/applications", data);
+}
+
+export async function uploadResumeBeforeCreate(file: File): Promise<{ message: string; resumeUrl: string }> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const token = getAuthToken();
+  const res = await fetch(`${API_BASE}/v1/students/applications/resume`, {
+    method: 'POST',
+    headers: {
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    if (res.status === 401) {
+      handleUnauthorized();
+    }
+    const text = await res.text();
+    throw new Error(`HTTP ${res.status}: ${text}`);
+  }
+
+  return res.json();
 }
 
 export async function uploadResume(applicationId: string, file: File): Promise<{ message: string; resumeUrl: string }> {
@@ -384,6 +445,24 @@ export async function updateApplicationStatus(
     method: 'PATCH',
     headers: getHeaders(),
     body: JSON.stringify({ status, reviewNotes }),
+  });
+  if (!res.ok) {
+    if (res.status === 401) {
+      handleUnauthorized();
+    }
+    const text = await res.text();
+    throw new Error(`HTTP ${res.status}: ${text}`);
+  }
+}
+
+export async function updateInterviewEligibility(
+  applicationId: string,
+  interviewEligible: boolean
+): Promise<void> {
+  const res = await fetch(`${API_BASE}/v1/students/applications/${applicationId}/interview-eligible`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify({ interviewEligible }),
   });
   if (!res.ok) {
     if (res.status === 401) {

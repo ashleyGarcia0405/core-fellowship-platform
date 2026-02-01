@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createStudentApplication, uploadResume, getApplications } from '../../lib/api';
+import { createStudentApplication, uploadResumeBeforeCreate, getApplications } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 
 const DRAFT_KEY = 'student-application-draft';
@@ -164,8 +164,11 @@ export default function ApplicationForm() {
     setLoading(true);
 
     try {
-      // Create the application first
-      const application = await createStudentApplication({
+      // Upload resume first
+      const { resumeUrl } = await uploadResumeBeforeCreate(resumeFile);
+
+      // Create the application with resumeUrl
+      await createStudentApplication({
         fullName,
         pronouns: pronouns || undefined,
         gradYear,
@@ -174,6 +177,7 @@ export default function ApplicationForm() {
         email,
         linkedinProfile: linkedinProfile || undefined,
         portfolioWebsite: portfolioWebsite || undefined,
+        resumeUrl,
         howDidYouHear: howDidYouHear || undefined,
         referralSource: referralSource || undefined,
         rolePreferences: rolePreferences.length > 0 ? rolePreferences : undefined,
@@ -188,11 +192,6 @@ export default function ApplicationForm() {
         previouslyParticipated: previouslyParticipated || undefined,
         hasUpcomingInternshipOffers,
       });
-
-      // Upload resume if provided
-      if (resumeFile) {
-        await uploadResume(application.id, resumeFile);
-      }
 
       // Clear the draft after successful submission
       localStorage.removeItem(DRAFT_KEY);

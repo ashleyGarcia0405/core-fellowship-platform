@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { FiHome, FiUsers, FiBriefcase, FiSettings, FiLogOut, FiMenu, FiX } from 'react-icons/fi';
+import { FiHome, FiUsers, FiBriefcase, FiSettings, FiLogOut, FiMenu, FiX, FiCalendar } from 'react-icons/fi';
 import {
   getAllApplications,
   updateApplicationStatus,
+  updateInterviewEligibility,
   exportApplicationsCSV,
   exportApplicationsJSON,
   getResumeSignedUrl,
@@ -21,6 +22,7 @@ interface Application {
   status: 'submitted' | 'under_review' | 'accepted' | 'rejected';
   term?: string;
   submittedAt: string;
+  interviewEligible?: boolean;
 
   // Student fields
   pronouns?: string;
@@ -368,6 +370,15 @@ export default function AdminDashboard() {
     }
   }
 
+  async function handleInterviewEligibility(appId: string, eligible: boolean) {
+    try {
+      await updateInterviewEligibility(appId, eligible);
+      await loadApplications();
+    } catch (err: any) {
+      alert('Failed to update interview eligibility: ' + err.message);
+    }
+  }
+
   const selectedIndex = selectedApp ? filteredApps.findIndex(app => app.id === selectedApp.id) : -1;
   const canGoPrev = selectedIndex > 0;
   const canGoNext = selectedIndex >= 0 && selectedIndex < filteredApps.length - 1;
@@ -505,6 +516,30 @@ export default function AdminDashboard() {
               }}
             >
               <FiBriefcase size={18} /> Startup Applications
+            </button>
+            <button
+              onClick={() => {
+                navigate('/admin/interviews');
+                setSidebarOpen(false);
+              }}
+              style={{
+                padding: '10px 15px',
+                textAlign: 'left',
+                background: 'transparent',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#333',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = '#f5f5f5'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+            >
+              <FiCalendar size={18} /> Interview Sign-Up
             </button>
           </nav>
         </div>
@@ -1425,6 +1460,17 @@ export default function AdminDashboard() {
                   <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#0a468f', marginBottom: '15px' }}>
                     Admin Actions
                   </h3>
+                  <div style={{ marginBottom: '15px' }}>
+                    <div style={{ fontSize: '12px', color: '#999', marginBottom: '8px' }}>Interview Eligibility</div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={!!selectedApp.interviewEligible}
+                        onChange={(e) => handleInterviewEligibility(selectedApp.id, e.target.checked)}
+                      />
+                      <span style={{ fontSize: '14px', color: '#333' }}>Approved for interview</span>
+                    </label>
+                  </div>
                   <div style={{ marginBottom: '15px' }}>
                     <div style={{ fontSize: '12px', color: '#999', marginBottom: '8px' }}>Update Status</div>
                     <select
