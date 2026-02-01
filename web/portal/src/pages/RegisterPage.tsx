@@ -39,6 +39,11 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!isAdminMode && userType === 'STUDENT' && !fullName.trim()) {
+      setError('Full name is required.');
+      return;
+    }
+
     if (isAdminMode && !fullName.trim()) {
       setError('Full name is required for admin registration.');
       return;
@@ -46,12 +51,14 @@ export default function RegisterPage() {
 
     try {
       setSubmitting(true);
+      const trimmedFullName = fullName.trim();
+      const trimmedCompanyName = companyName.trim();
       await register({
         email,
         password,
         userType,
-        fullName: (userType === 'STUDENT' || isAdminMode) ? fullName : undefined,
-        companyName: userType === 'STARTUP' ? companyName : undefined,
+        fullName: (userType === 'STUDENT' || isAdminMode) && trimmedFullName ? trimmedFullName : undefined,
+        companyName: userType === 'STARTUP' && trimmedCompanyName ? trimmedCompanyName : undefined,
         adminToken: adminToken || undefined,
       });
 
@@ -84,9 +91,22 @@ export default function RegisterPage() {
       padding: '20px'
     }}>
       <div style={{ maxWidth: '400px', width: '100%', background: 'white', padding: '40px', borderRadius: '12px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }} className="register-box">
-        <h1 style={{ textAlign: 'center', marginBottom: isAdminMode ? '10px' : '30px' }}>
-          {isAdminMode ? 'Admin Registration' : 'Register'}
-        </h1>
+        {!isAdminMode && (
+          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+            <div style={{ fontSize: '12px', letterSpacing: '2px', color: '#8aa6d9', fontWeight: '600' }}>
+              CORE FELLOWSHIP
+            </div>
+            <h1 style={{ margin: '10px 0 6px 0', fontSize: '22px' }}>Create an account</h1>
+            <p style={{ margin: 0, fontSize: '13px', color: '#7b8794' }}>
+              Join the CORE Fellowship community
+            </p>
+          </div>
+        )}
+        {isAdminMode && (
+          <h1 style={{ textAlign: 'center', marginBottom: '10px' }}>
+            Admin Registration
+          </h1>
+        )}
         {isAdminMode && (
           <div style={{
             background: '#e0e7ff',
@@ -103,6 +123,36 @@ export default function RegisterPage() {
           </div>
         )}
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          {!isAdminMode && (
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '4px' }}>
+              <button
+                type="button"
+                className={`account-type-toggle ${userType === 'STUDENT' ? 'active' : ''}`}
+                onClick={() => setUserType('STUDENT')}
+              >
+                Student
+              </button>
+              <button
+                type="button"
+                className={`account-type-toggle ${userType === 'STARTUP' ? 'active' : ''}`}
+                onClick={() => setUserType('STARTUP')}
+              >
+                Startup
+              </button>
+            </div>
+          )}
+          {(isAdminMode || userType === 'STUDENT') && (
+            <input
+              type="text"
+              placeholder={isAdminMode ? 'Full Name (required)' : 'Full Name'}
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              required={isAdminMode || userType === 'STUDENT'}
+              style={{ padding: '12px', fontSize: '14px', border: '2px solid #e0e0e0', borderRadius: '6px', outline: 'none' }}
+              onFocus={(e) => e.target.style.borderColor = '#93c5fd'}
+              onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
+            />
+          )}
           <input
             type="email"
             placeholder="Email"
@@ -127,45 +177,6 @@ export default function RegisterPage() {
             />
             <span style={{ fontSize: '12px', color: '#6b7280' }}>Password must be at least 8 characters.</span>
           </div>
-          {!isAdminMode && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '12px', color: '#6b7280' }}>Choose account type (required)</label>
-              <select
-                value={userType}
-                onChange={(e) => setUserType(e.target.value as UserType)}
-                style={{ padding: '12px', fontSize: '14px', border: '2px solid #e0e0e0', borderRadius: '6px', outline: 'none' }}
-              >
-                <option value="STUDENT">Student</option>
-                <option value="STARTUP">Startup</option>
-              </select>
-            </div>
-          )}
-
-          {isAdminMode && (
-            <input
-              type="text"
-              placeholder="Full Name (required)"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              required
-              style={{ padding: '12px', fontSize: '14px', border: '2px solid #e0e0e0', borderRadius: '6px', outline: 'none' }}
-              onFocus={(e) => e.target.style.borderColor = '#93c5fd'}
-              onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
-            />
-          )}
-
-          {!isAdminMode && userType === 'STUDENT' && (
-            <input
-              type="text"
-              placeholder="Full Name"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              style={{ padding: '12px', fontSize: '14px', border: '2px solid #e0e0e0', borderRadius: '6px', outline: 'none' }}
-              onFocus={(e) => e.target.style.borderColor = '#93c5fd'}
-              onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
-            />
-          )}
-
           {!isAdminMode && userType === 'STARTUP' && (
             <input
               type="text"
@@ -197,7 +208,7 @@ export default function RegisterPage() {
               opacity: submitting ? 0.8 : 1
             }}
           >
-            {submitting ? 'Registering...' : 'Register'}
+            {submitting ? 'Registering...' : (isAdminMode ? 'Register' : (userType === 'STUDENT' ? 'Apply as Student' : 'Apply as Startup'))}
           </button>
         </form>
         <div style={{ marginTop: '20px', textAlign: 'center' }}>
@@ -234,6 +245,30 @@ export default function RegisterPage() {
 
       {/* Responsive Styles */}
       <style>{`
+        .account-type-toggle {
+          flex: 1;
+          padding: 10px 12px;
+          border-radius: 8px;
+          border: 1px solid #d7e3f4;
+          background: #ffffff;
+          color: #4b5563;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+
+        .account-type-toggle.active {
+          background: #93c5fd;
+          border-color: #93c5fd;
+          color: #ffffff;
+          box-shadow: 0 6px 16px rgba(147, 197, 253, 0.35);
+        }
+
+        .account-type-toggle:hover {
+          border-color: #93c5fd;
+        }
+
         @media (max-width: 768px) {
           .register-box {
             padding: 30px 24px !important;
