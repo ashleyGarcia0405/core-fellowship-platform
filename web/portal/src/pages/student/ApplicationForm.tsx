@@ -327,7 +327,7 @@ export default function ApplicationForm() {
         </ul>
 
         <p>
-          <strong>Note:</strong> Companies will be looking for part-time positions. Fellows' personal and professional interests are taken into account before they are matched with a given company. Once matched with a company, fellows will have an internal interview with that company to secure the position they were matched with. Interviews will be conducted soon after the deadline.
+          <strong>Note:</strong> Companies will be looking for part-time positions. Fellows' personal and professional interests are taken into account before they are matched with a given company. Once matched with a company, fellows may have an internal interview with that company to secure the position they were matched with. Interviews will be conducted soon after the deadline.
         </p>
 
         <p style={{ marginBottom: 0 }}>
