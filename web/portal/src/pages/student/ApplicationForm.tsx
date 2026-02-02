@@ -294,7 +294,7 @@ export default function ApplicationForm() {
             border: '2px solid #93c5fd'
           }}>
         <p style={{ marginTop: 0 }}>
-          <strong>CORE Fellows</strong> (previously Almaworks Fellows) are matched with startups founded by Columbia alumni and around NYC for an ~8 week internship. We will be considering applications for the <strong>Spring 2026 CORE Fellowship</strong> on a rolling basis, with a priority deadline of <strong>February 3rd, 2026 at 11:59pm EST</strong>. We encourage you to sign up as soon as possible, applications submitted after the priority deadline have a significantly lower chance of getting matched. No prior startup experience is required to participate.
+          <strong>CORE Fellows</strong> (previously Almaworks Fellows) are matched with startups founded by Columbia alumni and around NYC for an ~8 week internship. We will be considering applications for the <strong>Spring 2026 CORE Fellowship</strong> on a rolling basis, with a priority deadline of <strong>February 4th, 2026 at 11:59pm EST</strong>. We encourage you to sign up as soon as possible, applications submitted after the priority deadline have a significantly lower chance of getting matched. No prior startup experience is required to participate.
         </p>
 
         <p>
