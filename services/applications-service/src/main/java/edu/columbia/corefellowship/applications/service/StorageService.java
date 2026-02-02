@@ -73,6 +73,14 @@ public class StorageService {
   }
 
   /**
+   * Check whether a blob exists in GCS.
+   */
+  public boolean fileExists(String blobName) {
+    BlobId blobId = BlobId.of(gcsProperties.getBucketName(), blobName);
+    return storage.get(blobId) != null;
+  }
+
+  /**
    * Delete a file from GCS.
    *
    * @param blobName The GCS blob name

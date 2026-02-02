@@ -162,6 +162,39 @@ public class ApplicationsProxyController {
     return forwardResponse(response);
   }
 
+  @PostMapping("/students/applications/resume")
+  public ResponseEntity<Object> uploadResumeBeforeCreate(
+      @RequestParam("file") MultipartFile file,
+      HttpServletRequest request) {
+
+    String userId = (String) request.getAttribute("X-User-Id");
+    String userRole = (String) request.getAttribute("X-User-Role");
+    String userEmail = (String) request.getAttribute("X-User-Email");
+
+    RestClient.RequestBodySpec spec = client.post()
+        .uri("/v1/students/applications/resume");
+
+    if (userId != null) {
+      spec = spec.header("X-User-Id", userId);
+    }
+    if (userRole != null) {
+      spec = spec.header("X-User-Role", userRole);
+    }
+    if (userEmail != null) {
+      spec = spec.header("X-User-Email", userEmail);
+    }
+
+    org.springframework.http.client.MultipartBodyBuilder builder =
+        new org.springframework.http.client.MultipartBodyBuilder();
+    builder.part("file", file.getResource());
+
+    ResponseEntity<String> response = spec
+        .body(builder.build())
+        .retrieve()
+        .toEntity(String.class);
+    return forwardResponse(response);
+  }
+
   @GetMapping("/students/applications/{id}/resume")
   public ResponseEntity<Object> getResumeUrl(
       @PathVariable String id,

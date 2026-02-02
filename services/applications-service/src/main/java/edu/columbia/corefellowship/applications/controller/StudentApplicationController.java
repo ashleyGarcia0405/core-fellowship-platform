@@ -3,6 +3,7 @@ package edu.columbia.corefellowship.applications.controller;
 import edu.columbia.corefellowship.applications.dto.CreateInterviewRequest;
 import edu.columbia.corefellowship.applications.dto.CreateStudentApplicationRequest;
 import edu.columbia.corefellowship.applications.dto.UpdateApplicationStatusRequest;
+import edu.columbia.corefellowship.applications.dto.UpdateInterviewEligibilityRequest;
 import edu.columbia.corefellowship.applications.dto.UpdateInterviewRequest;
 import edu.columbia.corefellowship.applications.model.Interview;
 import edu.columbia.corefellowship.applications.model.StudentApplication;
@@ -11,6 +12,7 @@ import edu.columbia.corefellowship.applications.repository.StudentApplicationRep
 import edu.columbia.corefellowship.applications.service.StorageService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -62,6 +64,20 @@ public class StudentApplicationController {
           "You have already submitted an application");
     }
 
+    String resumeUrl = request.getResumeUrl();
+    if (resumeUrl == null || resumeUrl.isBlank()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Resume is required");
+    }
+    String expectedPrefix = String.format("resumes/%s/", userId);
+    if (!resumeUrl.startsWith(expectedPrefix)) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+          "Resume does not belong to the authenticated user");
+    }
+    if (!storageService.fileExists(resumeUrl)) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+          "Resume upload not found");
+    }
+
     StudentApplication application = new StudentApplication();
 
     // Set userId from authenticated user
@@ -76,7 +92,7 @@ public class StudentApplicationController {
     application.setEmail(request.getEmail());
     application.setLinkedinProfile(request.getLinkedinProfile());
     application.setPortfolioWebsite(request.getPortfolioWebsite());
-    application.setResumeUrl(request.getResumeUrl());
+    application.setResumeUrl(resumeUrl);
 
     // Discovery
     application.setHowDidYouHear(request.getHowDidYouHear());
@@ -103,9 +119,28 @@ public class StudentApplicationController {
     application.setStatus("submitted");
     application.setSubmittedAt(Instant.now());
     application.setUpdatedAt(Instant.now());
+    application.setInterviewEligible(false);
 
     StudentApplication saved = repository.save(application);
     return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+  }
+
+  @PostMapping(value = "/resume", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public ResponseEntity<Map<String, String>> uploadResumeBeforeCreate(
+      @RequestParam("file") MultipartFile file,
+      @RequestHeader(value = "X-User-Id", required = false) String userId) {
+
+    if (userId == null || userId.isBlank()) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User ID is required");
+    }
+
+    String fileName = String.format("resume-%s-%d.pdf", userId, System.currentTimeMillis());
+    String blobName = storageService.uploadFile(file, userId, fileName);
+
+    return ResponseEntity.ok(Map.of(
+        "message", "Resume uploaded successfully",
+        "resumeUrl", blobName
+    ));
   }
 
   @GetMapping
@@ -260,6 +295,22 @@ public class StudentApplicationController {
             application.setReviewNotes(request.getReviewNotes());
           }
 
+          StudentApplication updated = repository.save(application);
+          return ResponseEntity.ok(updated);
+        })
+        .orElse(ResponseEntity.notFound().build());
+  }
+
+  @PatchMapping("/{id}/interview-eligible")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<StudentApplication> updateInterviewEligibility(
+      @PathVariable String id,
+      @Valid @RequestBody UpdateInterviewEligibilityRequest request) {
+
+    return repository.findById(id)
+        .map(application -> {
+          application.setInterviewEligible(request.getInterviewEligible());
+          application.setUpdatedAt(Instant.now());
           StudentApplication updated = repository.save(application);
           return ResponseEntity.ok(updated);
         })

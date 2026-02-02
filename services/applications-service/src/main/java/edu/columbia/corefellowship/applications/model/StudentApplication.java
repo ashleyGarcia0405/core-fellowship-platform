@@ -56,6 +56,7 @@ public class StudentApplication {
   private Instant updatedAt;
   private String reviewedBy;
   private String reviewNotes;
+  private Boolean interviewEligible;
 
   // Constructors
   public StudentApplication() {
@@ -300,5 +301,13 @@ public class StudentApplication {
 
   public void setReviewNotes(String reviewNotes) {
     this.reviewNotes = reviewNotes;
+  }
+
+  public Boolean getInterviewEligible() {
+    return interviewEligible;
+  }
+
+  public void setInterviewEligible(Boolean interviewEligible) {
+    this.interviewEligible = interviewEligible;
   }
 }

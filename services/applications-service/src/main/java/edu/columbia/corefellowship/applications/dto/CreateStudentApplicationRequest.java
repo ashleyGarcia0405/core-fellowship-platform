@@ -29,7 +29,8 @@ public class CreateStudentApplicationRequest {
   private String linkedinProfile;
   private String portfolioWebsite; // Portfolio/Personal Website/Github
 
-  private String resumeUrl; // PDF URL or file path (optional - can be uploaded later)
+  @NotBlank(message = "Resume is required")
+  private String resumeUrl; // GCS blob path for resume upload
 
   // Discovery
   private String howDidYouHear; // Website, Word-of-mouth, Previous Fellow, etc.

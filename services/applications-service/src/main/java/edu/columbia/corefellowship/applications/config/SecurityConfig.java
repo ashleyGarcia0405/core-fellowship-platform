@@ -33,6 +33,7 @@ public class SecurityConfig {
       .cors(cors -> cors.configurationSource(corsConfigurationSource()))
       .authorizeHttpRequests(auth -> auth
         .requestMatchers("/health").permitAll()
+        .requestMatchers("/v1/webhooks/cal").permitAll()
         .anyRequest().authenticated()
       )
       .sessionManagement(session ->
