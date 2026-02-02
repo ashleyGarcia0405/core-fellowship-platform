@@ -165,7 +165,14 @@ export default function ApplicationForm() {
 
     try {
       // Upload resume first
-      const { resumeUrl } = await uploadResumeBeforeCreate(resumeFile);
+      let resumeUrl: string;
+      try {
+        const uploadResult = await uploadResumeBeforeCreate(resumeFile);
+        resumeUrl = uploadResult.resumeUrl;
+      } catch {
+        setError('Server error uploading resume. Please try uploading your resume again, then resubmit your application.');
+        return;
+      }
 
       // Create the application with resumeUrl
       await createStudentApplication({

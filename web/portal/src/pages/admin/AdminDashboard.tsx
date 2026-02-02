@@ -1532,13 +1532,13 @@ export default function AdminDashboard() {
                   boxSizing: 'border-box'
                 }}>
                   <div style={{
-                    padding: '1.6vw',
+                    padding: '0.6vw 1.2vw',
                     borderBottom: '1px solid #e0e0e0',
-                    background: 'white'
+                    background: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'flex-start'
                   }}>
-                    <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#0a468f', marginBottom: '10px' }}>
-                      Resume
-                    </h3>
                     {resumeSignedUrl ? (
                       <a
                         href={resumeSignedUrl}
@@ -1547,35 +1547,35 @@ export default function AdminDashboard() {
                         rel="noopener noreferrer"
                         style={{
                           display: 'inline-block',
-                          padding: '8px 16px',
+                          padding: '4px 10px',
                           background: '#0a468f',
                           color: 'white',
                           borderRadius: '6px',
-                          fontSize: '13px',
-                          fontWeight: '500',
-                          textDecoration: 'none'
-                        }}
-                      >
-                        Download Resume
+                        fontSize: '11px',
+                        fontWeight: '500',
+                        textDecoration: 'none'
+                      }}
+                    >
+                      Download Resume
                       </a>
                     ) : selectedApp.resumeUrl ? (
                       <div style={{
-                        padding: '8px 16px',
+                        padding: '4px 10px',
                         background: '#e3f2fd',
                         color: '#0a468f',
                         borderRadius: '6px',
-                        fontSize: '13px',
+                        fontSize: '11px',
                         fontWeight: '500'
                       }}>
                         Loading resume...
                       </div>
                     ) : (
                       <div style={{
-                        padding: '8px 16px',
+                        padding: '4px 10px',
                         background: '#fee',
                         color: '#c33',
                         borderRadius: '6px',
-                        fontSize: '13px',
+                        fontSize: '11px',
                         fontWeight: '500'
                       }}>
                         No resume uploaded
