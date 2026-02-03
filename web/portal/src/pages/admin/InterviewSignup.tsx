@@ -4,7 +4,7 @@ import { FiCalendar, FiFilter, FiUserPlus, FiHome, FiUsers, FiBriefcase, FiSetti
 import { useAuth } from '../../contexts/AuthContext';
 import { getInterviewBookings, updateInterviewBooking } from '../../lib/api';
 
-type InterviewStatusFilter = 'all' | 'scheduled' | 'completed' | 'cancelled';
+type InterviewStatusFilter = 'all' | 'scheduled' | 'completed';
 type InterviewTypeFilter = 'all' | 'technical' | 'non-technical';
 type AssignmentFilter = 'all' | 'needs-interviewer' | 'fully-assigned';
 
@@ -15,7 +15,7 @@ export default function InterviewSignup() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [bookings, setBookings] = useState<any[]>([]);
-  const [statusFilter, setStatusFilter] = useState<InterviewStatusFilter>('all');
+  const [statusFilter, setStatusFilter] = useState<InterviewStatusFilter>('scheduled');
   const [typeFilter, setTypeFilter] = useState<InterviewTypeFilter>('all');
   const [assignmentFilter, setAssignmentFilter] = useState<AssignmentFilter>('all');
 
@@ -42,6 +42,7 @@ export default function InterviewSignup() {
 
   const filteredBookings = useMemo(() => {
     return bookings.filter((booking) => {
+      if (booking.status === 'cancelled') return false;
       if (statusFilter !== 'all' && booking.status !== statusFilter) return false;
       if (typeFilter !== 'all' && booking.interviewType !== typeFilter) return false;
       if (assignmentFilter === 'needs-interviewer' && booking.interviewers.length > 0) return false;
@@ -311,7 +312,6 @@ export default function InterviewSignup() {
               <option value="all">All Statuses</option>
               <option value="scheduled">Scheduled</option>
               <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
             </select>
             <select
               value={typeFilter}

@@ -245,6 +245,10 @@ export async function getInterviewBookings(): Promise<InterviewBooking[]> {
   return getJson<InterviewBooking[]>('/v1/admin/interviews');
 }
 
+export async function getStudentInterviewBookings(): Promise<InterviewBooking[]> {
+  return getJson<InterviewBooking[]>('/v1/students/interviews');
+}
+
 export async function updateInterviewBooking(
   interviewId: string,
   data: { addInterviewer?: boolean }

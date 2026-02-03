@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiCalendar, FiInfo, FiEdit3, FiFileText, FiLogOut, FiMenu, FiSettings, FiX } from 'react-icons/fi';
-import { getApplications } from '../../lib/api';
+import { getApplications, getStudentInterviewBookings } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 
 type InterviewType = 'technical' | 'non-technical';
@@ -19,13 +19,17 @@ export default function InterviewScheduling() {
   const [error, setError] = useState('');
   const [interviewType, setInterviewType] = useState<InterviewType>('non-technical');
   const [iframeUrl, setIframeUrl] = useState<string>('');
+  const [existingBooking, setExistingBooking] = useState<{ startTime: string; endTime: string } | null>(null);
 
   useEffect(() => {
     async function loadEligibility() {
       try {
         setLoading(true);
         setError('');
-        const apps = await getApplications();
+        const [apps, bookings] = await Promise.all([
+          getApplications(),
+          getStudentInterviewBookings(),
+        ]);
         const eligibleApps = apps.filter(app => app.interviewEligible);
         setEligible(eligibleApps.length > 0);
         const app = eligibleApps[0];
@@ -33,6 +37,10 @@ export default function InterviewScheduling() {
           setInterviewType('technical');
         } else {
           setInterviewType('non-technical');
+        }
+        const scheduled = bookings.find(b => b.status === 'scheduled');
+        if (scheduled) {
+          setExistingBooking({ startTime: scheduled.startTime, endTime: scheduled.endTime });
         }
       } catch (err: any) {
         setError(err.message || 'Failed to load interview eligibility.');
@@ -295,24 +303,41 @@ export default function InterviewScheduling() {
               </div>
             )}
 
-            <div style={{
-              background: 'white',
-              borderRadius: '12px',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-              overflow: 'hidden'
-            }}>
-              {iframeUrl ? (
-                <iframe
-                  title="Interview Scheduling"
-                  src={iframeUrl}
-                  style={{ width: '100%', height: '780px', border: 'none' }}
-                />
-              ) : (
-                <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
-                  Loading scheduling widget...
-                </div>
-              )}
-            </div>
+            {existingBooking ? (
+              <div style={{
+                background: 'white',
+                borderRadius: '12px',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                padding: '24px'
+              }}>
+                <h3 style={{ color: '#0a468f', marginBottom: '10px' }}>Your interview is booked</h3>
+                <p style={{ color: '#666' }}>
+                  {new Date(existingBooking.startTime).toLocaleString()} – {new Date(existingBooking.endTime).toLocaleTimeString()}
+                </p>
+                <p style={{ marginTop: '10px', color: '#666' }}>
+                  If you need to reschedule, please use the link in your Cal.com confirmation email.
+                </p>
+              </div>
+            ) : (
+              <div style={{
+                background: 'white',
+                borderRadius: '12px',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                overflow: 'hidden'
+              }}>
+                {iframeUrl ? (
+                  <iframe
+                    title="Interview Scheduling"
+                    src={iframeUrl}
+                    style={{ width: '100%', height: '780px', border: 'none' }}
+                  />
+                ) : (
+                  <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
+                    Loading scheduling widget...
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
