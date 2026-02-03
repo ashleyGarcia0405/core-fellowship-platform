@@ -40,6 +40,28 @@ public class InterviewBookingController {
     return ResponseEntity.ok(bookingRepository.findAll());
   }
 
+  @GetMapping("/v1/students/interviews")
+  public ResponseEntity<List<InterviewBooking>> listStudentBookings(
+      @RequestHeader(value = "X-User-Email", required = false) String userEmail,
+      @RequestHeader(value = "X-User-Id", required = false) String userId) {
+    String resolvedEmail = userEmail;
+    if (resolvedEmail == null || resolvedEmail.isBlank()) {
+      if (userId == null || userId.isBlank()) {
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User identity is required");
+      }
+      List<StudentApplication> apps = applicationRepository.findByUserId(userId);
+      if (!apps.isEmpty()) {
+        resolvedEmail = apps.get(0).getEmail();
+      }
+    }
+
+    if (resolvedEmail == null || resolvedEmail.isBlank()) {
+      return ResponseEntity.ok(List.of());
+    }
+
+    return ResponseEntity.ok(bookingRepository.findByStudentEmail(resolvedEmail));
+  }
+
   @PatchMapping("/v1/admin/interviews/{id}")
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<InterviewBooking> updateBooking(
@@ -231,6 +253,9 @@ public class InterviewBookingController {
   private String resolveInterviewType(String eventType, String title) {
     String haystack = (eventType != null ? eventType : "") + " " + (title != null ? title : "");
     String normalized = haystack.toLowerCase();
+    if (normalized.contains("non-technical") || normalized.contains("non technical")) {
+      return "non-technical";
+    }
     if (normalized.contains("technical")) {
       return "technical";
     }

@@ -123,6 +123,19 @@ public class ApplicationsProxyController {
     return forwardResponse(response);
   }
 
+  @PatchMapping("/students/applications/{id}/interview-eligible")
+  public ResponseEntity<Object> updateInterviewEligibility(
+      @PathVariable String id,
+      @RequestBody Map<String, Object> body,
+      HttpServletRequest request) {
+    RestClient.RequestBodySpec spec = client.patch().uri("/v1/students/applications/" + id + "/interview-eligible");
+    ResponseEntity<String> response = addUserHeadersToBody(spec, request)
+        .body(body)
+        .retrieve()
+        .toEntity(String.class);
+    return forwardResponse(response);
+  }
+
   @PostMapping("/students/applications/{id}/resume")
   public ResponseEntity<Object> uploadResume(
       @PathVariable String id,
@@ -334,6 +347,59 @@ public class ApplicationsProxyController {
         .retrieve()
         .toEntity(String.class);
     return forwardResponseString(response);
+  }
+
+  // Interview Booking Endpoints
+  @GetMapping("/admin/interviews")
+  public ResponseEntity<Object> getInterviewBookings(HttpServletRequest request) {
+    RestClient.RequestHeadersUriSpec<?> spec = client.get();
+    ResponseEntity<String> response = addUserHeadersToGet(spec.uri("/v1/admin/interviews"), request)
+        .retrieve()
+        .toEntity(String.class);
+    return forwardResponse(response);
+  }
+
+  @GetMapping("/students/interviews")
+  public ResponseEntity<Object> getStudentInterviewBookings(HttpServletRequest request) {
+    RestClient.RequestHeadersUriSpec<?> spec = client.get();
+    ResponseEntity<String> response = addUserHeadersToGet(spec.uri("/v1/students/interviews"), request)
+        .retrieve()
+        .toEntity(String.class);
+    return forwardResponse(response);
+  }
+
+  @PatchMapping("/admin/interviews/{id}")
+  public ResponseEntity<Object> updateInterviewBooking(
+      @PathVariable String id,
+      @RequestBody Map<String, Object> body,
+      HttpServletRequest request) {
+    RestClient.RequestBodySpec spec = client.patch().uri("/v1/admin/interviews/" + id);
+    ResponseEntity<String> response = addUserHeadersToBody(spec, request)
+        .body(body)
+        .retrieve()
+        .toEntity(String.class);
+    return forwardResponse(response);
+  }
+
+  // Cal.com Webhook Endpoint
+  @PostMapping("/webhooks/cal")
+  public ResponseEntity<Object> handleCalWebhook(
+      @RequestBody Map<String, Object> body,
+      HttpServletRequest request) {
+    RestClient.RequestBodySpec spec = client.post().uri("/v1/webhooks/cal");
+    ResponseEntity<String> response = spec
+        .headers(headers -> copyWebhookHeaders(headers, request))
+        .body(body)
+        .retrieve()
+        .toEntity(String.class);
+    return forwardResponse(response);
+  }
+
+  private void copyWebhookHeaders(HttpHeaders headers, HttpServletRequest request) {
+    String secret = request.getHeader("X-Cal-Webhook-Secret");
+    if (secret != null) {
+      headers.set("X-Cal-Webhook-Secret", secret);
+    }
   }
 
   private ResponseEntity<Object> forwardResponse(ResponseEntity<String> response) {

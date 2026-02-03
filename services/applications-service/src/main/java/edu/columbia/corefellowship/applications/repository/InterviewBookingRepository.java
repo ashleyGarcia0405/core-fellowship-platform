@@ -9,4 +9,5 @@ import java.util.Optional;
 @Repository
 public interface InterviewBookingRepository extends MongoRepository<InterviewBooking, String> {
   Optional<InterviewBooking> findByCalBookingUid(String calBookingUid);
+  java.util.List<InterviewBooking> findByStudentEmail(String studentEmail);
 }
