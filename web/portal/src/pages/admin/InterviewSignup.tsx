@@ -400,6 +400,9 @@ export default function InterviewSignup() {
                             ) : (
                               booking.interviewers.map((i: any) => i.name).join(', ')
                             )}
+                            <div style={{ marginTop: '6px', fontSize: '11px', color: '#666' }}>
+                              {booking.interviewers.length}/2 interviewers
+                            </div>
                           </td>
                           <td style={{ padding: '14px 16px' }}>
                             <button
