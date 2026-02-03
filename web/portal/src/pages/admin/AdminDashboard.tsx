@@ -8,10 +8,11 @@ import {
   updateInterviewEligibility,
   exportApplicationsCSV,
   exportApplicationsJSON,
+  getInterview,
   getResumeSignedUrl,
   getStartups
 } from '../../lib/api';
-import type { Startup } from '../../lib/api';
+import type { Startup, Interview } from '../../lib/api';
 
 interface Application {
   id: string;
@@ -111,6 +112,8 @@ export default function AdminDashboard() {
   const [interviewEligibilityFilter, setInterviewEligibilityFilter] = useState<string>('all');
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [resumeSignedUrl, setResumeSignedUrl] = useState<string | null>(null);
+  const [interviewSummary, setInterviewSummary] = useState<Interview | null>(null);
+  const [interviewLoading, setInterviewLoading] = useState(false);
   const [splitPercent, setSplitPercent] = useState(55);
   const [isResizing, setIsResizing] = useState(false);
   const contentRef = useRef<HTMLDivElement | null>(null);
@@ -200,6 +203,25 @@ export default function AdminDashboard() {
       }
     }
     fetchResumeUrl();
+  }, [selectedApp]);
+
+  useEffect(() => {
+    async function fetchInterview() {
+      if (!selectedApp || selectedApp.userType !== 'STUDENT') {
+        setInterviewSummary(null);
+        return;
+      }
+      try {
+        setInterviewLoading(true);
+        const interview = await getInterview(selectedApp.id);
+        setInterviewSummary(interview);
+      } catch (err: any) {
+        setInterviewSummary(null);
+      } finally {
+        setInterviewLoading(false);
+      }
+    }
+    fetchInterview();
   }, [selectedApp]);
 
   useEffect(() => {
@@ -1494,6 +1516,87 @@ export default function AdminDashboard() {
                     )}
                   </div>
                 )}
+
+                {/* Interview Summary */}
+                <div style={{ marginBottom: '25px' }}>
+                  <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#0a468f', marginBottom: '15px', borderBottom: '2px solid #93c5fd', paddingBottom: '8px' }}>
+                    Interview Summary
+                  </h3>
+                  {interviewLoading ? (
+                    <div style={{ color: '#666' }}>Loading interview...</div>
+                  ) : interviewSummary ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                      <div>
+                        <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Overall Score</div>
+                        <div style={{ fontSize: '16px', fontWeight: '600', color: '#0a468f' }}>
+                          {interviewSummary.overallScore?.toFixed(1) ?? '—'}/10
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Recommendation</div>
+                        <div style={{ fontSize: '14px', color: '#333' }}>
+                          {interviewSummary.recommendation}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Strengths</div>
+                        <div style={{ fontSize: '14px', color: '#333' }}>
+                          {interviewSummary.strengths || '—'}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Concerns</div>
+                        <div style={{ fontSize: '14px', color: '#333' }}>
+                          {interviewSummary.concerns || '—'}
+                        </div>
+                      </div>
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Notes</div>
+                        <div style={{ fontSize: '14px', color: '#333', whiteSpace: 'pre-wrap' }}>
+                          {interviewSummary.notes || '—'}
+                        </div>
+                      </div>
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <button
+                          onClick={() => navigate(`/admin/interview/${selectedApp.id}`)}
+                          style={{
+                            marginTop: '10px',
+                            padding: '8px 14px',
+                            borderRadius: '6px',
+                            border: '1px solid #0a468f',
+                            background: 'white',
+                            color: '#0a468f',
+                            cursor: 'pointer',
+                            fontSize: '13px'
+                          }}
+                        >
+                          {interviewSummary ? 'Edit Interview' : 'Record Interview'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ color: '#666' }}>
+                      No interview recorded yet.
+                      <div>
+                        <button
+                          onClick={() => navigate(`/admin/interview/${selectedApp.id}`)}
+                          style={{
+                            marginTop: '10px',
+                            padding: '8px 14px',
+                            borderRadius: '6px',
+                            border: '1px solid #0a468f',
+                            background: 'white',
+                            color: '#0a468f',
+                            cursor: 'pointer',
+                            fontSize: '13px'
+                          }}
+                        >
+                          Record Interview
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* Admin Actions */}
                 <div style={{ borderTop: '1px solid #e0e0e0', paddingTop: '20px' }}>

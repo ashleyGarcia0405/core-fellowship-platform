@@ -404,7 +404,7 @@ export default function InterviewSignup() {
                               {booking.interviewers.length}/2 interviewers
                             </div>
                           </td>
-                          <td style={{ padding: '14px 16px' }}>
+                          <td style={{ padding: '14px 16px', display: 'flex', gap: '8px', alignItems: 'center' }}>
                             <button
                               onClick={() => handleClaim(booking.id)}
                               disabled={!canClaim}
@@ -422,6 +422,21 @@ export default function InterviewSignup() {
                               }}
                             >
                               <FiUserPlus size={14} /> Claim slot
+                            </button>
+                            <button
+                              onClick={() => booking.applicationId && navigate(`/admin/interview/${booking.applicationId}`)}
+                              disabled={!booking.applicationId}
+                              style={{
+                                padding: '6px 12px',
+                                borderRadius: '6px',
+                                border: '1px solid #0a468f',
+                                background: booking.applicationId ? 'white' : '#e5e7eb',
+                                color: booking.applicationId ? '#0a468f' : '#666',
+                                cursor: booking.applicationId ? 'pointer' : 'not-allowed',
+                                fontSize: '12px'
+                              }}
+                            >
+                              Record interview
                             </button>
                           </td>
                         </tr>
