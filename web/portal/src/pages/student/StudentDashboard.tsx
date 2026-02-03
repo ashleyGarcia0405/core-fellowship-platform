@@ -35,7 +35,7 @@ export default function StudentDashboard() {
       status: 'completed'
     },
     {
-      date: 'Feb 1',
+      date: 'Feb 4',
       title: 'Application Deadline',
       description: 'You must submit your application by Feb 1st at 11:59 PM EST to be considered for CORE Fellowship 2026.',
       status: 'upcoming'

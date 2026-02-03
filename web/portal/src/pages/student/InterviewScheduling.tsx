@@ -18,6 +18,7 @@ export default function InterviewScheduling() {
   const [eligible, setEligible] = useState(false);
   const [error, setError] = useState('');
   const [interviewType, setInterviewType] = useState<InterviewType>('non-technical');
+  const [iframeUrl, setIframeUrl] = useState<string>('');
 
   useEffect(() => {
     async function loadEligibility() {
@@ -53,6 +54,13 @@ export default function InterviewScheduling() {
     }
     return url.toString();
   }, [interviewType, user]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIframeUrl(bookingUrl);
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [bookingUrl]);
 
   if (loading) {
     return (
@@ -293,11 +301,17 @@ export default function InterviewScheduling() {
               boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
               overflow: 'hidden'
             }}>
-              <iframe
-                title="Interview Scheduling"
-                src={bookingUrl}
-                style={{ width: '100%', height: '780px', border: 'none' }}
-              />
+              {iframeUrl ? (
+                <iframe
+                  title="Interview Scheduling"
+                  src={iframeUrl}
+                  style={{ width: '100%', height: '780px', border: 'none' }}
+                />
+              ) : (
+                <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
+                  Loading scheduling widget...
+                </div>
+              )}
             </div>
           </div>
         )}

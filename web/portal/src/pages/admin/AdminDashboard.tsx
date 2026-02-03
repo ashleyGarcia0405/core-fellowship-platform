@@ -108,6 +108,7 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [interviewEligibilityFilter, setInterviewEligibilityFilter] = useState<string>('all');
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [resumeSignedUrl, setResumeSignedUrl] = useState<string | null>(null);
   const [splitPercent, setSplitPercent] = useState(55);
@@ -146,7 +147,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     filterApplications();
-  }, [applications, searchTerm, statusFilter, typeFilter]);
+  }, [applications, searchTerm, statusFilter, typeFilter, interviewEligibilityFilter]);
 
   useEffect(() => {
     if (activeTab === 'startups' && startups.length === 0) {
@@ -292,6 +293,14 @@ export default function AdminDashboard() {
       filtered = filtered.filter(app => app.status === statusFilter);
     }
 
+    if (interviewEligibilityFilter !== 'all') {
+      filtered = filtered.filter(app =>
+        interviewEligibilityFilter === 'eligible'
+          ? !!app.interviewEligible
+          : !app.interviewEligible
+      );
+    }
+
     // Type filter
     if (typeFilter !== 'all') {
       filtered = filtered.filter(app => app.userType === typeFilter);
@@ -373,7 +382,17 @@ export default function AdminDashboard() {
   async function handleInterviewEligibility(appId: string, eligible: boolean) {
     try {
       await updateInterviewEligibility(appId, eligible);
-      await loadApplications();
+      const data = await getAllApplications();
+      const normalized = data.map(app => ({
+        ...app,
+        userType: 'STUDENT',
+      }));
+      setApplications(normalized);
+      calculateStats(normalized);
+      const updated = normalized.find(app => app.id === appId);
+      if (updated) {
+        setSelectedApp(updated);
+      }
     } catch (err: any) {
       alert('Failed to update interview eligibility: ' + err.message);
     }
@@ -690,8 +709,29 @@ export default function AdminDashboard() {
                 <option value="all">All Status</option>
                 <option value="submitted">Submitted</option>
                 <option value="under_review">Under Review</option>
+                <option value="interview_scheduled">Interview Scheduled</option>
+                <option value="interviewed">Interviewed</option>
+                <option value="finalist">Finalist</option>
+                <option value="matched">Matched</option>
+                <option value="not_matched">Not Matched</option>
                 <option value="accepted">Accepted</option>
                 <option value="rejected">Rejected</option>
+              </select>
+              <select
+                value={interviewEligibilityFilter}
+                onChange={(e) => setInterviewEligibilityFilter(e.target.value)}
+                style={{
+                  padding: '10px 15px',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                <option value="all">All Interview Eligibility</option>
+                <option value="eligible">Interview Eligible</option>
+                <option value="not_eligible">Not Eligible</option>
               </select>
               <select
                 value={typeFilter}
