@@ -62,6 +62,15 @@ export default function InterviewSignup() {
     }
   }
 
+  async function handleUnclaim(bookingId: string) {
+    try {
+      const updated = await updateInterviewBooking(bookingId, { removeInterviewer: true });
+      setBookings((prev) => prev.map(b => (b.id === bookingId ? updated : b)));
+    } catch (err: any) {
+      alert(err.message || 'Failed to unclaim interview slot.');
+    }
+  }
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-blue)', position: 'relative' }}>
       <button
@@ -377,8 +386,9 @@ export default function InterviewSignup() {
                     filteredBookings.map((booking, index) => {
                       const start = new Date(booking.startTime);
                       const end = new Date(booking.endTime);
-                      const canClaim = booking.interviewers.length < 2 &&
-                        !booking.interviewers.some((i: any) => i.userId === user?.userId);
+                      const isAssigned = booking.interviewers.some((i: any) => i.userId === user?.userId);
+                      const canClaim = booking.interviewers.length < 2 && !isAssigned;
+                      const canUnclaim = isAssigned;
                       return (
                         <tr key={booking.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
                           <td style={{ padding: '14px 16px', fontSize: '14px', color: '#999', fontWeight: '500' }}>
@@ -428,6 +438,21 @@ export default function InterviewSignup() {
                               }}
                             >
                               <FiUserPlus size={14} /> Claim slot
+                            </button>
+                            <button
+                              onClick={() => handleUnclaim(booking.id)}
+                              disabled={!canUnclaim}
+                              style={{
+                                padding: '6px 12px',
+                                borderRadius: '6px',
+                                border: '1px solid #dc3545',
+                                background: canUnclaim ? 'white' : '#e5e7eb',
+                                color: canUnclaim ? '#dc3545' : '#666',
+                                cursor: canUnclaim ? 'pointer' : 'not-allowed',
+                                fontSize: '12px'
+                              }}
+                            >
+                              Unclaim
                             </button>
                             <button
                               onClick={() => booking.applicationId && navigate(`/admin/interview/${booking.applicationId}`)}
