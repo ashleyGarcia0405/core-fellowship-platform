@@ -219,6 +219,44 @@ public class ApplicationsProxyController {
     return forwardResponse(response);
   }
 
+  // Interview Endpoints
+  @PostMapping("/students/applications/{id}/interview")
+  public ResponseEntity<Object> createInterview(
+      @PathVariable String id,
+      @RequestBody Map<String, Object> body,
+      HttpServletRequest request) {
+    RestClient.RequestBodySpec spec = client.post().uri("/v1/students/applications/" + id + "/interview");
+    ResponseEntity<String> response = addUserHeadersToBody(spec, request)
+        .body(body)
+        .retrieve()
+        .toEntity(String.class);
+    return forwardResponse(response);
+  }
+
+  @GetMapping("/students/applications/{id}/interview")
+  public ResponseEntity<Object> getInterview(
+      @PathVariable String id,
+      HttpServletRequest request) {
+    RestClient.RequestHeadersUriSpec<?> spec = client.get();
+    ResponseEntity<String> response = addUserHeadersToGet(spec.uri("/v1/students/applications/" + id + "/interview"), request)
+        .retrieve()
+        .toEntity(String.class);
+    return forwardResponse(response);
+  }
+
+  @PatchMapping("/students/applications/{id}/interview")
+  public ResponseEntity<Object> updateInterview(
+      @PathVariable String id,
+      @RequestBody Map<String, Object> body,
+      HttpServletRequest request) {
+    RestClient.RequestBodySpec spec = client.patch().uri("/v1/students/applications/" + id + "/interview");
+    ResponseEntity<String> response = addUserHeadersToBody(spec, request)
+        .body(body)
+        .retrieve()
+        .toEntity(String.class);
+    return forwardResponse(response);
+  }
+
   // Startup Endpoints
   @PostMapping("/startups/intake")
   public ResponseEntity<Object> createStartup(
