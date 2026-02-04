@@ -251,7 +251,7 @@ export async function getStudentInterviewBookings(): Promise<InterviewBooking[]>
 
 export async function updateInterviewBooking(
   interviewId: string,
-  data: { addInterviewer?: boolean }
+  data: { addInterviewer?: boolean; removeInterviewer?: boolean }
 ): Promise<InterviewBooking> {
   const res = await fetch(`${API_BASE}/v1/admin/interviews/${interviewId}`, {
     method: 'PATCH',
