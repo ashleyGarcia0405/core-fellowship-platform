@@ -831,6 +831,18 @@ export default function AdminDashboard() {
                       fontWeight: '600',
                       color: '#666',
                       textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      width: '50px'
+                    }}>
+                      #
+                    </th>
+                    <th style={{
+                      padding: '15px 20px',
+                      textAlign: 'left',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      color: '#666',
+                      textTransform: 'uppercase',
                       letterSpacing: '0.5px'
                     }}>
                       Name
@@ -895,7 +907,7 @@ export default function AdminDashboard() {
                 <tbody>
                   {filteredApps.length === 0 ? (
                     <tr>
-                      <td colSpan={6} style={{
+                      <td colSpan={7} style={{
                         padding: '60px 20px',
                         textAlign: 'center',
                         color: '#999',
@@ -905,8 +917,11 @@ export default function AdminDashboard() {
                       </td>
                     </tr>
                   ) : (
-                    filteredApps.map((app) => (
+                    filteredApps.map((app, index) => (
                       <tr key={app.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                        <td style={{ padding: '15px 20px', fontSize: '14px', fontWeight: '500', color: '#999' }}>
+                          {index + 1}
+                        </td>
                         <td style={{ padding: '15px 20px' }}>
                           <div style={{ fontSize: '14px', fontWeight: '500', color: '#333', marginBottom: '4px' }}>
                             {app.fullName || app.companyName}
@@ -1095,6 +1110,18 @@ export default function AdminDashboard() {
                               fontWeight: '600',
                               color: '#666',
                               textTransform: 'uppercase',
+                              letterSpacing: '0.5px',
+                              width: '50px'
+                            }}>
+                              #
+                            </th>
+                            <th style={{
+                              padding: '15px 20px',
+                              textAlign: 'left',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              color: '#666',
+                              textTransform: 'uppercase',
                               letterSpacing: '0.5px'
                             }}>
                               Company
@@ -1148,7 +1175,7 @@ export default function AdminDashboard() {
                         <tbody>
                           {filteredStartups.length === 0 ? (
                             <tr>
-                              <td colSpan={5} style={{
+                              <td colSpan={6} style={{
                                 padding: '60px 20px',
                                 textAlign: 'center',
                                 color: '#999',
@@ -1158,10 +1185,13 @@ export default function AdminDashboard() {
                               </td>
                             </tr>
                           ) : (
-                            filteredStartups.map((startup) => {
+                            filteredStartups.map((startup, index) => {
                               const style = STARTUP_STATUS_STYLES[startup.status] || { bg: '#f3f4f6', color: '#374151', border: '#e5e7eb' };
                               return (
                                 <tr key={startup.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                                  <td style={{ padding: '15px 20px', fontSize: '14px', fontWeight: '500', color: '#999' }}>
+                                    {index + 1}
+                                  </td>
                                   <td style={{ padding: '15px 20px' }}>
                                     <div style={{ fontSize: '14px', fontWeight: '500', color: '#333', marginBottom: '4px' }}>
                                       {startup.companyName || 'Unnamed Startup'}

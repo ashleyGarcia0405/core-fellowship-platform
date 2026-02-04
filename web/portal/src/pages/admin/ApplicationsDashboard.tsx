@@ -94,6 +94,7 @@ export default function ApplicationsDashboard() {
         }}>
           <thead>
             <tr style={{ background: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
+              <th style={{ padding: '12px', textAlign: 'left', width: '50px' }}>#</th>
               <th style={{ padding: '12px', textAlign: 'left' }}>Name</th>
               <th style={{ padding: '12px', textAlign: 'left' }}>Email</th>
               <th style={{ padding: '12px', textAlign: 'left' }}>Grad Year</th>
@@ -106,13 +107,14 @@ export default function ApplicationsDashboard() {
           <tbody>
             {filteredApplications.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
+                <td colSpan={8} style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
                   No applications found
                 </td>
               </tr>
             ) : (
-              filteredApplications.map((app) => (
+              filteredApplications.map((app, index) => (
                 <tr key={app.id} style={{ borderBottom: '1px solid #dee2e6' }}>
+                  <td style={{ padding: '12px', color: '#999', fontWeight: '500' }}>{index + 1}</td>
                   <td style={{ padding: '12px' }}>{app.fullName}</td>
                   <td style={{ padding: '12px' }}>{app.email}</td>
                   <td style={{ padding: '12px' }}>{app.gradYear}</td>
