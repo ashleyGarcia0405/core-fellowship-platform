@@ -41,14 +41,16 @@ export default function InterviewSignup() {
   };
 
   const filteredBookings = useMemo(() => {
-    return bookings.filter((booking) => {
-      if (booking.status === 'cancelled') return false;
-      if (statusFilter !== 'all' && booking.status !== statusFilter) return false;
-      if (typeFilter !== 'all' && booking.interviewType !== typeFilter) return false;
-      if (assignmentFilter === 'needs-interviewer' && booking.interviewers.length > 0) return false;
-      if (assignmentFilter === 'fully-assigned' && booking.interviewers.length < 2) return false;
-      return true;
-    });
+    return bookings
+      .filter((booking) => {
+        if (booking.status === 'cancelled') return false;
+        if (statusFilter !== 'all' && booking.status !== statusFilter) return false;
+        if (typeFilter !== 'all' && booking.interviewType !== typeFilter) return false;
+        if (assignmentFilter === 'needs-interviewer' && booking.interviewers.length > 0) return false;
+        if (assignmentFilter === 'fully-assigned' && booking.interviewers.length < 2) return false;
+        return true;
+      })
+      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
   }, [bookings, statusFilter, typeFilter, assignmentFilter]);
 
   async function handleClaim(bookingId: string) {
