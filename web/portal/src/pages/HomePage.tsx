@@ -28,6 +28,31 @@ export default function HomePage() {
             width: 'auto'
           }}
         />
+        <button
+          onClick={() => navigate('/information')}
+          style={{
+            padding: '10px 24px',
+            fontSize: '14px',
+            cursor: 'pointer',
+            background: '#0a468f',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            fontWeight: '600',
+            transition: 'all 0.2s ease',
+            fontFamily: 'inherit'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = '#083d7a';
+            e.currentTarget.style.transform = 'translateY(-1px)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = '#0a468f';
+            e.currentTarget.style.transform = 'translateY(0)';
+          }}
+        >
+          Learn More
+        </button>
       </header>
 
       {/* Main content */}
