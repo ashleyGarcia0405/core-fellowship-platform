@@ -356,6 +356,7 @@ export default function InterviewSignup() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead style={{ background: '#f5f5f5' }}>
                   <tr>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', color: '#666', width: '50px' }}>#</th>
                     <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', color: '#666' }}>Date</th>
                     <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', color: '#666' }}>Time</th>
                     <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', color: '#666' }}>Student</th>
@@ -368,18 +369,21 @@ export default function InterviewSignup() {
                 <tbody>
                   {filteredBookings.length === 0 ? (
                     <tr>
-                      <td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: '#999' }}>
+                      <td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: '#999' }}>
                         No interview bookings match the current filters.
                       </td>
                     </tr>
                   ) : (
-                    filteredBookings.map((booking) => {
+                    filteredBookings.map((booking, index) => {
                       const start = new Date(booking.startTime);
                       const end = new Date(booking.endTime);
                       const canClaim = booking.interviewers.length < 2 &&
                         !booking.interviewers.some((i: any) => i.userId === user?.userId);
                       return (
                         <tr key={booking.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                          <td style={{ padding: '14px 16px', fontSize: '14px', color: '#999', fontWeight: '500' }}>
+                            {index + 1}
+                          </td>
                           <td style={{ padding: '14px 16px', fontSize: '14px', color: '#333' }}>
                             {start.toLocaleDateString()}
                           </td>
