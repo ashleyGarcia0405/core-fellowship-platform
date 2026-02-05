@@ -152,9 +152,39 @@ export default function ApplicationForm() {
     }
   };
 
+  const normalizeUrl = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return '';
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    return `https://${trimmed}`;
+  };
+
+  const isValidUrl = (value: string) => {
+    if (!value) return true;
+    try {
+      new URL(value);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    const normalizedLinkedin = normalizeUrl(linkedinProfile);
+    const normalizedPortfolio = normalizeUrl(portfolioWebsite);
+
+    if (!isValidUrl(normalizedLinkedin)) {
+      setError('Please enter a valid LinkedIn URL.');
+      return;
+    }
+
+    if (!isValidUrl(normalizedPortfolio)) {
+      setError('Please enter a valid portfolio/personal website URL.');
+      return;
+    }
 
     if (!resumeFile) {
       setError('Please upload your resume (PDF)');
@@ -182,8 +212,8 @@ export default function ApplicationForm() {
         school: school || undefined,
         major,
         email,
-        linkedinProfile: linkedinProfile || undefined,
-        portfolioWebsite: portfolioWebsite || undefined,
+        linkedinProfile: normalizedLinkedin || undefined,
+        portfolioWebsite: normalizedPortfolio || undefined,
         resumeUrl,
         howDidYouHear: howDidYouHear || undefined,
         referralSource: referralSource || undefined,
@@ -431,9 +461,10 @@ export default function ApplicationForm() {
             LinkedIn Profile
           </label>
           <input
-            type="url"
+            type="text"
             value={linkedinProfile}
             onChange={(e) => setLinkedinProfile(e.target.value)}
+            onBlur={(e) => setLinkedinProfile(normalizeUrl(e.target.value))}
             placeholder="https://linkedin.com/in/yourprofile"
             style={{ width: '100%', padding: '8px', fontSize: '14px' }}
           />
@@ -444,9 +475,10 @@ export default function ApplicationForm() {
             Portfolio/Personal Website/GitHub
           </label>
           <input
-            type="url"
+            type="text"
             value={portfolioWebsite}
             onChange={(e) => setPortfolioWebsite(e.target.value)}
+            onBlur={(e) => setPortfolioWebsite(normalizeUrl(e.target.value))}
             placeholder="https://yourwebsite.com"
             style={{ width: '100%', padding: '8px', fontSize: '14px' }}
           />
