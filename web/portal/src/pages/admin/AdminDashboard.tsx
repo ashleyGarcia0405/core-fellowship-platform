@@ -69,14 +69,14 @@ interface StartupStats {
   inactive: number;
 }
 
-const STATUS_STYLES = {
+const STATUS_STYLES: Record<string, { bg: string; color: string; border: string }> = {
   submitted: { bg: '#fef3c7', color: '#92400e', border: '#fcd34d' },
   under_review: { bg: '#dbeafe', color: '#1e40af', border: '#93c5fd' },
   accepted: { bg: '#d1fae5', color: '#065f46', border: '#6ee7b7' },
   rejected: { bg: '#fee2e2', color: '#991b1b', border: '#fca5a5' },
 };
 
-const STATUS_LABELS = {
+const STATUS_LABELS: Record<string, string> = {
   submitted: 'Submitted',
   under_review: 'Under Review',
   accepted: 'Accepted',
@@ -946,18 +946,23 @@ export default function AdminDashboard() {
                           </span>
                         </td>
                         <td style={{ padding: '15px 20px' }}>
-                          <span style={{
-                            padding: '4px 12px',
-                            fontSize: '11px',
-                            fontWeight: '600',
-                            borderRadius: '12px',
-                            border: '1px solid',
-                            background: STATUS_STYLES[app.status].bg,
-                            color: STATUS_STYLES[app.status].color,
-                            borderColor: STATUS_STYLES[app.status].border
-                          }}>
-                            {STATUS_LABELS[app.status]}
-                          </span>
+                          {(() => {
+                            const style = STATUS_STYLES[app.status] || { bg: '#f3f4f6', color: '#374151', border: '#e5e7eb' };
+                            return (
+                              <span style={{
+                                padding: '4px 12px',
+                                fontSize: '11px',
+                                fontWeight: '600',
+                                borderRadius: '12px',
+                                border: '1px solid',
+                                background: style.bg,
+                                color: style.color,
+                                borderColor: style.border
+                              }}>
+                                {STATUS_LABELS[app.status] || app.status}
+                              </span>
+                            );
+                          })()}
                         </td>
                         <td style={{ padding: '15px 20px', fontSize: '14px', color: '#666' }}>
                           {new Date(app.submittedAt).toLocaleDateString()}
