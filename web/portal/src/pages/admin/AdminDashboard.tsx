@@ -1557,33 +1557,39 @@ export default function AdminDashboard() {
                   ) : interviewSummary ? (
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                       <div>
-                        <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Overall Score</div>
-                        <div style={{ fontSize: '16px', fontWeight: '600', color: '#0a468f' }}>
-                          {interviewSummary.overallScore?.toFixed(1) ?? '—'}/10
-                        </div>
-                      </div>
-                      <div>
                         <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Recommendation</div>
                         <div style={{ fontSize: '14px', color: '#333' }}>
                           {interviewSummary.recommendation}
                         </div>
                       </div>
                       <div>
-                        <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Strengths</div>
+                        <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Likelihood to Accept</div>
                         <div style={{ fontSize: '14px', color: '#333' }}>
-                          {interviewSummary.strengths || '—'}
+                          {interviewSummary.likelihoodToAccept || '—'}
                         </div>
                       </div>
                       <div>
-                        <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Concerns</div>
+                        <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Primary Role Interest</div>
                         <div style={{ fontSize: '14px', color: '#333' }}>
-                          {interviewSummary.concerns || '—'}
+                          {interviewSummary.primaryRoleInterest || '—'}
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Role Structure Preference</div>
+                        <div style={{ fontSize: '14px', color: '#333' }}>
+                          {interviewSummary.roleStructurePreference || '—'}
                         </div>
                       </div>
                       <div style={{ gridColumn: '1 / -1' }}>
-                        <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Notes</div>
+                        <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Best Fit Role or Startup</div>
                         <div style={{ fontSize: '14px', color: '#333', whiteSpace: 'pre-wrap' }}>
-                          {interviewSummary.notes || '—'}
+                          {interviewSummary.bestFitRoleOrStartup || '—'}
+                        </div>
+                      </div>
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Commitment Concerns</div>
+                        <div style={{ fontSize: '14px', color: '#333', whiteSpace: 'pre-wrap' }}>
+                          {interviewSummary.commitmentConcerns || '—'}
                         </div>
                       </div>
                       <div style={{ gridColumn: '1 / -1' }}>
