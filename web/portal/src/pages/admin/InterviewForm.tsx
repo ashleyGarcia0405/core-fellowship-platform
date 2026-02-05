@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { createInterview, getApplications, getInterviewBookings } from '../../lib/api';
+import { createInterview, getApplications, getInterview, getInterviewBookings, updateInterview } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
-import type { Recommendation } from '../../lib/api';
+import type { Interview, Recommendation, UpdateInterviewRequest } from '../../lib/api';
 
 export default function InterviewForm() {
   const { applicationId } = useParams<{ applicationId: string }>();
@@ -41,6 +41,8 @@ export default function InterviewForm() {
   const [candidateName, setCandidateName] = useState<string | null>(null);
   const [candidateEmail, setCandidateEmail] = useState<string | null>(null);
   const [candidateError, setCandidateError] = useState('');
+  const [existingInterview, setExistingInterview] = useState<Interview | null>(null);
+  const [interviewLoadError, setInterviewLoadError] = useState('');
 
   useEffect(() => {
     async function loadInterviewers() {
@@ -67,6 +69,47 @@ export default function InterviewForm() {
 
     if (applicationId) {
       loadInterviewers();
+    }
+  }, [applicationId]);
+
+  useEffect(() => {
+    async function loadInterview() {
+      try {
+        setInterviewLoadError('');
+        const interview = await getInterview(applicationId!);
+        setExistingInterview(interview);
+        setPrimaryRoleInterest(interview.primaryRoleInterest || '');
+        setSecondaryRoleInterest(interview.secondaryRoleInterest || '');
+        setRoleStructurePreference(interview.roleStructurePreference || '');
+        setStartupInterests(interview.startupInterests || '');
+        setSkillsAndExperience(interview.skillsAndExperience || '');
+        setAmbiguityExample(interview.ambiguityExample || '');
+        setCriticalFeedbackExample(interview.criticalFeedbackExample || '');
+        setWorkPreference(interview.workPreference || '');
+        setCommitmentsAndConflicts(interview.commitmentsAndConflicts || '');
+        setClarifyingQuestions(interview.clarifyingQuestions || '');
+        setTechnicalProjectOverview(interview.technicalProjectOverview || '');
+        setTechnicalRebuildChanges(interview.technicalRebuildChanges || '');
+        setTechnicalDebuggingExample(interview.technicalDebuggingExample || '');
+        setTechnicalTestingApproach(interview.technicalTestingApproach || '');
+        setTechnicalOnboardingApproach(interview.technicalOnboardingApproach || '');
+        setNonTechnicalOrganization(interview.nonTechnicalOrganization || '');
+        setNonTechnicalFirstTwoWeeks(interview.nonTechnicalFirstTwoWeeks || '');
+        setNonTechnicalCommunication(interview.nonTechnicalCommunication || '');
+        setNonTechnicalProudProject(interview.nonTechnicalProudProject || '');
+        setBestFitRoleOrStartup(interview.bestFitRoleOrStartup || '');
+        setLikelihoodToAccept(interview.likelihoodToAccept || '');
+        setCommitmentConcerns(interview.commitmentConcerns || '');
+        setRecommendation(interview.recommendation || 'YES');
+      } catch (err: any) {
+        if (!String(err.message || '').includes('HTTP 404')) {
+          setInterviewLoadError(err.message || 'Failed to load interview.');
+        }
+      }
+    }
+
+    if (applicationId) {
+      loadInterview();
     }
   }, [applicationId]);
 
@@ -122,31 +165,67 @@ export default function InterviewForm() {
     setLoading(true);
 
     try {
-      await createInterview(applicationId!, {
-        primaryRoleInterest,
-        secondaryRoleInterest,
-        roleStructurePreference,
-        startupInterests,
-        skillsAndExperience,
-        ambiguityExample,
-        criticalFeedbackExample,
-        workPreference,
-        commitmentsAndConflicts,
-        clarifyingQuestions,
-        technicalProjectOverview,
-        technicalRebuildChanges,
-        technicalDebuggingExample,
-        technicalTestingApproach,
-        technicalOnboardingApproach,
-        nonTechnicalOrganization,
-        nonTechnicalFirstTwoWeeks,
-        nonTechnicalCommunication,
-        nonTechnicalProudProject,
-        bestFitRoleOrStartup,
-        likelihoodToAccept,
-        commitmentConcerns,
-        recommendation,
-      });
+      if (existingInterview) {
+        const normalized = (value: string | undefined | null) => value ?? '';
+        const patch: UpdateInterviewRequest = {};
+        if (normalized(primaryRoleInterest) !== normalized(existingInterview.primaryRoleInterest)) patch.primaryRoleInterest = primaryRoleInterest;
+        if (normalized(secondaryRoleInterest) !== normalized(existingInterview.secondaryRoleInterest)) patch.secondaryRoleInterest = secondaryRoleInterest;
+        if (normalized(roleStructurePreference) !== normalized(existingInterview.roleStructurePreference)) patch.roleStructurePreference = roleStructurePreference;
+        if (normalized(startupInterests) !== normalized(existingInterview.startupInterests)) patch.startupInterests = startupInterests;
+        if (normalized(skillsAndExperience) !== normalized(existingInterview.skillsAndExperience)) patch.skillsAndExperience = skillsAndExperience;
+        if (normalized(ambiguityExample) !== normalized(existingInterview.ambiguityExample)) patch.ambiguityExample = ambiguityExample;
+        if (normalized(criticalFeedbackExample) !== normalized(existingInterview.criticalFeedbackExample)) patch.criticalFeedbackExample = criticalFeedbackExample;
+        if (normalized(workPreference) !== normalized(existingInterview.workPreference)) patch.workPreference = workPreference;
+        if (normalized(commitmentsAndConflicts) !== normalized(existingInterview.commitmentsAndConflicts)) patch.commitmentsAndConflicts = commitmentsAndConflicts;
+        if (normalized(clarifyingQuestions) !== normalized(existingInterview.clarifyingQuestions)) patch.clarifyingQuestions = clarifyingQuestions;
+        if (normalized(technicalProjectOverview) !== normalized(existingInterview.technicalProjectOverview)) patch.technicalProjectOverview = technicalProjectOverview;
+        if (normalized(technicalRebuildChanges) !== normalized(existingInterview.technicalRebuildChanges)) patch.technicalRebuildChanges = technicalRebuildChanges;
+        if (normalized(technicalDebuggingExample) !== normalized(existingInterview.technicalDebuggingExample)) patch.technicalDebuggingExample = technicalDebuggingExample;
+        if (normalized(technicalTestingApproach) !== normalized(existingInterview.technicalTestingApproach)) patch.technicalTestingApproach = technicalTestingApproach;
+        if (normalized(technicalOnboardingApproach) !== normalized(existingInterview.technicalOnboardingApproach)) patch.technicalOnboardingApproach = technicalOnboardingApproach;
+        if (normalized(nonTechnicalOrganization) !== normalized(existingInterview.nonTechnicalOrganization)) patch.nonTechnicalOrganization = nonTechnicalOrganization;
+        if (normalized(nonTechnicalFirstTwoWeeks) !== normalized(existingInterview.nonTechnicalFirstTwoWeeks)) patch.nonTechnicalFirstTwoWeeks = nonTechnicalFirstTwoWeeks;
+        if (normalized(nonTechnicalCommunication) !== normalized(existingInterview.nonTechnicalCommunication)) patch.nonTechnicalCommunication = nonTechnicalCommunication;
+        if (normalized(nonTechnicalProudProject) !== normalized(existingInterview.nonTechnicalProudProject)) patch.nonTechnicalProudProject = nonTechnicalProudProject;
+        if (normalized(bestFitRoleOrStartup) !== normalized(existingInterview.bestFitRoleOrStartup)) patch.bestFitRoleOrStartup = bestFitRoleOrStartup;
+        if (normalized(likelihoodToAccept) !== normalized(existingInterview.likelihoodToAccept)) patch.likelihoodToAccept = likelihoodToAccept;
+        if (normalized(commitmentConcerns) !== normalized(existingInterview.commitmentConcerns)) patch.commitmentConcerns = commitmentConcerns;
+        if (recommendation !== existingInterview.recommendation) patch.recommendation = recommendation;
+
+        if (Object.keys(patch).length === 0) {
+          alert('No changes to save.');
+          setLoading(false);
+          return;
+        }
+
+        await updateInterview(applicationId!, patch);
+      } else {
+        await createInterview(applicationId!, {
+          primaryRoleInterest,
+          secondaryRoleInterest,
+          roleStructurePreference,
+          startupInterests,
+          skillsAndExperience,
+          ambiguityExample,
+          criticalFeedbackExample,
+          workPreference,
+          commitmentsAndConflicts,
+          clarifyingQuestions,
+          technicalProjectOverview,
+          technicalRebuildChanges,
+          technicalDebuggingExample,
+          technicalTestingApproach,
+          technicalOnboardingApproach,
+          nonTechnicalOrganization,
+          nonTechnicalFirstTwoWeeks,
+          nonTechnicalCommunication,
+          nonTechnicalProudProject,
+          bestFitRoleOrStartup,
+          likelihoodToAccept,
+          commitmentConcerns,
+          recommendation,
+        });
+      }
 
       alert('Interview recorded successfully!');
       navigate('/admin/applications');
@@ -159,7 +238,7 @@ export default function InterviewForm() {
 
   return (
     <div style={{ maxWidth: '800px', margin: '20px auto', padding: '20px' }}>
-      <h1>Record Interview</h1>
+      <h1>{existingInterview ? 'Edit Interview' : 'Record Interview'}</h1>
       <p>Application ID: {applicationId}</p>
       <div style={{ marginBottom: '10px', color: '#666', fontSize: '14px' }}>
         Candidate: {candidateName || '—'}{candidateEmail ? ` (${candidateEmail})` : ''}
@@ -171,6 +250,11 @@ export default function InterviewForm() {
       <div style={{ marginBottom: '10px', color: '#666', fontSize: '14px' }}>
         Interview Type: {interviewTypeLabel}
       </div>
+      {interviewLoadError && (
+        <div style={{ marginBottom: '10px', color: '#c33', fontSize: '13px' }}>
+          {interviewLoadError}
+        </div>
+      )}
       {candidateError && (
         <div style={{ marginBottom: '10px', color: '#c33', fontSize: '13px' }}>
           {candidateError}
