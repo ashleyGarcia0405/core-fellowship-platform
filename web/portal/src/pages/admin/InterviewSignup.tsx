@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiCalendar, FiFilter, FiUserPlus, FiHome, FiUsers, FiBriefcase, FiSettings, FiLogOut, FiMenu, FiX } from 'react-icons/fi';
+import { FiCalendar, FiFilter, FiUserPlus, FiUserMinus, FiHome, FiUsers, FiBriefcase, FiSettings, FiLogOut, FiMenu, FiX } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import { getInterviewBookings, updateInterviewBooking } from '../../lib/api';
 
@@ -365,8 +365,8 @@ export default function InterviewSignup() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead style={{ background: '#f5f5f5' }}>
                   <tr>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', color: '#666', width: '50px' }}>#</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', color: '#666' }}>Date</th>
+                    <th style={{ padding: '12px 8px 12px 12px', textAlign: 'left', fontSize: '12px', color: '#666', width: '40px' }}>#</th>
+                    <th style={{ padding: '12px 10px', textAlign: 'left', fontSize: '12px', color: '#666' }}>Date</th>
                     <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', color: '#666' }}>Time</th>
                     <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', color: '#666' }}>Student</th>
                     <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', color: '#666' }}>Type</th>
@@ -391,10 +391,10 @@ export default function InterviewSignup() {
                       const canUnclaim = isAssigned;
                       return (
                         <tr key={booking.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                          <td style={{ padding: '14px 16px', fontSize: '14px', color: '#999', fontWeight: '500' }}>
+                          <td style={{ padding: '14px 8px 14px 12px', fontSize: '14px', color: '#999', fontWeight: '500' }}>
                             {index + 1}
                           </td>
-                          <td style={{ padding: '14px 16px', fontSize: '14px', color: '#333' }}>
+                          <td style={{ padding: '14px 10px', fontSize: '14px', color: '#333' }}>
                             {start.toLocaleDateString()}
                           </td>
                           <td style={{ padding: '14px 16px', fontSize: '14px', color: '#333' }}>
@@ -422,37 +422,27 @@ export default function InterviewSignup() {
                           </td>
                           <td style={{ padding: '14px 16px', display: 'flex', gap: '8px', alignItems: 'center' }}>
                             <button
-                              onClick={() => handleClaim(booking.id)}
-                              disabled={!canClaim}
+                              onClick={() => (isAssigned ? handleUnclaim(booking.id) : handleClaim(booking.id))}
+                              disabled={!canClaim && !canUnclaim}
                               style={{
                                 padding: '6px 12px',
                                 borderRadius: '6px',
-                                border: '1px solid #0a468f',
-                                background: canClaim ? '#0a468f' : '#e5e7eb',
-                                color: canClaim ? 'white' : '#666',
-                                cursor: canClaim ? 'pointer' : 'not-allowed',
+                                border: `1px solid ${isAssigned ? '#dc3545' : '#0a468f'}`,
+                                background: isAssigned
+                                  ? (canUnclaim ? 'white' : '#e5e7eb')
+                                  : (canClaim ? '#0a468f' : '#e5e7eb'),
+                                color: isAssigned
+                                  ? (canUnclaim ? '#dc3545' : '#666')
+                                  : (canClaim ? 'white' : '#666'),
+                                cursor: canClaim || canUnclaim ? 'pointer' : 'not-allowed',
                                 fontSize: '12px',
                                 display: 'inline-flex',
                                 alignItems: 'center',
                                 gap: '6px'
                               }}
                             >
-                              <FiUserPlus size={14} /> Claim slot
-                            </button>
-                            <button
-                              onClick={() => handleUnclaim(booking.id)}
-                              disabled={!canUnclaim}
-                              style={{
-                                padding: '6px 12px',
-                                borderRadius: '6px',
-                                border: '1px solid #dc3545',
-                                background: canUnclaim ? 'white' : '#e5e7eb',
-                                color: canUnclaim ? '#dc3545' : '#666',
-                                cursor: canUnclaim ? 'pointer' : 'not-allowed',
-                                fontSize: '12px'
-                              }}
-                            >
-                              Unclaim
+                              {isAssigned ? <FiUserMinus size={14} /> : <FiUserPlus size={14} />}
+                              {isAssigned ? 'Unclaim slot' : 'Claim slot'}
                             </button>
                             <button
                               onClick={() => booking.applicationId && navigate(`/admin/interview/${booking.applicationId}`)}
