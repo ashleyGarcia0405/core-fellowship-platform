@@ -73,7 +73,9 @@ export async function postJson<T>(path: string, body: unknown): Promise<T> {
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    if (res.status === 401) {
+    // Don't trigger logout for auth endpoints (login/register) - those 401s
+    // mean wrong credentials, not an expired session
+    if (res.status === 401 && !path.startsWith("/v1/auth/")) {
       handleUnauthorized();
     }
     const text = await res.text();

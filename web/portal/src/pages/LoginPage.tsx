@@ -25,11 +25,15 @@ export default function LoginPage() {
         navigate('/startup');
       }
     } catch (err: any) {
-      // Check if it's a 401 (authentication failure)
-      if (err.message && err.message.includes('401')) {
+      const msg = err.message || '';
+      if (msg.includes('401')) {
         setError('Incorrect email or password. Please try again.');
+      } else if (msg.includes('503') || msg.includes('unavailable') || msg.includes('starting up')) {
+        setError('Service is starting up. Please wait a moment and try again.');
+      } else if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+        setError('Unable to reach the server. Please check your connection and try again.');
       } else {
-        setError('Login failed. Please check your credentials and try again.');
+        setError('Login failed. Please try again in a few seconds.');
       }
     }
   };
