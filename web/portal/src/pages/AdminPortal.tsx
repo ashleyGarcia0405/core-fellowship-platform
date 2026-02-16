@@ -8,8 +8,9 @@ import type { Startup } from '../lib/api';
 type Stats = {
   total: number;
   submitted: number;
-  under_review: number;
-  accepted: number;
+  interviewed: number;
+  finalist: number;
+  matched: number;
 };
 type StartupStats = {
   total: number;
@@ -25,8 +26,9 @@ export default function AdminPortal() {
   const [stats, setStats] = useState<Stats>({
     total: 0,
     submitted: 0,
-    under_review: 0,
-    accepted: 0,
+    interviewed: 0,
+    finalist: 0,
+    matched: 0,
   });
   const [startupStats, setStartupStats] = useState<StartupStats>({
     total: 0,
@@ -56,14 +58,16 @@ export default function AdminPortal() {
         if (!isMounted) return;
         const total = applications.length;
         const submitted = applications.filter(app => app.status === 'submitted').length;
-        const underReview = applications.filter(app => app.status === 'under_review').length;
-        const accepted = applications.filter(app => app.status === 'accepted').length;
+        const interviewed = applications.filter(app => app.status === 'interviewed').length;
+        const finalist = applications.filter(app => app.status === 'finalist').length;
+        const matched = applications.filter(app => app.status === 'matched').length;
         const startupStats = calculateStartupStats(startups);
         setStats({
           total,
           submitted,
-          under_review: underReview,
-          accepted,
+          interviewed,
+          finalist,
+          matched,
         });
         setStartupStats(startupStats);
       } catch (err: any) {
@@ -352,11 +356,11 @@ export default function AdminPortal() {
               borderRadius: '10px',
               boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
             }}>
-              <div style={{ fontSize: '12px', color: '#666', marginBottom: '6px' }}>Pending Review</div>
-              <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#ffc107' }}>
+              <div style={{ fontSize: '12px', color: '#666', marginBottom: '6px' }}>Submitted</div>
+              <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#92400e' }}>
                 {statValue(stats.submitted)}
               </div>
-              <div style={{ fontSize: '11px', color: '#999', marginTop: '6px' }}>Awaiting action</div>
+              <div style={{ fontSize: '11px', color: '#999', marginTop: '6px' }}>Awaiting review</div>
             </div>
             <div style={{
               background: 'white',
@@ -364,11 +368,11 @@ export default function AdminPortal() {
               borderRadius: '10px',
               boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
             }}>
-              <div style={{ fontSize: '12px', color: '#666', marginBottom: '6px' }}>Under Review</div>
-              <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#17a2b8' }}>
-                {statValue(stats.under_review)}
+              <div style={{ fontSize: '12px', color: '#666', marginBottom: '6px' }}>Interviewed</div>
+              <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#3730a3' }}>
+                {statValue(stats.interviewed)}
               </div>
-              <div style={{ fontSize: '11px', color: '#999', marginTop: '6px' }}>In progress</div>
+              <div style={{ fontSize: '11px', color: '#999', marginTop: '6px' }}>Completed interviews</div>
             </div>
             <div style={{
               background: 'white',
@@ -376,11 +380,23 @@ export default function AdminPortal() {
               borderRadius: '10px',
               boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
             }}>
-              <div style={{ fontSize: '12px', color: '#666', marginBottom: '6px' }}>Accepted</div>
-              <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#28a745' }}>
-                {statValue(stats.accepted)}
+              <div style={{ fontSize: '12px', color: '#666', marginBottom: '6px' }}>Finalist</div>
+              <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#86198f' }}>
+                {statValue(stats.finalist)}
               </div>
-              <div style={{ fontSize: '11px', color: '#999', marginTop: '6px' }}>Admitted students</div>
+              <div style={{ fontSize: '11px', color: '#999', marginTop: '6px' }}>Selected finalists</div>
+            </div>
+            <div style={{
+              background: 'white',
+              padding: '16px',
+              borderRadius: '10px',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+            }}>
+              <div style={{ fontSize: '12px', color: '#666', marginBottom: '6px' }}>Matched</div>
+              <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#065f46' }}>
+                {statValue(stats.matched)}
+              </div>
+              <div style={{ fontSize: '11px', color: '#999', marginTop: '6px' }}>Matched to startups</div>
             </div>
           </div>
           <h2 style={{ fontSize: '18px', color: '#0a468f', marginBottom: '12px' }}>

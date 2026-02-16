@@ -20,7 +20,7 @@ interface Application {
   companyName?: string;
   email: string;
   userType: 'STUDENT' | 'STARTUP';
-  status: 'submitted' | 'under_review' | 'accepted' | 'rejected';
+  status: 'submitted' | 'interview_scheduled' | 'interviewed' | 'finalist' | 'rejected' | 'matched' | 'not_matched';
   term?: string;
   submittedAt: string;
   interviewEligible?: boolean;
@@ -56,9 +56,12 @@ interface Application {
 interface Stats {
   total: number;
   submitted: number;
-  under_review: number;
-  accepted: number;
+  interview_scheduled: number;
+  interviewed: number;
+  finalist: number;
   rejected: number;
+  matched: number;
+  not_matched: number;
 }
 
 interface StartupStats {
@@ -71,16 +74,22 @@ interface StartupStats {
 
 const STATUS_STYLES: Record<string, { bg: string; color: string; border: string }> = {
   submitted: { bg: '#fef3c7', color: '#92400e', border: '#fcd34d' },
-  under_review: { bg: '#dbeafe', color: '#1e40af', border: '#93c5fd' },
-  accepted: { bg: '#d1fae5', color: '#065f46', border: '#6ee7b7' },
+  interview_scheduled: { bg: '#dbeafe', color: '#1e40af', border: '#93c5fd' },
+  interviewed: { bg: '#e0e7ff', color: '#3730a3', border: '#a5b4fc' },
+  finalist: { bg: '#fae8ff', color: '#86198f', border: '#e879f9' },
   rejected: { bg: '#fee2e2', color: '#991b1b', border: '#fca5a5' },
+  matched: { bg: '#d1fae5', color: '#065f46', border: '#6ee7b7' },
+  not_matched: { bg: '#fef3c7', color: '#78350f', border: '#fbbf24' },
 };
 
 const STATUS_LABELS: Record<string, string> = {
   submitted: 'Submitted',
-  under_review: 'Under Review',
-  accepted: 'Accepted',
+  interview_scheduled: 'Interview Scheduled',
+  interviewed: 'Interviewed',
+  finalist: 'Finalist',
   rejected: 'Rejected',
+  matched: 'Matched',
+  not_matched: 'Not Matched',
 };
 
 const STARTUP_STATUS_STYLES: Record<string, { bg: string; color: string; border: string }> = {
@@ -119,9 +128,12 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats>({
     total: 0,
     submitted: 0,
-    under_review: 0,
-    accepted: 0,
+    interview_scheduled: 0,
+    interviewed: 0,
+    finalist: 0,
     rejected: 0,
+    matched: 0,
+    not_matched: 0,
   });
   const [startups, setStartups] = useState<Startup[]>([]);
   const [filteredStartups, setFilteredStartups] = useState<Startup[]>([]);
@@ -280,9 +292,12 @@ export default function AdminDashboard() {
     setStats({
       total: apps.length,
       submitted: apps.filter(a => a.status === 'submitted').length,
-      under_review: apps.filter(a => a.status === 'under_review').length,
-      accepted: apps.filter(a => a.status === 'accepted').length,
+      interview_scheduled: apps.filter(a => a.status === 'interview_scheduled').length,
+      interviewed: apps.filter(a => a.status === 'interviewed').length,
+      finalist: apps.filter(a => a.status === 'finalist').length,
       rejected: apps.filter(a => a.status === 'rejected').length,
+      matched: apps.filter(a => a.status === 'matched').length,
+      not_matched: apps.filter(a => a.status === 'not_matched').length,
     });
   }
 
@@ -674,24 +689,28 @@ export default function AdminDashboard() {
             marginBottom: '30px'
           }}>
             <div style={{ background: 'white', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', padding: '20px' }}>
-              <div style={{ fontSize: '13px', fontWeight: '500', color: '#666' }}>Total Applications</div>
+              <div style={{ fontSize: '13px', fontWeight: '500', color: '#666' }}>Total</div>
               <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#0a468f', marginTop: '8px' }}>{stats.total}</div>
             </div>
             <div style={{ background: 'white', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', padding: '20px' }}>
-              <div style={{ fontSize: '13px', fontWeight: '500', color: '#666' }}>Pending Review</div>
-              <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#ffc107', marginTop: '8px' }}>{stats.submitted}</div>
+              <div style={{ fontSize: '13px', fontWeight: '500', color: '#666' }}>Submitted</div>
+              <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#92400e', marginTop: '8px' }}>{stats.submitted}</div>
             </div>
             <div style={{ background: 'white', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', padding: '20px' }}>
-              <div style={{ fontSize: '13px', fontWeight: '500', color: '#666' }}>Under Review</div>
-              <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#17a2b8', marginTop: '8px' }}>{stats.under_review}</div>
+              <div style={{ fontSize: '13px', fontWeight: '500', color: '#666' }}>Interviewed</div>
+              <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#3730a3', marginTop: '8px' }}>{stats.interviewed}</div>
             </div>
             <div style={{ background: 'white', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', padding: '20px' }}>
-              <div style={{ fontSize: '13px', fontWeight: '500', color: '#666' }}>Accepted</div>
-              <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#28a745', marginTop: '8px' }}>{stats.accepted}</div>
+              <div style={{ fontSize: '13px', fontWeight: '500', color: '#666' }}>Finalist</div>
+              <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#86198f', marginTop: '8px' }}>{stats.finalist}</div>
+            </div>
+            <div style={{ background: 'white', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', padding: '20px' }}>
+              <div style={{ fontSize: '13px', fontWeight: '500', color: '#666' }}>Matched</div>
+              <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#065f46', marginTop: '8px' }}>{stats.matched}</div>
             </div>
             <div style={{ background: 'white', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', padding: '20px' }}>
               <div style={{ fontSize: '13px', fontWeight: '500', color: '#666' }}>Rejected</div>
-              <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#dc3545', marginTop: '8px' }}>{stats.rejected}</div>
+              <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#991b1b', marginTop: '8px' }}>{stats.rejected}</div>
             </div>
           </div>
 
@@ -733,14 +752,12 @@ export default function AdminDashboard() {
               >
                 <option value="all">All Status</option>
                 <option value="submitted">Submitted</option>
-                <option value="under_review">Under Review</option>
                 <option value="interview_scheduled">Interview Scheduled</option>
                 <option value="interviewed">Interviewed</option>
                 <option value="finalist">Finalist</option>
+                <option value="rejected">Rejected</option>
                 <option value="matched">Matched</option>
                 <option value="not_matched">Not Matched</option>
-                <option value="accepted">Accepted</option>
-                <option value="rejected">Rejected</option>
               </select>
               <select
                 value={interviewEligibilityFilter}
@@ -1635,9 +1652,12 @@ export default function AdminDashboard() {
                       }}
                     >
                       <option value="submitted">Submitted</option>
-                      <option value="under_review">Under Review</option>
-                      <option value="accepted">Accepted</option>
+                      <option value="interview_scheduled">Interview Scheduled</option>
+                      <option value="interviewed">Interviewed</option>
+                      <option value="finalist">Finalist</option>
                       <option value="rejected">Rejected</option>
+                      <option value="matched">Matched</option>
+                      <option value="not_matched">Not Matched</option>
                     </select>
                   </div>
                 </div>

@@ -486,7 +486,7 @@ export async function getAllApplications(params?: {
 
 export async function updateApplicationStatus(
   applicationId: string,
-  status: 'submitted' | 'under_review' | 'accepted' | 'rejected',
+  status: 'submitted' | 'interview_scheduled' | 'interviewed' | 'finalist' | 'rejected' | 'matched' | 'not_matched',
   reviewNotes?: string
 ): Promise<void> {
   const res = await fetch(`${API_BASE}/v1/students/applications/${applicationId}`, {
