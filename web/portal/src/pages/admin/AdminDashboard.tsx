@@ -108,7 +108,6 @@ export default function AdminDashboard() {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
   const [interviewEligibilityFilter, setInterviewEligibilityFilter] = useState<string>('all');
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [resumeSignedUrl, setResumeSignedUrl] = useState<string | null>(null);
@@ -150,7 +149,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     filterApplications();
-  }, [applications, searchTerm, statusFilter, typeFilter, interviewEligibilityFilter]);
+  }, [applications, searchTerm, statusFilter, interviewEligibilityFilter]);
 
   useEffect(() => {
     if (activeTab === 'startups' && startups.length === 0) {
@@ -323,11 +322,6 @@ export default function AdminDashboard() {
       );
     }
 
-    // Type filter
-    if (typeFilter !== 'all') {
-      filtered = filtered.filter(app => app.userType === typeFilter);
-    }
-
     setFilteredApps(filtered);
   }
 
@@ -394,8 +388,17 @@ export default function AdminDashboard() {
   async function handleStatusChange(appId: string, newStatus: string) {
     try {
       await updateApplicationStatus(appId, newStatus as any);
-      await loadApplications();
-      setSelectedApp(null);
+      const data = await getAllApplications();
+      const normalized = data.map(app => ({
+        ...app,
+        userType: 'STUDENT',
+      }));
+      setApplications(normalized);
+      calculateStats(normalized);
+      const updated = normalized.find(app => app.id === appId);
+      if (updated) {
+        setSelectedApp(updated);
+      }
     } catch (err: any) {
       alert('Failed to update status: ' + err.message);
     }
@@ -755,22 +758,6 @@ export default function AdminDashboard() {
                 <option value="eligible">Interview Eligible</option>
                 <option value="not_eligible">Not Eligible</option>
               </select>
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                style={{
-                  padding: '10px 15px',
-                  border: '1px solid #ddd',
-                  borderRadius: '6px',
-                  fontSize: '14px',
-                  outline: 'none',
-                  cursor: 'pointer'
-                }}
-              >
-                <option value="all">All Types</option>
-                <option value="STUDENT">Students</option>
-                <option value="STARTUP">Startups</option>
-              </select>
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
               <button
@@ -867,17 +854,6 @@ export default function AdminDashboard() {
                       textTransform: 'uppercase',
                       letterSpacing: '0.5px'
                     }}>
-                      Type
-                    </th>
-                    <th style={{
-                      padding: '15px 20px',
-                      textAlign: 'left',
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      color: '#666',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px'
-                    }}>
                       Status
                     </th>
                     <th style={{
@@ -907,7 +883,7 @@ export default function AdminDashboard() {
                 <tbody>
                   {filteredApps.length === 0 ? (
                     <tr>
-                      <td colSpan={7} style={{
+                      <td colSpan={6} style={{
                         padding: '60px 20px',
                         textAlign: 'center',
                         color: '#999',
@@ -932,18 +908,6 @@ export default function AdminDashboard() {
                         </td>
                         <td style={{ padding: '15px 20px', fontSize: '14px', color: '#666' }}>
                           {app.email}
-                        </td>
-                        <td style={{ padding: '15px 20px' }}>
-                          <span style={{
-                            padding: '4px 12px',
-                            fontSize: '11px',
-                            fontWeight: '600',
-                            borderRadius: '12px',
-                            background: app.userType === 'STUDENT' ? '#e8d5ff' : '#ffe8d5',
-                            color: app.userType === 'STUDENT' ? '#7c3aed' : '#ea580c'
-                          }}>
-                            {app.userType}
-                          </span>
                         </td>
                         <td style={{ padding: '15px 20px' }}>
                           {(() => {
