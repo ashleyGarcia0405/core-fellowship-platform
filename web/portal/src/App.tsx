@@ -14,6 +14,7 @@ import InterviewForm from './pages/admin/InterviewForm';
 import ApplicationForm from './pages/student/ApplicationForm';
 import IntakeForm from './pages/startup/IntakeForm';
 import InterviewScheduling from './pages/student/InterviewScheduling';
+import MatchPreferenceForm from './pages/student/MatchPreferenceForm';
 import InterviewSignup from './pages/admin/InterviewSignup';
 
 export default function App() {
@@ -79,6 +80,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <InterviewScheduling />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/match-preferences"
+            element={
+              <ProtectedRoute>
+                <MatchPreferenceForm />
               </ProtectedRoute>
             }
           />

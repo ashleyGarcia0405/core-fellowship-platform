@@ -92,19 +92,6 @@ const STATUS_LABELS: Record<string, string> = {
   not_matched: 'Not Matched',
 };
 
-const STARTUP_STATUS_STYLES: Record<string, { bg: string; color: string; border: string }> = {
-  submitted: { bg: '#fef3c7', color: '#92400e', border: '#fcd34d' },
-  approved: { bg: '#d1fae5', color: '#065f46', border: '#6ee7b7' },
-  active: { bg: '#dbeafe', color: '#1e40af', border: '#93c5fd' },
-  inactive: { bg: '#fee2e2', color: '#991b1b', border: '#fca5a5' },
-};
-
-const STARTUP_STATUS_LABELS: Record<string, string> = {
-  submitted: 'Submitted',
-  approved: 'Approved',
-  active: 'Active',
-  inactive: 'Inactive',
-};
 
 export default function AdminDashboard() {
   const { logout } = useAuth();
@@ -1132,18 +1119,7 @@ export default function AdminDashboard() {
                               textTransform: 'uppercase',
                               letterSpacing: '0.5px'
                             }}>
-                              Status
-                            </th>
-                            <th style={{
-                              padding: '15px 20px',
-                              textAlign: 'left',
-                              fontSize: '12px',
-                              fontWeight: '600',
-                              color: '#666',
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.5px'
-                            }}>
-                              Submitted
+                              Roles
                             </th>
                             <th style={{
                               padding: '15px 20px',
@@ -1161,7 +1137,7 @@ export default function AdminDashboard() {
                         <tbody>
                           {filteredStartups.length === 0 ? (
                             <tr>
-                              <td colSpan={6} style={{
+                              <td colSpan={5} style={{
                                 padding: '60px 20px',
                                 textAlign: 'center',
                                 color: '#999',
@@ -1172,7 +1148,6 @@ export default function AdminDashboard() {
                             </tr>
                           ) : (
                             filteredStartups.map((startup, index) => {
-                              const style = STARTUP_STATUS_STYLES[startup.status] || { bg: '#f3f4f6', color: '#374151', border: '#e5e7eb' };
                               return (
                                 <tr key={startup.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
                                   <td style={{ padding: '15px 20px', fontSize: '14px', fontWeight: '500', color: '#999' }}>
@@ -1195,21 +1170,24 @@ export default function AdminDashboard() {
                                     </div>
                                   </td>
                                   <td style={{ padding: '15px 20px' }}>
-                                    <span style={{
-                                      padding: '4px 12px',
-                                      fontSize: '11px',
-                                      fontWeight: '600',
-                                      borderRadius: '12px',
-                                      border: '1px solid',
-                                      background: style.bg,
-                                      color: style.color,
-                                      borderColor: style.border
-                                    }}>
-                                      {STARTUP_STATUS_LABELS[startup.status] || startup.status || 'Unknown'}
-                                    </span>
-                                  </td>
-                                  <td style={{ padding: '15px 20px', fontSize: '14px', color: '#666' }}>
-                                    {startup.submittedAt ? new Date(startup.submittedAt).toLocaleDateString() : '—'}
+                                    {startup.positions && startup.positions.length > 0 ? (
+                                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                        {startup.positions.map((pos, i) => (
+                                          <span key={i} style={{
+                                            padding: '3px 10px',
+                                            fontSize: '11px',
+                                            fontWeight: '600',
+                                            borderRadius: '12px',
+                                            background: '#e8f4ff',
+                                            color: '#0a468f',
+                                          }}>
+                                            {pos.roleType}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <span style={{ fontSize: '13px', color: '#999' }}>No roles</span>
+                                    )}
                                   </td>
                                   <td style={{ padding: '15px 20px' }}>
                                     <button

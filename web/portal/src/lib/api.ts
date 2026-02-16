@@ -548,3 +548,75 @@ export async function exportApplicationsJSON(): Promise<Blob> {
   }
   return res.blob();
 }
+
+// Match Preference types
+export interface RoleReference {
+  startupId: string;
+  positionIndex: number;
+  startupName: string;
+  roleType: string;
+}
+
+export interface MatchPreference {
+  id: string;
+  applicationId: string;
+  rankedRoles: RoleReference[];
+  notes?: string;
+  submitted: boolean;
+  matchedRole?: RoleReference;
+  createdAt: string;
+  updatedAt: string;
+  submittedAt?: string;
+}
+
+export interface AvailableStartup {
+  id: string;
+  companyName: string;
+  website?: string;
+  industry?: string;
+  description?: string;
+  stage?: string;
+  teamSize?: string;
+  foundedYear?: string;
+  operatingMode?: string;
+  timeZone?: string;
+  numberOfInternsNeeded?: number;
+  positions?: Position[];
+  willPayInterns?: string;
+  payAmount?: string;
+}
+
+// Match Preference API
+export async function getAvailableStartups(): Promise<AvailableStartup[]> {
+  return getJson<AvailableStartup[]>('/v1/startups/available');
+}
+
+export async function createMatchPreferences(
+  applicationId: string,
+  data: { rankedRoles: RoleReference[]; notes?: string; submit?: boolean }
+): Promise<MatchPreference> {
+  return postJson<MatchPreference>(`/v1/students/applications/${applicationId}/match-preferences`, data);
+}
+
+export async function getMatchPreferences(applicationId: string): Promise<MatchPreference> {
+  return getJson<MatchPreference>(`/v1/students/applications/${applicationId}/match-preferences`);
+}
+
+export async function updateMatchPreferences(
+  applicationId: string,
+  data: { rankedRoles?: RoleReference[]; notes?: string; submit?: boolean }
+): Promise<MatchPreference> {
+  const res = await fetch(`${API_BASE}/v1/students/applications/${applicationId}/match-preferences`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    if (res.status === 401) {
+      handleUnauthorized();
+    }
+    const text = await res.text();
+    throw new Error(`HTTP ${res.status}: ${text}`);
+  }
+  return res.json() as Promise<MatchPreference>;
+}
