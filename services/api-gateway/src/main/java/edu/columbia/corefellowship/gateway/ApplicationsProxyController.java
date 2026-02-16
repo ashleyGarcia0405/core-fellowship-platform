@@ -3,11 +3,15 @@ package edu.columbia.corefellowship.gateway;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Duration;
 import java.util.Map;
 
 @RestController
@@ -17,7 +21,12 @@ public class ApplicationsProxyController {
   private final RestClient client;
 
   public ApplicationsProxyController(@Value("${services.applications.baseUrl}") String baseUrl) {
-    this.client = RestClient.builder().baseUrl(baseUrl).build();
+    JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory();
+    requestFactory.setReadTimeout(Duration.ofSeconds(60));
+    this.client = RestClient.builder()
+        .baseUrl(baseUrl)
+        .requestFactory(requestFactory)
+        .build();
   }
 
   /**
@@ -63,6 +72,13 @@ public class ApplicationsProxyController {
     }
 
     return spec;
+  }
+
+  @ExceptionHandler(ResourceAccessException.class)
+  public ResponseEntity<Object> handleResourceAccessException(ResourceAccessException ex) {
+    System.out.println(">>> ApplicationsProxy connection error: " + ex.getMessage());
+    return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+        .body(Map.of("error", "Applications service is temporarily unavailable. Please try again."));
   }
 
   // Student Applications Endpoints

@@ -22,19 +22,43 @@ public class Interview {
 
   private Instant interviewDate;
 
-  // Scoring (1-10 scale)
-  private Integer technicalScore;
-  private Integer communicationScore;
-  private Integer motivationScore;
-  private Integer cultureFitScore;
+  // Role preferences
+  private String primaryRoleInterest;
+  private String secondaryRoleInterest;
+  private String roleStructurePreference;
 
-  // Auto-calculated weighted average
-  private Double overallScore;
+  // Startups & industries of interest
+  private String startupInterests;
 
-  // Qualitative assessment
-  private String strengths;
-  private String concerns;
-  private String notes;
+  // Contribution & experience
+  private String skillsAndExperience;
+  private String ambiguityExample;
+  private String criticalFeedbackExample;
+
+  // Work details
+  private String workPreference;
+  private String commitmentsAndConflicts;
+
+  // Questions
+  private String clarifyingQuestions;
+
+  // Technical section
+  private String technicalProjectOverview;
+  private String technicalRebuildChanges;
+  private String technicalDebuggingExample;
+  private String technicalTestingApproach;
+  private String technicalOnboardingApproach;
+
+  // Non-technical section
+  private String nonTechnicalOrganization;
+  private String nonTechnicalFirstTwoWeeks;
+  private String nonTechnicalCommunication;
+  private String nonTechnicalProudProject;
+
+  // Interviewer notes
+  private String bestFitRoleOrStartup;
+  private String likelihoodToAccept;
+  private String commitmentConcerns;
 
   // Recommendation
   private Recommendation recommendation;
@@ -45,18 +69,6 @@ public class Interview {
 
   // Constructors
   public Interview() {
-  }
-
-  // Method to calculate overall score
-  public void calculateOverallScore() {
-    if (technicalScore != null && communicationScore != null &&
-        motivationScore != null && cultureFitScore != null) {
-      // Weighted average: technical 30%, communication 25%, motivation 25%, culture fit 20%
-      this.overallScore = (technicalScore * 0.30) +
-                         (communicationScore * 0.25) +
-                         (motivationScore * 0.25) +
-                         (cultureFitScore * 0.20);
-    }
   }
 
   // Getters and Setters
@@ -100,68 +112,180 @@ public class Interview {
     this.interviewDate = interviewDate;
   }
 
-  public Integer getTechnicalScore() {
-    return technicalScore;
+  public String getPrimaryRoleInterest() {
+    return primaryRoleInterest;
   }
 
-  public void setTechnicalScore(Integer technicalScore) {
-    this.technicalScore = technicalScore;
+  public void setPrimaryRoleInterest(String primaryRoleInterest) {
+    this.primaryRoleInterest = primaryRoleInterest;
   }
 
-  public Integer getCommunicationScore() {
-    return communicationScore;
+  public String getSecondaryRoleInterest() {
+    return secondaryRoleInterest;
   }
 
-  public void setCommunicationScore(Integer communicationScore) {
-    this.communicationScore = communicationScore;
+  public void setSecondaryRoleInterest(String secondaryRoleInterest) {
+    this.secondaryRoleInterest = secondaryRoleInterest;
   }
 
-  public Integer getMotivationScore() {
-    return motivationScore;
+  public String getRoleStructurePreference() {
+    return roleStructurePreference;
   }
 
-  public void setMotivationScore(Integer motivationScore) {
-    this.motivationScore = motivationScore;
+  public void setRoleStructurePreference(String roleStructurePreference) {
+    this.roleStructurePreference = roleStructurePreference;
   }
 
-  public Integer getCultureFitScore() {
-    return cultureFitScore;
+  public String getStartupInterests() {
+    return startupInterests;
   }
 
-  public void setCultureFitScore(Integer cultureFitScore) {
-    this.cultureFitScore = cultureFitScore;
+  public void setStartupInterests(String startupInterests) {
+    this.startupInterests = startupInterests;
   }
 
-  public Double getOverallScore() {
-    return overallScore;
+  public String getSkillsAndExperience() {
+    return skillsAndExperience;
   }
 
-  public void setOverallScore(Double overallScore) {
-    this.overallScore = overallScore;
+  public void setSkillsAndExperience(String skillsAndExperience) {
+    this.skillsAndExperience = skillsAndExperience;
   }
 
-  public String getStrengths() {
-    return strengths;
+  public String getAmbiguityExample() {
+    return ambiguityExample;
   }
 
-  public void setStrengths(String strengths) {
-    this.strengths = strengths;
+  public void setAmbiguityExample(String ambiguityExample) {
+    this.ambiguityExample = ambiguityExample;
   }
 
-  public String getConcerns() {
-    return concerns;
+  public String getCriticalFeedbackExample() {
+    return criticalFeedbackExample;
   }
 
-  public void setConcerns(String concerns) {
-    this.concerns = concerns;
+  public void setCriticalFeedbackExample(String criticalFeedbackExample) {
+    this.criticalFeedbackExample = criticalFeedbackExample;
   }
 
-  public String getNotes() {
-    return notes;
+  public String getWorkPreference() {
+    return workPreference;
   }
 
-  public void setNotes(String notes) {
-    this.notes = notes;
+  public void setWorkPreference(String workPreference) {
+    this.workPreference = workPreference;
+  }
+
+  public String getCommitmentsAndConflicts() {
+    return commitmentsAndConflicts;
+  }
+
+  public void setCommitmentsAndConflicts(String commitmentsAndConflicts) {
+    this.commitmentsAndConflicts = commitmentsAndConflicts;
+  }
+
+  public String getClarifyingQuestions() {
+    return clarifyingQuestions;
+  }
+
+  public void setClarifyingQuestions(String clarifyingQuestions) {
+    this.clarifyingQuestions = clarifyingQuestions;
+  }
+
+  public String getTechnicalProjectOverview() {
+    return technicalProjectOverview;
+  }
+
+  public void setTechnicalProjectOverview(String technicalProjectOverview) {
+    this.technicalProjectOverview = technicalProjectOverview;
+  }
+
+  public String getTechnicalRebuildChanges() {
+    return technicalRebuildChanges;
+  }
+
+  public void setTechnicalRebuildChanges(String technicalRebuildChanges) {
+    this.technicalRebuildChanges = technicalRebuildChanges;
+  }
+
+  public String getTechnicalDebuggingExample() {
+    return technicalDebuggingExample;
+  }
+
+  public void setTechnicalDebuggingExample(String technicalDebuggingExample) {
+    this.technicalDebuggingExample = technicalDebuggingExample;
+  }
+
+  public String getTechnicalTestingApproach() {
+    return technicalTestingApproach;
+  }
+
+  public void setTechnicalTestingApproach(String technicalTestingApproach) {
+    this.technicalTestingApproach = technicalTestingApproach;
+  }
+
+  public String getTechnicalOnboardingApproach() {
+    return technicalOnboardingApproach;
+  }
+
+  public void setTechnicalOnboardingApproach(String technicalOnboardingApproach) {
+    this.technicalOnboardingApproach = technicalOnboardingApproach;
+  }
+
+  public String getNonTechnicalOrganization() {
+    return nonTechnicalOrganization;
+  }
+
+  public void setNonTechnicalOrganization(String nonTechnicalOrganization) {
+    this.nonTechnicalOrganization = nonTechnicalOrganization;
+  }
+
+  public String getNonTechnicalFirstTwoWeeks() {
+    return nonTechnicalFirstTwoWeeks;
+  }
+
+  public void setNonTechnicalFirstTwoWeeks(String nonTechnicalFirstTwoWeeks) {
+    this.nonTechnicalFirstTwoWeeks = nonTechnicalFirstTwoWeeks;
+  }
+
+  public String getNonTechnicalCommunication() {
+    return nonTechnicalCommunication;
+  }
+
+  public void setNonTechnicalCommunication(String nonTechnicalCommunication) {
+    this.nonTechnicalCommunication = nonTechnicalCommunication;
+  }
+
+  public String getNonTechnicalProudProject() {
+    return nonTechnicalProudProject;
+  }
+
+  public void setNonTechnicalProudProject(String nonTechnicalProudProject) {
+    this.nonTechnicalProudProject = nonTechnicalProudProject;
+  }
+
+  public String getBestFitRoleOrStartup() {
+    return bestFitRoleOrStartup;
+  }
+
+  public void setBestFitRoleOrStartup(String bestFitRoleOrStartup) {
+    this.bestFitRoleOrStartup = bestFitRoleOrStartup;
+  }
+
+  public String getLikelihoodToAccept() {
+    return likelihoodToAccept;
+  }
+
+  public void setLikelihoodToAccept(String likelihoodToAccept) {
+    this.likelihoodToAccept = likelihoodToAccept;
+  }
+
+  public String getCommitmentConcerns() {
+    return commitmentConcerns;
+  }
+
+  public void setCommitmentConcerns(String commitmentConcerns) {
+    this.commitmentConcerns = commitmentConcerns;
   }
 
   public Recommendation getRecommendation() {

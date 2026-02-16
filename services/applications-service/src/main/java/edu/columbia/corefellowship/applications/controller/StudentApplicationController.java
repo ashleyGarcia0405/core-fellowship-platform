@@ -354,20 +354,32 @@ public class StudentApplicationController {
     interview.setApplicationId(id);
     interview.setInterviewerId(userId);
     interview.setInterviewerName(userEmail != null ? userEmail.split("@")[0] : "Admin");
-    interview.setInterviewDate(request.getInterviewDate());
-    interview.setTechnicalScore(request.getTechnicalScore());
-    interview.setCommunicationScore(request.getCommunicationScore());
-    interview.setMotivationScore(request.getMotivationScore());
-    interview.setCultureFitScore(request.getCultureFitScore());
-    interview.setStrengths(request.getStrengths());
-    interview.setConcerns(request.getConcerns());
-    interview.setNotes(request.getNotes());
+    interview.setInterviewDate(Instant.now());
+    interview.setPrimaryRoleInterest(request.getPrimaryRoleInterest());
+    interview.setSecondaryRoleInterest(request.getSecondaryRoleInterest());
+    interview.setRoleStructurePreference(request.getRoleStructurePreference());
+    interview.setStartupInterests(request.getStartupInterests());
+    interview.setSkillsAndExperience(request.getSkillsAndExperience());
+    interview.setAmbiguityExample(request.getAmbiguityExample());
+    interview.setCriticalFeedbackExample(request.getCriticalFeedbackExample());
+    interview.setWorkPreference(request.getWorkPreference());
+    interview.setCommitmentsAndConflicts(request.getCommitmentsAndConflicts());
+    interview.setClarifyingQuestions(request.getClarifyingQuestions());
+    interview.setTechnicalProjectOverview(request.getTechnicalProjectOverview());
+    interview.setTechnicalRebuildChanges(request.getTechnicalRebuildChanges());
+    interview.setTechnicalDebuggingExample(request.getTechnicalDebuggingExample());
+    interview.setTechnicalTestingApproach(request.getTechnicalTestingApproach());
+    interview.setTechnicalOnboardingApproach(request.getTechnicalOnboardingApproach());
+    interview.setNonTechnicalOrganization(request.getNonTechnicalOrganization());
+    interview.setNonTechnicalFirstTwoWeeks(request.getNonTechnicalFirstTwoWeeks());
+    interview.setNonTechnicalCommunication(request.getNonTechnicalCommunication());
+    interview.setNonTechnicalProudProject(request.getNonTechnicalProudProject());
+    interview.setBestFitRoleOrStartup(request.getBestFitRoleOrStartup());
+    interview.setLikelihoodToAccept(request.getLikelihoodToAccept());
+    interview.setCommitmentConcerns(request.getCommitmentConcerns());
     interview.setRecommendation(request.getRecommendation());
     interview.setCreatedAt(Instant.now());
     interview.setUpdatedAt(Instant.now());
-
-    // Calculate overall score
-    interview.calculateOverallScore();
 
     // Save interview
     Interview saved = interviewRepository.save(interview);
@@ -422,38 +434,77 @@ public class StudentApplicationController {
             "No interview found for this application"));
 
     // Update fields if provided
-    if (request.getInterviewDate() != null) {
-      interview.setInterviewDate(request.getInterviewDate());
+    if (request.getPrimaryRoleInterest() != null) {
+      interview.setPrimaryRoleInterest(request.getPrimaryRoleInterest());
     }
-    if (request.getTechnicalScore() != null) {
-      interview.setTechnicalScore(request.getTechnicalScore());
+    if (request.getSecondaryRoleInterest() != null) {
+      interview.setSecondaryRoleInterest(request.getSecondaryRoleInterest());
     }
-    if (request.getCommunicationScore() != null) {
-      interview.setCommunicationScore(request.getCommunicationScore());
+    if (request.getRoleStructurePreference() != null) {
+      interview.setRoleStructurePreference(request.getRoleStructurePreference());
     }
-    if (request.getMotivationScore() != null) {
-      interview.setMotivationScore(request.getMotivationScore());
+    if (request.getStartupInterests() != null) {
+      interview.setStartupInterests(request.getStartupInterests());
     }
-    if (request.getCultureFitScore() != null) {
-      interview.setCultureFitScore(request.getCultureFitScore());
+    if (request.getSkillsAndExperience() != null) {
+      interview.setSkillsAndExperience(request.getSkillsAndExperience());
     }
-    if (request.getStrengths() != null) {
-      interview.setStrengths(request.getStrengths());
+    if (request.getAmbiguityExample() != null) {
+      interview.setAmbiguityExample(request.getAmbiguityExample());
     }
-    if (request.getConcerns() != null) {
-      interview.setConcerns(request.getConcerns());
+    if (request.getCriticalFeedbackExample() != null) {
+      interview.setCriticalFeedbackExample(request.getCriticalFeedbackExample());
     }
-    if (request.getNotes() != null) {
-      interview.setNotes(request.getNotes());
+    if (request.getWorkPreference() != null) {
+      interview.setWorkPreference(request.getWorkPreference());
+    }
+    if (request.getCommitmentsAndConflicts() != null) {
+      interview.setCommitmentsAndConflicts(request.getCommitmentsAndConflicts());
+    }
+    if (request.getClarifyingQuestions() != null) {
+      interview.setClarifyingQuestions(request.getClarifyingQuestions());
+    }
+    if (request.getTechnicalProjectOverview() != null) {
+      interview.setTechnicalProjectOverview(request.getTechnicalProjectOverview());
+    }
+    if (request.getTechnicalRebuildChanges() != null) {
+      interview.setTechnicalRebuildChanges(request.getTechnicalRebuildChanges());
+    }
+    if (request.getTechnicalDebuggingExample() != null) {
+      interview.setTechnicalDebuggingExample(request.getTechnicalDebuggingExample());
+    }
+    if (request.getTechnicalTestingApproach() != null) {
+      interview.setTechnicalTestingApproach(request.getTechnicalTestingApproach());
+    }
+    if (request.getTechnicalOnboardingApproach() != null) {
+      interview.setTechnicalOnboardingApproach(request.getTechnicalOnboardingApproach());
+    }
+    if (request.getNonTechnicalOrganization() != null) {
+      interview.setNonTechnicalOrganization(request.getNonTechnicalOrganization());
+    }
+    if (request.getNonTechnicalFirstTwoWeeks() != null) {
+      interview.setNonTechnicalFirstTwoWeeks(request.getNonTechnicalFirstTwoWeeks());
+    }
+    if (request.getNonTechnicalCommunication() != null) {
+      interview.setNonTechnicalCommunication(request.getNonTechnicalCommunication());
+    }
+    if (request.getNonTechnicalProudProject() != null) {
+      interview.setNonTechnicalProudProject(request.getNonTechnicalProudProject());
+    }
+    if (request.getBestFitRoleOrStartup() != null) {
+      interview.setBestFitRoleOrStartup(request.getBestFitRoleOrStartup());
+    }
+    if (request.getLikelihoodToAccept() != null) {
+      interview.setLikelihoodToAccept(request.getLikelihoodToAccept());
+    }
+    if (request.getCommitmentConcerns() != null) {
+      interview.setCommitmentConcerns(request.getCommitmentConcerns());
     }
     if (request.getRecommendation() != null) {
       interview.setRecommendation(request.getRecommendation());
     }
 
     interview.setUpdatedAt(Instant.now());
-
-    // Recalculate overall score
-    interview.calculateOverallScore();
 
     Interview updated = interviewRepository.save(interview);
     return ResponseEntity.ok(updated);

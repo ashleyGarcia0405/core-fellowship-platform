@@ -1,10 +1,13 @@
 package edu.columbia.corefellowship.gateway;
 
+import java.time.Duration;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -12,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 
 @RestController
 public class IdentityProxyController {
@@ -19,7 +23,12 @@ public class IdentityProxyController {
   private final RestClient client;
 
   public IdentityProxyController(@Value("${services.identity.baseUrl}") String baseUrl) {
-    this.client = RestClient.builder().baseUrl(baseUrl).build();
+    JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory();
+    requestFactory.setReadTimeout(Duration.ofSeconds(60));
+    this.client = RestClient.builder()
+        .baseUrl(baseUrl)
+        .requestFactory(requestFactory)
+        .build();
   }
 
   @GetMapping("/v1/identity/health")
@@ -45,6 +54,10 @@ public class IdentityProxyController {
       System.out.println(">>> IdentityProxyController.register downstream status "
           + ex.getStatusCode() + " body=" + ex.getResponseBodyAsString());
       throw ex;
+    } catch (ResourceAccessException ex) {
+      System.out.println(">>> IdentityProxyController.register connection error: " + ex.getMessage());
+      return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+          .body(Map.of("error", "Identity service is temporarily unavailable. Please try again."));
     }
   }
 
@@ -66,6 +79,10 @@ public class IdentityProxyController {
       System.out.println(">>> IdentityProxyController.login downstream status "
           + ex.getStatusCode() + " body=" + ex.getResponseBodyAsString());
       throw ex;
+    } catch (ResourceAccessException ex) {
+      System.out.println(">>> IdentityProxyController.login connection error: " + ex.getMessage());
+      return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+          .body(Map.of("error", "Authentication service is starting up. Please try again in a few seconds."));
     }
   }
 
@@ -87,6 +104,10 @@ public class IdentityProxyController {
       System.out.println(">>> IdentityProxyController.resetPassword downstream status "
           + ex.getStatusCode() + " body=" + ex.getResponseBodyAsString());
       throw ex;
+    } catch (ResourceAccessException ex) {
+      System.out.println(">>> IdentityProxyController.resetPassword connection error: " + ex.getMessage());
+      return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+          .body(Map.of("error", "Identity service is temporarily unavailable. Please try again."));
     }
   }
 
