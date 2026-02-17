@@ -70,6 +70,7 @@ interface StartupStats {
   approved: number;
   active: number;
   inactive: number;
+  totalRoles: number;
 }
 
 const STATUS_STYLES: Record<string, { bg: string; color: string; border: string }> = {
@@ -135,6 +136,7 @@ export default function AdminDashboard() {
     approved: 0,
     active: 0,
     inactive: 0,
+    totalRoles: 0,
   });
 
   const handleLogout = () => {
@@ -295,6 +297,7 @@ export default function AdminDashboard() {
       approved: items.filter(s => s.status === 'approved').length,
       active: items.filter(s => s.status === 'active').length,
       inactive: items.filter(s => s.status === 'inactive').length,
+      totalRoles: items.reduce((sum, s) => sum + (s.positions?.length || 0), 0),
     });
   }
 
@@ -1003,6 +1006,10 @@ export default function AdminDashboard() {
                     <div style={{ background: 'white', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', padding: '20px' }}>
                       <div style={{ fontSize: '13px', fontWeight: '500', color: '#666' }}>Total Startups</div>
                       <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#0a468f', marginTop: '8px' }}>{startupStats.total}</div>
+                    </div>
+                    <div style={{ background: 'white', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', padding: '20px' }}>
+                      <div style={{ fontSize: '13px', fontWeight: '500', color: '#666' }}>Total Roles</div>
+                      <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#7c3aed', marginTop: '8px' }}>{startupStats.totalRoles}</div>
                     </div>
                     <div style={{ background: 'white', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', padding: '20px' }}>
                       <div style={{ fontSize: '13px', fontWeight: '500', color: '#666' }}>Submitted</div>
