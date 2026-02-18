@@ -273,7 +273,54 @@ public class ApplicationsProxyController {
     return forwardResponse(response);
   }
 
+  // Match Preference Endpoints
+  @PostMapping("/students/applications/{id}/match-preferences")
+  public ResponseEntity<Object> createMatchPreferences(
+      @PathVariable String id,
+      @RequestBody Map<String, Object> body,
+      HttpServletRequest request) {
+    RestClient.RequestBodySpec spec = client.post().uri("/v1/students/applications/" + id + "/match-preferences");
+    ResponseEntity<String> response = addUserHeadersToBody(spec, request)
+        .body(body)
+        .retrieve()
+        .toEntity(String.class);
+    return forwardResponse(response);
+  }
+
+  @GetMapping("/students/applications/{id}/match-preferences")
+  public ResponseEntity<Object> getMatchPreferences(
+      @PathVariable String id,
+      HttpServletRequest request) {
+    RestClient.RequestHeadersUriSpec<?> spec = client.get();
+    ResponseEntity<String> response = addUserHeadersToGet(spec.uri("/v1/students/applications/" + id + "/match-preferences"), request)
+        .retrieve()
+        .toEntity(String.class);
+    return forwardResponse(response);
+  }
+
+  @PatchMapping("/students/applications/{id}/match-preferences")
+  public ResponseEntity<Object> updateMatchPreferences(
+      @PathVariable String id,
+      @RequestBody Map<String, Object> body,
+      HttpServletRequest request) {
+    RestClient.RequestBodySpec spec = client.patch().uri("/v1/students/applications/" + id + "/match-preferences");
+    ResponseEntity<String> response = addUserHeadersToBody(spec, request)
+        .body(body)
+        .retrieve()
+        .toEntity(String.class);
+    return forwardResponse(response);
+  }
+
   // Startup Endpoints
+  @GetMapping("/startups/available")
+  public ResponseEntity<Object> getAvailableStartups(HttpServletRequest request) {
+    RestClient.RequestHeadersUriSpec<?> spec = client.get();
+    ResponseEntity<String> response = addUserHeadersToGet(spec.uri("/v1/startups/available"), request)
+        .retrieve()
+        .toEntity(String.class);
+    return forwardResponse(response);
+  }
+
   @PostMapping("/startups/intake")
   public ResponseEntity<Object> createStartup(
       @RequestBody Map<String, Object> body,

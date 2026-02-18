@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -95,6 +97,34 @@ public class StartupController {
 
     Startup saved = repository.save(startup);
     return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+  }
+
+  @GetMapping("/available")
+  public ResponseEntity<List<Map<String, Object>>> getAvailableStartups() {
+    // Returns all submitted startups with student-safe fields only (no contact details or review notes)
+    List<Startup> approved = repository.findAll();
+    List<Map<String, Object>> result = new ArrayList<>();
+
+    for (Startup s : approved) {
+      Map<String, Object> safe = new HashMap<>();
+      safe.put("id", s.getId());
+      safe.put("companyName", s.getCompanyName());
+      safe.put("website", s.getWebsite());
+      safe.put("industry", s.getIndustry());
+      safe.put("description", s.getDescription());
+      safe.put("stage", s.getStage());
+      safe.put("teamSize", s.getTeamSize());
+      safe.put("foundedYear", s.getFoundedYear());
+      safe.put("operatingMode", s.getOperatingMode());
+      safe.put("timeZone", s.getTimeZone());
+      safe.put("numberOfInternsNeeded", s.getNumberOfInternsNeeded());
+      safe.put("positions", s.getPositions());
+      safe.put("willPayInterns", s.getWillPayInterns());
+      safe.put("payAmount", s.getPayAmount());
+      result.add(safe);
+    }
+
+    return ResponseEntity.ok(result);
   }
 
   @GetMapping

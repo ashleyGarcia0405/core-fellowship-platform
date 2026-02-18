@@ -51,7 +51,7 @@ public class StudentApplication {
 
   // Administrative Fields (not visible to applicants)
   private String term; // e.g., "Fall 2025", "Spring 2026" - set by admin
-  private String status; // e.g., "submitted", "under_review", "accepted", "rejected"
+  private String status; // see ApplicationStatus enum: submitted, interview_scheduled, interviewed, finalist, rejected, matched, not_matched
   private Instant submittedAt;
   private Instant updatedAt;
   private String reviewedBy;

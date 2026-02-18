@@ -1,13 +1,17 @@
 package edu.columbia.corefellowship.applications.controller;
 
 import edu.columbia.corefellowship.applications.dto.CreateInterviewRequest;
+import edu.columbia.corefellowship.applications.dto.CreateMatchPreferenceRequest;
 import edu.columbia.corefellowship.applications.dto.CreateStudentApplicationRequest;
 import edu.columbia.corefellowship.applications.dto.UpdateApplicationStatusRequest;
 import edu.columbia.corefellowship.applications.dto.UpdateInterviewEligibilityRequest;
 import edu.columbia.corefellowship.applications.dto.UpdateInterviewRequest;
+import edu.columbia.corefellowship.applications.dto.UpdateMatchPreferenceRequest;
 import edu.columbia.corefellowship.applications.model.Interview;
+import edu.columbia.corefellowship.applications.model.MatchPreference;
 import edu.columbia.corefellowship.applications.model.StudentApplication;
 import edu.columbia.corefellowship.applications.repository.InterviewRepository;
+import edu.columbia.corefellowship.applications.repository.MatchPreferenceRepository;
 import edu.columbia.corefellowship.applications.repository.StudentApplicationRepository;
 import edu.columbia.corefellowship.applications.service.StorageService;
 import jakarta.validation.Valid;
@@ -30,14 +34,17 @@ public class StudentApplicationController {
   private final StudentApplicationRepository repository;
   private final StorageService storageService;
   private final InterviewRepository interviewRepository;
+  private final MatchPreferenceRepository matchPreferenceRepository;
 
   public StudentApplicationController(
       StudentApplicationRepository repository,
       StorageService storageService,
-      InterviewRepository interviewRepository) {
+      InterviewRepository interviewRepository,
+      MatchPreferenceRepository matchPreferenceRepository) {
     this.repository = repository;
     this.storageService = storageService;
     this.interviewRepository = interviewRepository;
+    this.matchPreferenceRepository = matchPreferenceRepository;
   }
 
   @PostMapping
@@ -507,6 +514,128 @@ public class StudentApplicationController {
     interview.setUpdatedAt(Instant.now());
 
     Interview updated = interviewRepository.save(interview);
+    return ResponseEntity.ok(updated);
+  }
+
+  // Match Preference endpoints
+
+  @PostMapping("/{id}/match-preferences")
+  public ResponseEntity<MatchPreference> createMatchPreferences(
+      @PathVariable String id,
+      @Valid @RequestBody CreateMatchPreferenceRequest request,
+      @RequestHeader(value = "X-User-Id", required = false) String userId) {
+
+    if (userId == null || userId.isBlank()) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User ID is required");
+    }
+
+    // Verify application exists and user owns it
+    StudentApplication application = repository.findById(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+            "Application not found"));
+
+    if (!application.getUserId().equals(userId)) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+          "You can only create match preferences for your own application");
+    }
+
+    // Must be a finalist
+    if (!"finalist".equals(application.getStatus())) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+          "Only finalists can submit match preferences");
+    }
+
+    // Check if preferences already exist
+    if (matchPreferenceRepository.existsByApplicationId(id)) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT,
+          "Match preferences already exist for this application. Use PATCH to update.");
+    }
+
+    MatchPreference pref = new MatchPreference();
+    pref.setApplicationId(id);
+    pref.setRankedRoles(request.getRankedRoles());
+    pref.setNotes(request.getNotes());
+    pref.setSubmitted(Boolean.TRUE.equals(request.getSubmit()));
+    pref.setCreatedAt(Instant.now());
+    pref.setUpdatedAt(Instant.now());
+    if (pref.isSubmitted()) {
+      pref.setSubmittedAt(Instant.now());
+    }
+
+    MatchPreference saved = matchPreferenceRepository.save(pref);
+    return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+  }
+
+  @GetMapping("/{id}/match-preferences")
+  public ResponseEntity<MatchPreference> getMatchPreferences(
+      @PathVariable String id,
+      @RequestHeader(value = "X-User-Id", required = false) String userId,
+      @RequestHeader(value = "X-User-Role", required = false) String userRole) {
+
+    // Verify application exists
+    StudentApplication application = repository.findById(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+            "Application not found"));
+
+    // Owner or admin
+    boolean isOwner = userId != null && application.getUserId().equals(userId);
+    boolean isAdmin = "ROLE_ADMIN".equals(userRole);
+
+    if (!isOwner && !isAdmin) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+          "You can only view your own match preferences");
+    }
+
+    MatchPreference pref = matchPreferenceRepository.findByApplicationId(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+            "No match preferences found for this application"));
+
+    return ResponseEntity.ok(pref);
+  }
+
+  @PatchMapping("/{id}/match-preferences")
+  public ResponseEntity<MatchPreference> updateMatchPreferences(
+      @PathVariable String id,
+      @Valid @RequestBody UpdateMatchPreferenceRequest request,
+      @RequestHeader(value = "X-User-Id", required = false) String userId) {
+
+    if (userId == null || userId.isBlank()) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User ID is required");
+    }
+
+    // Verify application exists and user owns it
+    StudentApplication application = repository.findById(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+            "Application not found"));
+
+    if (!application.getUserId().equals(userId)) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+          "You can only update your own match preferences");
+    }
+
+    MatchPreference pref = matchPreferenceRepository.findByApplicationId(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+            "No match preferences found for this application"));
+
+    // Cannot update if already submitted
+    if (pref.isSubmitted()) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT,
+          "Match preferences have already been submitted and cannot be modified");
+    }
+
+    if (request.getRankedRoles() != null) {
+      pref.setRankedRoles(request.getRankedRoles());
+    }
+    if (request.getNotes() != null) {
+      pref.setNotes(request.getNotes());
+    }
+    if (Boolean.TRUE.equals(request.getSubmit())) {
+      pref.setSubmitted(true);
+      pref.setSubmittedAt(Instant.now());
+    }
+
+    pref.setUpdatedAt(Instant.now());
+    MatchPreference updated = matchPreferenceRepository.save(pref);
     return ResponseEntity.ok(updated);
   }
 }
