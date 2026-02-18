@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { FiHome, FiUsers, FiBriefcase, FiSettings, FiLogOut, FiMenu, FiX, FiCalendar } from 'react-icons/fi';
+import { FiHome, FiUsers, FiBriefcase, FiSettings, FiLogOut, FiMenu, FiX, FiCalendar, FiLink } from 'react-icons/fi';
 import {
   getAllApplications,
   updateApplicationStatus,
@@ -10,9 +10,13 @@ import {
   exportApplicationsJSON,
   getInterview,
   getResumeSignedUrl,
-  getStartups
+  getStartups,
+  getAllSubmittedMatchPreferences,
+  getAiRecommendation,
+  generateAiRecommendation,
+  assignMatchRole,
 } from '../../lib/api';
-import type { Startup, Interview } from '../../lib/api';
+import type { Startup, Interview, MatchPreference, AiRecommendation, RoleReference } from '../../lib/api';
 
 interface Application {
   id: string;
@@ -98,7 +102,7 @@ export default function AdminDashboard() {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'students' | 'startups'>('students');
+  const [activeTab, setActiveTab] = useState<'students' | 'startups' | 'matching'>('students');
   const [applications, setApplications] = useState<Application[]>([]);
   const [filteredApps, setFilteredApps] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
@@ -139,6 +143,17 @@ export default function AdminDashboard() {
     totalRoles: 0,
   });
 
+  // Matching tab state
+  const [matchPreferences, setMatchPreferences] = useState<MatchPreference[]>([]);
+  const [matchStartups, setMatchStartups] = useState<Startup[]>([]);
+  const [matchLoading, setMatchLoading] = useState(false);
+  const [matchError, setMatchError] = useState('');
+  const [selectedRole, setSelectedRole] = useState<{ startupId: string; positionIndex: number } | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<string | null>(null); // applicationId
+  const [aiRecommendations, setAiRecommendations] = useState<Record<string, AiRecommendation>>({});
+  const [generatingRec, setGeneratingRec] = useState<string | null>(null); // applicationId currently generating
+  const [matchApplications, setMatchApplications] = useState<Application[]>([]);
+
   const handleLogout = () => {
     logout();
     navigate('/');
@@ -155,6 +170,9 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (activeTab === 'startups' && startups.length === 0) {
       loadStartups();
+    }
+    if (activeTab === 'matching' && matchPreferences.length === 0) {
+      loadMatchingData();
     }
   }, [activeTab]);
 
@@ -356,6 +374,113 @@ export default function AdminDashboard() {
     }
 
     setFilteredStartups(filtered);
+  }
+
+  async function loadMatchingData() {
+    try {
+      setMatchLoading(true);
+      setMatchError('');
+      const [prefs, startupsData, appsData] = await Promise.all([
+        getAllSubmittedMatchPreferences(),
+        getStartups(),
+        getAllApplications(),
+      ]);
+      setMatchPreferences(prefs);
+      setMatchStartups(startupsData);
+      setMatchApplications(appsData);
+
+      // Load cached AI recommendations for each preference (404 = not generated yet)
+      const recs: Record<string, AiRecommendation> = {};
+      await Promise.all(
+        prefs.map(async (pref) => {
+          try {
+            const rec = await getAiRecommendation(pref.applicationId);
+            recs[pref.applicationId] = rec;
+          } catch {
+            // 404 = not generated yet, skip
+          }
+        })
+      );
+      setAiRecommendations(recs);
+    } catch (err: any) {
+      setMatchError(err.message || 'Failed to load matching data');
+    } finally {
+      setMatchLoading(false);
+    }
+  }
+
+  async function handleGenerateAiRec(applicationId: string) {
+    try {
+      setGeneratingRec(applicationId);
+      const rec = await generateAiRecommendation(applicationId);
+      setAiRecommendations(prev => ({ ...prev, [applicationId]: rec }));
+    } catch (err: any) {
+      alert('Failed to generate AI recommendation: ' + err.message);
+    } finally {
+      setGeneratingRec(null);
+    }
+  }
+
+  async function handleToggleAssign(applicationId: string, role: RoleReference) {
+    const pref = matchPreferences.find(p => p.applicationId === applicationId);
+    const isAssigned = pref?.matchedRoles?.some(
+      r => r.startupId === role.startupId && r.positionIndex === role.positionIndex
+    );
+    try {
+      const updated = await assignMatchRole(
+        applicationId,
+        isAssigned ? 'remove' : 'add',
+        role
+      );
+      setMatchPreferences(prev => prev.map(p => p.applicationId === applicationId ? updated : p));
+    } catch (err: any) {
+      alert('Failed to update assignment: ' + err.message);
+    }
+  }
+
+  async function handleClearAssignments(applicationId: string) {
+    try {
+      const updated = await assignMatchRole(applicationId, 'clear');
+      setMatchPreferences(prev => prev.map(p => p.applicationId === applicationId ? updated : p));
+    } catch (err: any) {
+      alert('Failed to clear assignments: ' + err.message);
+    }
+  }
+
+  function getAppForPref(pref: MatchPreference): Application | undefined {
+    return matchApplications.find(a => a.id === pref.applicationId);
+  }
+
+  // Build a flat list of all roles from startups
+  // Build a display label that disambiguates duplicate role types within the same startup
+  // e.g. two "Software Engineer" roles become "Software Engineer (1)" and "Software Engineer (2)"
+  function getRoleDisplayLabel(startupId: string, positionIndex: number, roleType: string): string {
+    const startup = matchStartups.find(s => s.id === startupId);
+    if (!startup?.positions) return roleType;
+    const sameTypeIndices = startup.positions
+      .map((p, idx) => ({ idx, roleType: p.roleType }))
+      .filter(p => p.roleType === roleType);
+    if (sameTypeIndices.length <= 1) return roleType;
+    const rank = sameTypeIndices.findIndex(p => p.idx === positionIndex) + 1;
+    return `${roleType} (${rank})`;
+  }
+
+  function getAllRoles(): { startupId: string; positionIndex: number; startupName: string; roleType: string; displayLabel: string; description: string }[] {
+    const roles: { startupId: string; positionIndex: number; startupName: string; roleType: string; displayLabel: string; description: string }[] = [];
+    for (const startup of matchStartups) {
+      if (!startup.positions) continue;
+      startup.positions.forEach((pos, idx) => {
+        roles.push({
+          startupId: startup.id,
+          positionIndex: idx,
+          startupName: startup.companyName,
+          roleType: pos.roleType,
+          displayLabel: getRoleDisplayLabel(startup.id, idx, pos.roleType),
+          description: pos.description || '',
+        });
+      });
+    }
+    return roles;
   }
 
   async function handleExportCSV() {
@@ -568,6 +693,34 @@ export default function AdminDashboard() {
             </button>
             <button
               onClick={() => {
+                setActiveTab('matching');
+                setSidebarOpen(false);
+              }}
+              style={{
+                padding: '10px 15px',
+                textAlign: 'left',
+                background: activeTab === 'matching' ? '#e8f4ff' : 'transparent',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: activeTab === 'matching' ? '#0a468f' : '#333',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}
+              onMouseEnter={(e) => {
+                if (activeTab !== 'matching') e.currentTarget.style.background = '#f5f5f5';
+              }}
+              onMouseLeave={(e) => {
+                if (activeTab !== 'matching') e.currentTarget.style.background = 'transparent';
+              }}
+            >
+              <FiLink size={18} /> Matching
+            </button>
+            <button
+              onClick={() => {
                 navigate('/admin/interviews');
                 setSidebarOpen(false);
               }}
@@ -649,7 +802,7 @@ export default function AdminDashboard() {
       {/* Main Content */}
       <div className="main-content" style={{ flex: 1, padding: '40px 60px', overflow: 'auto' }}>
         <div style={{ maxWidth: '1400px' }}>
-          {activeTab === 'students' ? (
+          {activeTab === 'students' && (
             <>
           <h1 style={{ fontSize: '32px', color: '#0a468f', marginBottom: '10px' }}>
             Student Applications
@@ -962,7 +1115,8 @@ export default function AdminDashboard() {
             </div>
           </div>
             </>
-          ) : (
+          )}
+          {activeTab === 'startups' && (
             <>
               <h1 style={{ fontSize: '32px', color: '#0a468f', marginBottom: '10px' }}>
                 Startup Intake Submissions
@@ -1218,6 +1372,460 @@ export default function AdminDashboard() {
                           )}
                         </tbody>
                       </table>
+                    </div>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+          {activeTab === 'matching' && (
+            <>
+              <h1 style={{ fontSize: '32px', color: '#0a468f', marginBottom: '10px' }}>
+                Student-Role Matching
+              </h1>
+              <p style={{ color: '#666', marginBottom: '30px' }}>
+                View student preferences, get AI-powered match suggestions, and assign students to roles.
+              </p>
+
+              {matchError && (
+                <div style={{
+                  marginBottom: '20px',
+                  background: '#fee',
+                  border: '1px solid #fcc',
+                  color: '#c33',
+                  padding: '15px',
+                  borderRadius: '8px'
+                }}>
+                  {matchError}
+                </div>
+              )}
+
+              {matchLoading ? (
+                <div style={{
+                  background: 'white',
+                  borderRadius: '10px',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                  padding: '40px',
+                  textAlign: 'center',
+                  color: '#0a468f'
+                }}>
+                  Loading matching data...
+                </div>
+              ) : (
+                <>
+                  {/* Stats Row */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                    gap: '15px',
+                    marginBottom: '30px'
+                  }}>
+                    <div style={{ background: 'white', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', padding: '20px' }}>
+                      <div style={{ fontSize: '13px', fontWeight: '500', color: '#666' }}>Roles Available</div>
+                      <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#0a468f', marginTop: '8px' }}>
+                        {getAllRoles().length}
+                      </div>
+                    </div>
+                    <div style={{ background: 'white', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', padding: '20px' }}>
+                      <div style={{ fontSize: '13px', fontWeight: '500', color: '#666' }}>Students with Prefs</div>
+                      <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#7c3aed', marginTop: '8px' }}>
+                        {matchPreferences.length}
+                      </div>
+                    </div>
+                    <div style={{ background: 'white', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', padding: '20px' }}>
+                      <div style={{ fontSize: '13px', fontWeight: '500', color: '#666' }}>Matched</div>
+                      <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#065f46', marginTop: '8px' }}>
+                        {matchPreferences.filter(p => p.matchedRoles && p.matchedRoles.length > 0).length}
+                      </div>
+                    </div>
+                    <div style={{ background: 'white', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', padding: '20px' }}>
+                      <div style={{ fontSize: '13px', fontWeight: '500', color: '#666' }}>Unmatched</div>
+                      <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#dc2626', marginTop: '8px' }}>
+                        {matchPreferences.filter(p => !p.matchedRoles || p.matchedRoles.length === 0).length}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Side-by-side: Roles (left) | Students (right) */}
+                  <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
+                    {/* Left Panel - Roles */}
+                    <div style={{
+                      flex: '0 0 40%',
+                      background: 'white',
+                      borderRadius: '10px',
+                      boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                      padding: '20px',
+                      maxHeight: 'calc(100vh - 340px)',
+                      overflow: 'auto'
+                    }}>
+                      <h2 style={{ fontSize: '16px', fontWeight: '600', color: '#0a468f', marginBottom: '15px' }}>
+                        Roles by Startup
+                      </h2>
+                      {(() => {
+                        const grouped: Record<string, { startup: Startup; roles: { positionIndex: number; roleType: string; description: string }[] }> = {};
+                        for (const startup of matchStartups) {
+                          if (!startup.positions || startup.positions.length === 0) continue;
+                          grouped[startup.id] = {
+                            startup,
+                            roles: startup.positions.map((pos, idx) => ({
+                              positionIndex: idx,
+                              roleType: pos.roleType,
+                              description: pos.description || '',
+                            }))
+                          };
+                        }
+                        return Object.entries(grouped).map(([startupId, { startup, roles }]) => (
+                          <div key={startupId} style={{ marginBottom: '18px' }}>
+                            <div style={{ fontSize: '14px', fontWeight: '600', color: '#333', marginBottom: '8px' }}>
+                              {startup.companyName}
+                            </div>
+                            {roles.map((role) => {
+                              const isSelected = selectedRole?.startupId === startupId && selectedRole?.positionIndex === role.positionIndex;
+                              const isHighlightedByStudent = selectedStudent != null && matchPreferences
+                                .find(p => p.applicationId === selectedStudent)?.rankedRoles
+                                .some(r => r.startupId === startupId && r.positionIndex === role.positionIndex);
+                              const interestedCount = matchPreferences.filter(p =>
+                                p.rankedRoles.some(r => r.startupId === startupId && r.positionIndex === role.positionIndex)
+                              ).length;
+                              const assignedPrefs = matchPreferences.filter(p =>
+                                p.matchedRoles?.some(r => r.startupId === startupId && r.positionIndex === role.positionIndex)
+                              );
+                              const assignedApps = assignedPrefs.map(p => getAppForPref(p)).filter(Boolean);
+
+                              return (
+                                <div
+                                  key={role.positionIndex}
+                                  onClick={() => {
+                                    if (isSelected) {
+                                      setSelectedRole(null);
+                                    } else {
+                                      setSelectedRole({ startupId, positionIndex: role.positionIndex });
+                                      setSelectedStudent(null);
+                                    }
+                                  }}
+                                  style={{
+                                    padding: '10px 12px',
+                                    marginBottom: '6px',
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    border: isSelected ? '2px solid #0a468f' : '1px solid #e0e0e0',
+                                    background: isHighlightedByStudent ? '#fef9c3' : isSelected ? '#e8f4ff' : 'white',
+                                    transition: 'all 0.15s',
+                                  }}
+                                >
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div>
+                                      <span style={{ fontSize: '13px', fontWeight: '500', color: '#333' }}>{getRoleDisplayLabel(startupId, role.positionIndex, role.roleType)}</span>
+                                      <span style={{
+                                        marginLeft: '8px',
+                                        fontSize: '11px',
+                                        color: '#666',
+                                        background: '#f3f4f6',
+                                        padding: '2px 8px',
+                                        borderRadius: '10px'
+                                      }}>
+                                        {interestedCount} interested
+                                      </span>
+                                    </div>
+                                    {assignedApps.length > 0 && (
+                                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                                        {assignedApps.map((a, i) => (
+                                          <span key={i} style={{
+                                            fontSize: '11px',
+                                            fontWeight: '600',
+                                            color: '#065f46',
+                                            background: '#d1fae5',
+                                            padding: '2px 8px',
+                                            borderRadius: '10px'
+                                          }}>
+                                            {a!.fullName}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                  {/* Top students for this role (shown when selected) */}
+                                  {isSelected && (() => {
+                                    const totalStudents = matchPreferences.length;
+                                    const scored: { appId: string; name: string; score: number; reasoning: string }[] = [];
+                                    for (const pref of matchPreferences) {
+                                      const rec = aiRecommendations[pref.applicationId];
+                                      if (!rec) continue;
+                                      const rs = rec.roleScores.find(
+                                        s => s.startupId === startupId && s.positionIndex === role.positionIndex
+                                      );
+                                      if (rs) {
+                                        const app = getAppForPref(pref);
+                                        scored.push({
+                                          appId: pref.applicationId,
+                                          name: app?.fullName || 'Unknown',
+                                          score: rs.score,
+                                          reasoning: rs.reasoning,
+                                        });
+                                      }
+                                    }
+                                    scored.sort((a, b) => b.score - a.score);
+                                    const top3 = scored.slice(0, 3);
+                                    const scoredCount = Object.keys(aiRecommendations).length;
+
+                                    return (
+                                      <div style={{
+                                        marginTop: '8px',
+                                        padding: '10px 12px',
+                                        background: '#f8fafc',
+                                        borderRadius: '6px',
+                                        border: '1px solid #e2e8f0',
+                                      }}>
+                                        <div style={{ fontSize: '11px', fontWeight: '600', color: '#0a468f', marginBottom: '6px' }}>
+                                          Top Students for this Role
+                                          <span style={{ fontWeight: '400', color: '#94a3b8', marginLeft: '6px' }}>
+                                            ({scoredCount} of {totalStudents} scored)
+                                          </span>
+                                        </div>
+                                        {top3.length === 0 ? (
+                                          <div style={{ fontSize: '12px', color: '#94a3b8' }}>
+                                            No AI scores generated yet. Generate recs for students first.
+                                          </div>
+                                        ) : (
+                                          top3.map((s, idx) => (
+                                            <div key={s.appId} style={{
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              gap: '8px',
+                                              padding: '4px 0',
+                                              borderBottom: idx < top3.length - 1 ? '1px solid #e2e8f0' : 'none',
+                                            }}>
+                                              <span style={{
+                                                fontSize: '11px',
+                                                fontWeight: '700',
+                                                color: s.score >= 8 ? '#065f46' : s.score >= 5 ? '#92400e' : '#991b1b',
+                                                background: s.score >= 8 ? '#d1fae5' : s.score >= 5 ? '#fef3c7' : '#fee2e2',
+                                                padding: '1px 7px',
+                                                borderRadius: '8px',
+                                                minWidth: '32px',
+                                                textAlign: 'center',
+                                              }}>
+                                                {s.score}/10
+                                              </span>
+                                              <span style={{ fontSize: '12px', fontWeight: '500', color: '#333' }}>
+                                                {s.name}
+                                              </span>
+                                              <span style={{ fontSize: '11px', color: '#94a3b8', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                                                    title={s.reasoning}>
+                                                {s.reasoning}
+                                              </span>
+                                            </div>
+                                          ))
+                                        )}
+                                      </div>
+                                    );
+                                  })()}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ));
+                      })()}
+                      {matchStartups.filter(s => s.positions && s.positions.length > 0).length === 0 && (
+                        <div style={{ textAlign: 'center', color: '#999', padding: '20px', fontSize: '14px' }}>
+                          No startups with roles found
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Right Panel - Students */}
+                    <div style={{
+                      flex: 1,
+                      background: 'white',
+                      borderRadius: '10px',
+                      boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                      padding: '20px',
+                      maxHeight: 'calc(100vh - 340px)',
+                      overflow: 'auto'
+                    }}>
+                      <h2 style={{ fontSize: '16px', fontWeight: '600', color: '#0a468f', marginBottom: '15px' }}>
+                        Students with Preferences
+                      </h2>
+                      {matchPreferences.length === 0 ? (
+                        <div style={{ textAlign: 'center', color: '#999', padding: '20px', fontSize: '14px' }}>
+                          No students have submitted preferences yet
+                        </div>
+                      ) : (
+                        matchPreferences.map((pref) => {
+                          const app = getAppForPref(pref);
+                          const isSelected = selectedStudent === pref.applicationId;
+                          const isHighlightedByRole = selectedRole != null && pref.rankedRoles.some(
+                            r => r.startupId === selectedRole.startupId && r.positionIndex === selectedRole.positionIndex
+                          );
+                          const rec = aiRecommendations[pref.applicationId];
+                          const isGenerating = generatingRec === pref.applicationId;
+                          const allRoles = getAllRoles();
+
+                          return (
+                            <div
+                              key={pref.applicationId}
+                              onClick={() => {
+                                if (isSelected) {
+                                  setSelectedStudent(null);
+                                } else {
+                                  setSelectedStudent(pref.applicationId);
+                                  setSelectedRole(null);
+                                }
+                              }}
+                              style={{
+                                padding: '14px 16px',
+                                marginBottom: '10px',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                border: isSelected ? '2px solid #0a468f' : '1px solid #e0e0e0',
+                                background: isHighlightedByRole ? '#fef9c3' : isSelected ? '#e8f4ff' : 'white',
+                                transition: 'all 0.15s',
+                              }}
+                            >
+                              {/* Student header */}
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                                <div>
+                                  <span style={{ fontSize: '14px', fontWeight: '600', color: '#333' }}>
+                                    {app?.fullName || 'Unknown Student'}
+                                  </span>
+                                  {app?.school && (
+                                    <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+                                      {app.school}
+                                    </span>
+                                  )}
+                                  {app?.major && (
+                                    <span style={{ fontSize: '12px', color: '#999', marginLeft: '6px' }}>
+                                      · {app.major}
+                                    </span>
+                                  )}
+                                </div>
+                                {pref.matchedRoles && pref.matchedRoles.length > 0 && (
+                                  <span style={{
+                                    fontSize: '11px',
+                                    fontWeight: '600',
+                                    color: '#065f46',
+                                    background: '#d1fae5',
+                                    padding: '3px 10px',
+                                    borderRadius: '10px',
+                                    flexShrink: 0,
+                                  }}>
+                                    {pref.matchedRoles.length} Match{pref.matchedRoles.length > 1 ? 'es' : ''}
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Ranked preferences as pills */}
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginBottom: '10px' }}>
+                                {pref.rankedRoles.map((role, idx) => (
+                                  <span key={idx} style={{
+                                    fontSize: '11px',
+                                    padding: '3px 8px',
+                                    borderRadius: '10px',
+                                    background: '#f3f4f6',
+                                    color: '#374151',
+                                    fontWeight: '500',
+                                  }}>
+                                    #{idx + 1} {role.startupName} - {getRoleDisplayLabel(role.startupId, role.positionIndex, role.roleType)}
+                                  </span>
+                                ))}
+                              </div>
+
+                              {/* AI Recs + Generate button */}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}
+                                   onClick={(e) => e.stopPropagation()}>
+                                <button
+                                  onClick={() => handleGenerateAiRec(pref.applicationId)}
+                                  disabled={isGenerating}
+                                  style={{
+                                    fontSize: '12px',
+                                    fontWeight: '500',
+                                    color: 'white',
+                                    background: isGenerating ? '#9ca3af' : '#7c3aed',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    padding: '5px 12px',
+                                    cursor: isGenerating ? 'not-allowed' : 'pointer',
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  {isGenerating ? 'Generating...' : rec ? 'Regenerate AI Recs' : 'Generate AI Recs'}
+                                </button>
+                                {rec && (
+                                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                    {rec.roleScores.slice(0, 3).map((rs, idx) => (
+                                      <span key={idx} style={{
+                                        fontSize: '11px',
+                                        padding: '2px 8px',
+                                        borderRadius: '10px',
+                                        background: rs.score >= 8 ? '#d1fae5' : rs.score >= 5 ? '#fef3c7' : '#fee2e2',
+                                        color: rs.score >= 8 ? '#065f46' : rs.score >= 5 ? '#92400e' : '#991b1b',
+                                        fontWeight: '600',
+                                      }}
+                                        title={rs.reasoning}
+                                      >
+                                        {rs.startupName} - {getRoleDisplayLabel(rs.startupId, rs.positionIndex, rs.roleType)}: {rs.score}/10
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Assign roles (multi-select) */}
+                              <div onClick={(e) => e.stopPropagation()}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                                  <label style={{ fontSize: '12px', color: '#666', fontWeight: '500' }}>Assigned Roles:</label>
+                                  {pref.matchedRoles && pref.matchedRoles.length > 0 && (
+                                    <button
+                                      onClick={() => handleClearAssignments(pref.applicationId)}
+                                      style={{
+                                        fontSize: '11px',
+                                        color: '#dc2626',
+                                        background: 'none',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        textDecoration: 'underline',
+                                        padding: 0,
+                                      }}
+                                    >
+                                      Clear all
+                                    </button>
+                                  )}
+                                </div>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                                  {allRoles.map((role) => {
+                                    const isAssigned = pref.matchedRoles?.some(
+                                      r => r.startupId === role.startupId && r.positionIndex === role.positionIndex
+                                    );
+                                    return (
+                                      <button
+                                        key={`${role.startupId}::${role.positionIndex}`}
+                                        onClick={() => handleToggleAssign(pref.applicationId, {
+                                          startupId: role.startupId,
+                                          positionIndex: role.positionIndex,
+                                          startupName: role.startupName,
+                                          roleType: role.roleType,
+                                        })}
+                                        style={{
+                                          fontSize: '11px',
+                                          padding: '3px 10px',
+                                          borderRadius: '12px',
+                                          border: isAssigned ? '1.5px solid #065f46' : '1px solid #d1d5db',
+                                          background: isAssigned ? '#d1fae5' : 'white',
+                                          color: isAssigned ? '#065f46' : '#374151',
+                                          cursor: 'pointer',
+                                          fontWeight: isAssigned ? '600' : '400',
+                                        }}
+                                      >
+                                        {isAssigned ? '\u2713 ' : ''}{role.startupName} - {role.displayLabel}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
                     </div>
                   </div>
                 </>

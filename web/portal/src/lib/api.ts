@@ -563,7 +563,7 @@ export interface MatchPreference {
   rankedRoles: RoleReference[];
   notes?: string;
   submitted: boolean;
-  matchedRole?: RoleReference;
+  matchedRoles?: RoleReference[];
   createdAt: string;
   updatedAt: string;
   submittedAt?: string;
@@ -610,6 +610,57 @@ export async function updateMatchPreferences(
     method: 'PATCH',
     headers: getHeaders(),
     body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    if (res.status === 401) {
+      handleUnauthorized();
+    }
+    const text = await res.text();
+    throw new Error(`HTTP ${res.status}: ${text}`);
+  }
+  return res.json() as Promise<MatchPreference>;
+}
+
+// AI Recommendation types
+export interface RoleScore {
+  startupId: string;
+  positionIndex: number;
+  startupName: string;
+  roleType: string;
+  score: number;
+  reasoning: string;
+}
+
+export interface AiRecommendation {
+  id: string;
+  applicationId: string;
+  roleScores: RoleScore[];
+  generatedAt: string;
+  updatedAt: string;
+}
+
+// Admin Matching API
+export async function getAllSubmittedMatchPreferences(): Promise<MatchPreference[]> {
+  return getJson<MatchPreference[]>('/v1/admin/matching/preferences');
+}
+
+export async function getAiRecommendation(applicationId: string): Promise<AiRecommendation> {
+  return getJson<AiRecommendation>(`/v1/admin/matching/recommendations/${applicationId}`);
+}
+
+export async function generateAiRecommendation(applicationId: string): Promise<AiRecommendation> {
+  return postJson<AiRecommendation>(`/v1/admin/matching/recommendations/${applicationId}`, {});
+}
+
+export async function assignMatchRole(
+  applicationId: string,
+  action: 'add' | 'remove' | 'clear',
+  role?: RoleReference
+): Promise<MatchPreference> {
+  const res = await fetch(`${API_BASE}/v1/admin/matching/preferences/${applicationId}/assign`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify({ action, role }),
   });
   if (!res.ok) {
     if (res.status === 401) {
