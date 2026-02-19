@@ -156,6 +156,14 @@ export default function AdminDashboard() {
   const [assignDropdownOpen, setAssignDropdownOpen] = useState<string | null>(null); // applicationId
   const [assignSearch, setAssignSearch] = useState('');
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
+  const [reasoningModal, setReasoningModal] = useState<{
+    applicationId: string;
+    studentName: string;
+    startupName: string;
+    roleLabel: string;
+    score: number;
+    reasoning: string;
+  } | null>(null);
 
   const handleLogout = () => {
     logout();
@@ -1589,16 +1597,29 @@ export default function AdminDashboard() {
                                               padding: '4px 0',
                                               borderBottom: idx < top3.length - 1 ? '1px solid #e2e8f0' : 'none',
                                             }}>
-                                              <span style={{
-                                                fontSize: '11px',
-                                                fontWeight: '700',
-                                                color: s.score >= 8 ? '#065f46' : s.score >= 5 ? '#92400e' : '#991b1b',
-                                                background: s.score >= 8 ? '#d1fae5' : s.score >= 5 ? '#fef3c7' : '#fee2e2',
-                                                padding: '1px 7px',
-                                                borderRadius: '8px',
-                                                minWidth: '32px',
-                                                textAlign: 'center',
-                                              }}>
+                                              <span
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setReasoningModal({
+                                                    applicationId: s.appId,
+                                                    studentName: s.name,
+                                                    startupName: startup.companyName,
+                                                    roleLabel: getRoleDisplayLabel(startupId, role.positionIndex, role.roleType),
+                                                    score: s.score,
+                                                    reasoning: s.reasoning || 'No reasoning provided.',
+                                                  });
+                                                }}
+                                                style={{
+                                                  fontSize: '11px',
+                                                  fontWeight: '700',
+                                                  color: s.score >= 8 ? '#065f46' : s.score >= 5 ? '#92400e' : '#991b1b',
+                                                  background: s.score >= 8 ? '#d1fae5' : s.score >= 5 ? '#fef3c7' : '#fee2e2',
+                                                  padding: '1px 7px',
+                                                  borderRadius: '8px',
+                                                  minWidth: '32px',
+                                                  textAlign: 'center',
+                                                  cursor: 'pointer',
+                                                }}>
                                                 {s.score}/10
                                               </span>
                                               <span style={{ fontSize: '12px', fontWeight: '500', color: '#333' }}>
@@ -1776,14 +1797,27 @@ export default function AdminDashboard() {
                                     {rec && (
                                       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                                         {rec.roleScores.map((rs, idx) => (
-                                          <span key={idx} style={{
-                                            fontSize: '11px',
-                                            padding: '2px 8px',
-                                            borderRadius: '10px',
-                                            background: rs.score >= 8 ? '#d1fae5' : rs.score >= 5 ? '#fef3c7' : '#fee2e2',
-                                            color: rs.score >= 8 ? '#065f46' : rs.score >= 5 ? '#92400e' : '#991b1b',
-                                            fontWeight: '600',
-                                          }}
+                                          <span
+                                            key={idx}
+                                            onClick={() => {
+                                              setReasoningModal({
+                                                applicationId: pref.applicationId,
+                                                studentName: app?.fullName || 'Unknown Student',
+                                                startupName: rs.startupName || 'Startup',
+                                                roleLabel: getRoleDisplayLabel(rs.startupId, rs.positionIndex, rs.roleType),
+                                                score: rs.score,
+                                                reasoning: rs.reasoning || 'No reasoning provided.',
+                                              });
+                                            }}
+                                            style={{
+                                              fontSize: '11px',
+                                              padding: '2px 8px',
+                                              borderRadius: '10px',
+                                              background: rs.score >= 8 ? '#d1fae5' : rs.score >= 5 ? '#fef3c7' : '#fee2e2',
+                                              color: rs.score >= 8 ? '#065f46' : rs.score >= 5 ? '#92400e' : '#991b1b',
+                                              fontWeight: '600',
+                                              cursor: 'pointer',
+                                            }}
                                             title={rs.reasoning}
                                           >
                                             {rs.startupName} - {getRoleDisplayLabel(rs.startupId, rs.positionIndex, rs.roleType)}: {rs.score}/10
@@ -2794,6 +2828,74 @@ export default function AdminDashboard() {
       )}
 
       {/* Responsive Styles */}
+      {reasoningModal && (
+        <div
+          onClick={() => setReasoningModal(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(15, 23, 42, 0.55)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1200,
+            padding: '20px',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: 'min(720px, 100%)',
+              background: 'white',
+              borderRadius: '12px',
+              boxShadow: '0 24px 60px rgba(15, 23, 42, 0.35)',
+              padding: '22px 24px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+              <div style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>
+                AI Reasoning
+              </div>
+              <button
+                onClick={() => setReasoningModal(null)}
+                style={{
+                  border: 'none',
+                  background: '#f1f5f9',
+                  color: '#0f172a',
+                  borderRadius: '8px',
+                  padding: '6px 10px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                }}
+              >
+                Close
+              </button>
+            </div>
+            <div style={{ marginTop: '14px', display: 'grid', gap: '8px', fontSize: '13px', color: '#475569' }}>
+              <div><span style={{ fontWeight: '600', color: '#0f172a' }}>Student:</span> {reasoningModal.studentName}</div>
+              <div><span style={{ fontWeight: '600', color: '#0f172a' }}>Startup:</span> {reasoningModal.startupName}</div>
+              <div><span style={{ fontWeight: '600', color: '#0f172a' }}>Role:</span> {reasoningModal.roleLabel}</div>
+              <div><span style={{ fontWeight: '600', color: '#0f172a' }}>Score:</span> {reasoningModal.score}/10</div>
+            </div>
+            <div style={{
+              marginTop: '16px',
+              padding: '12px 14px',
+              background: '#f8fafc',
+              borderRadius: '10px',
+              border: '1px solid #e2e8f0',
+              color: '#0f172a',
+              fontSize: '13px',
+              lineHeight: 1.5,
+              whiteSpace: 'pre-wrap',
+            }}>
+              {reasoningModal.reasoning}
+            </div>
+          </div>
+        </div>
+      )}
       <style>{`
         .mobile-menu-btn {
           display: none;
