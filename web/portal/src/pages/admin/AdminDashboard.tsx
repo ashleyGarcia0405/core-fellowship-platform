@@ -153,6 +153,8 @@ export default function AdminDashboard() {
   const [aiRecommendations, setAiRecommendations] = useState<Record<string, AiRecommendation>>({});
   const [generatingRec, setGeneratingRec] = useState<string | null>(null); // applicationId currently generating
   const [matchApplications, setMatchApplications] = useState<Application[]>([]);
+  const [assignDropdownOpen, setAssignDropdownOpen] = useState<string | null>(null); // applicationId
+  const [assignSearch, setAssignSearch] = useState('');
 
   const handleLogout = () => {
     logout();
@@ -1770,57 +1772,120 @@ export default function AdminDashboard() {
                                 )}
                               </div>
 
-                              {/* Assign roles (multi-select) */}
-                              <div onClick={(e) => e.stopPropagation()}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                                  <label style={{ fontSize: '12px', color: '#666', fontWeight: '500' }}>Assigned Roles:</label>
-                                  {pref.matchedRoles && pref.matchedRoles.length > 0 && (
-                                    <button
-                                      onClick={() => handleClearAssignments(pref.applicationId)}
-                                      style={{
-                                        fontSize: '11px',
-                                        color: '#dc2626',
-                                        background: 'none',
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        textDecoration: 'underline',
-                                        padding: 0,
-                                      }}
-                                    >
-                                      Clear all
-                                    </button>
-                                  )}
-                                </div>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                                  {allRoles.map((role) => {
-                                    const isAssigned = pref.matchedRoles?.some(
-                                      r => r.startupId === role.startupId && r.positionIndex === role.positionIndex
-                                    );
-                                    return (
-                                      <button
-                                        key={`${role.startupId}::${role.positionIndex}`}
-                                        onClick={() => handleToggleAssign(pref.applicationId, {
-                                          startupId: role.startupId,
-                                          positionIndex: role.positionIndex,
-                                          startupName: role.startupName,
-                                          roleType: role.roleType,
-                                        })}
+                              {/* Assign roles — searchable dropdown */}
+                              <div onClick={(e) => e.stopPropagation()} style={{ position: 'relative' }}>
+                                <label style={{ fontSize: '12px', color: '#666', fontWeight: '500', display: 'block', marginBottom: '6px' }}>Assigned Roles:</label>
+                                {/* Show assigned role chips */}
+                                {pref.matchedRoles && pref.matchedRoles.length > 0 && (
+                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginBottom: '6px' }}>
+                                    {pref.matchedRoles.map((r) => (
+                                      <span
+                                        key={`${r.startupId}::${r.positionIndex}`}
                                         style={{
                                           fontSize: '11px',
-                                          padding: '3px 10px',
+                                          padding: '3px 8px',
                                           borderRadius: '12px',
-                                          border: isAssigned ? '1.5px solid #065f46' : '1px solid #d1d5db',
-                                          background: isAssigned ? '#d1fae5' : 'white',
-                                          color: isAssigned ? '#065f46' : '#374151',
-                                          cursor: 'pointer',
-                                          fontWeight: isAssigned ? '600' : '400',
+                                          border: '1.5px solid #065f46',
+                                          background: '#d1fae5',
+                                          color: '#065f46',
+                                          fontWeight: '600',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '4px',
                                         }}
                                       >
-                                        {isAssigned ? '\u2713 ' : ''}{role.startupName} - {role.displayLabel}
-                                      </button>
+                                        {r.startupName} - {getRoleDisplayLabel(r.startupId, r.positionIndex, r.roleType)}
+                                        <button
+                                          onClick={() => handleToggleAssign(pref.applicationId, r)}
+                                          style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            color: '#065f46',
+                                            fontSize: '13px',
+                                            padding: '0 2px',
+                                            lineHeight: 1,
+                                          }}
+                                          title="Remove"
+                                        >
+                                          ×
+                                        </button>
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                                {/* Search input */}
+                                <input
+                                  type="text"
+                                  placeholder="Search roles to assign..."
+                                  value={assignDropdownOpen === pref.applicationId ? assignSearch : ''}
+                                  onFocus={() => { setAssignDropdownOpen(pref.applicationId); setAssignSearch(''); }}
+                                  onBlur={() => { setTimeout(() => { setAssignDropdownOpen(null); setAssignSearch(''); }, 200); }}
+                                  onChange={(e) => setAssignSearch(e.target.value)}
+                                  style={{
+                                    width: '100%',
+                                    padding: '6px 10px',
+                                    fontSize: '12px',
+                                    border: '1px solid #d1d5db',
+                                    borderRadius: '6px',
+                                    outline: 'none',
+                                    boxSizing: 'border-box',
+                                  }}
+                                />
+                                {/* Dropdown results */}
+                                {assignDropdownOpen === pref.applicationId && (() => {
+                                  const search = assignSearch.toLowerCase();
+                                  const filtered = allRoles.filter(role => {
+                                    const alreadyAssigned = pref.matchedRoles?.some(
+                                      r => r.startupId === role.startupId && r.positionIndex === role.positionIndex
                                     );
-                                  })}
-                                </div>
+                                    if (alreadyAssigned) return false;
+                                    const label = `${role.startupName} - ${role.displayLabel}`.toLowerCase();
+                                    return label.includes(search);
+                                  });
+                                  if (filtered.length === 0) return null;
+                                  return (
+                                    <div style={{
+                                      position: 'absolute',
+                                      top: '100%',
+                                      left: 0,
+                                      right: 0,
+                                      background: 'white',
+                                      border: '1px solid #d1d5db',
+                                      borderRadius: '6px',
+                                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                                      maxHeight: '160px',
+                                      overflowY: 'auto',
+                                      zIndex: 50,
+                                    }}>
+                                      {filtered.map((role) => (
+                                        <div
+                                          key={`${role.startupId}::${role.positionIndex}`}
+                                          onMouseDown={(e) => {
+                                            e.preventDefault();
+                                            handleToggleAssign(pref.applicationId, {
+                                              startupId: role.startupId,
+                                              positionIndex: role.positionIndex,
+                                              startupName: role.startupName,
+                                              roleType: role.roleType,
+                                            });
+                                            setAssignSearch('');
+                                          }}
+                                          style={{
+                                            padding: '6px 10px',
+                                            fontSize: '12px',
+                                            cursor: 'pointer',
+                                            borderBottom: '1px solid #f3f4f6',
+                                          }}
+                                          onMouseEnter={(e) => (e.currentTarget.style.background = '#f0fdf4')}
+                                          onMouseLeave={(e) => (e.currentTarget.style.background = 'white')}
+                                        >
+                                          {role.startupName} - {role.displayLabel}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  );
+                                })()}
                               </div>
                             </div>
                           );
