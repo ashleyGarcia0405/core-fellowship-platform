@@ -155,6 +155,7 @@ export default function AdminDashboard() {
   const [matchApplications, setMatchApplications] = useState<Application[]>([]);
   const [assignDropdownOpen, setAssignDropdownOpen] = useState<string | null>(null); // applicationId
   const [assignSearch, setAssignSearch] = useState('');
+  const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
 
   const handleLogout = () => {
     logout();
