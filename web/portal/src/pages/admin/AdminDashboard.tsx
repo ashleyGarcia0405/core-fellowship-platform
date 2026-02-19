@@ -1775,7 +1775,7 @@ export default function AdminDashboard() {
                                     </button>
                                     {rec && (
                                       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                                        {rec.roleScores.slice(0, 3).map((rs, idx) => (
+                                        {rec.roleScores.map((rs, idx) => (
                                           <span key={idx} style={{
                                             fontSize: '11px',
                                             padding: '2px 8px',
