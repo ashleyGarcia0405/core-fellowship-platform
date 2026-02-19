@@ -1567,7 +1567,7 @@ export default function AdminDashboard() {
                                       }
                                     }
                                     scored.sort((a, b) => b.score - a.score);
-                                    const top3 = scored.slice(0, 3);
+                                    const top5 = scored.slice(0, 5);
                                     const scoredCount = Object.keys(aiRecommendations).length;
 
                                     return (
@@ -1584,18 +1584,18 @@ export default function AdminDashboard() {
                                             ({scoredCount} of {totalStudents} scored)
                                           </span>
                                         </div>
-                                        {top3.length === 0 ? (
+                                        {top5.length === 0 ? (
                                           <div style={{ fontSize: '12px', color: '#94a3b8' }}>
                                             No AI scores generated yet. Generate recs for students first.
                                           </div>
                                         ) : (
-                                          top3.map((s, idx) => (
+                                          top5.map((s, idx) => (
                                             <div key={s.appId} style={{
                                               display: 'flex',
                                               alignItems: 'center',
                                               gap: '8px',
                                               padding: '4px 0',
-                                              borderBottom: idx < top3.length - 1 ? '1px solid #e2e8f0' : 'none',
+                                              borderBottom: idx < top5.length - 1 ? '1px solid #e2e8f0' : 'none',
                                             }}>
                                               <span
                                                 onClick={(e) => {
