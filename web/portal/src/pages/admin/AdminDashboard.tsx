@@ -441,15 +441,6 @@ export default function AdminDashboard() {
     }
   }
 
-  async function handleClearAssignments(applicationId: string) {
-    try {
-      const updated = await assignMatchRole(applicationId, 'clear');
-      setMatchPreferences(prev => prev.map(p => p.applicationId === applicationId ? updated : p));
-    } catch (err: any) {
-      alert('Failed to clear assignments: ' + err.message);
-    }
-  }
-
   function getAppForPref(pref: MatchPreference): Application | undefined {
     return matchApplications.find(a => a.id === pref.applicationId);
   }
@@ -1664,230 +1655,261 @@ export default function AdminDashboard() {
                           const isGenerating = generatingRec === pref.applicationId;
                           const allRoles = getAllRoles();
 
+                          const isExpanded = expandedStudents.has(pref.applicationId);
                           return (
                             <div
                               key={pref.applicationId}
-                              onClick={() => {
-                                if (isSelected) {
-                                  setSelectedStudent(null);
-                                } else {
-                                  setSelectedStudent(pref.applicationId);
-                                  setSelectedRole(null);
-                                }
-                              }}
                               style={{
-                                padding: '14px 16px',
-                                marginBottom: '10px',
+                                marginBottom: '8px',
                                 borderRadius: '8px',
-                                cursor: 'pointer',
                                 border: isSelected ? '2px solid #0a468f' : '1px solid #e0e0e0',
                                 background: isHighlightedByRole ? '#fef9c3' : isSelected ? '#e8f4ff' : 'white',
                                 transition: 'all 0.15s',
+                                overflow: 'visible',
                               }}
                             >
-                              {/* Student header */}
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                                <div>
+                              {/* Collapsed header — always visible */}
+                              <div
+                                onClick={() => {
+                                  // Toggle expand
+                                  setExpandedStudents(prev => {
+                                    const next = new Set(prev);
+                                    if (next.has(pref.applicationId)) {
+                                      next.delete(pref.applicationId);
+                                    } else {
+                                      next.add(pref.applicationId);
+                                    }
+                                    return next;
+                                  });
+                                  // Also set cross-highlight
+                                  if (isSelected) {
+                                    setSelectedStudent(null);
+                                  } else {
+                                    setSelectedStudent(pref.applicationId);
+                                    setSelectedRole(null);
+                                  }
+                                }}
+                                style={{
+                                  padding: '10px 14px',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <span style={{ fontSize: '12px', color: '#999', transition: 'transform 0.15s', transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>&#9654;</span>
                                   <span style={{ fontSize: '14px', fontWeight: '600', color: '#333' }}>
                                     {app?.fullName || 'Unknown Student'}
                                   </span>
                                   {app?.school && (
-                                    <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
+                                    <span style={{ fontSize: '12px', color: '#666' }}>
                                       {app.school}
                                     </span>
                                   )}
                                   {app?.major && (
-                                    <span style={{ fontSize: '12px', color: '#999', marginLeft: '6px' }}>
+                                    <span style={{ fontSize: '12px', color: '#999' }}>
                                       · {app.major}
                                     </span>
                                   )}
                                 </div>
-                                {pref.matchedRoles && pref.matchedRoles.length > 0 && (
-                                  <span style={{
-                                    fontSize: '11px',
-                                    fontWeight: '600',
-                                    color: '#065f46',
-                                    background: '#d1fae5',
-                                    padding: '3px 10px',
-                                    borderRadius: '10px',
-                                    flexShrink: 0,
-                                  }}>
-                                    {pref.matchedRoles.length} Match{pref.matchedRoles.length > 1 ? 'es' : ''}
-                                  </span>
-                                )}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  {rec && (
+                                    <span style={{ fontSize: '11px', color: '#7c3aed', fontWeight: '500' }}>
+                                      AI
+                                    </span>
+                                  )}
+                                  {pref.matchedRoles && pref.matchedRoles.length > 0 && (
+                                    <span style={{
+                                      fontSize: '11px',
+                                      fontWeight: '600',
+                                      color: '#065f46',
+                                      background: '#d1fae5',
+                                      padding: '2px 8px',
+                                      borderRadius: '10px',
+                                    }}>
+                                      {pref.matchedRoles.length} Match{pref.matchedRoles.length > 1 ? 'es' : ''}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
 
-                              {/* Ranked preferences as pills */}
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginBottom: '10px' }}>
-                                {pref.rankedRoles.map((role, idx) => (
-                                  <span key={idx} style={{
-                                    fontSize: '11px',
-                                    padding: '3px 8px',
-                                    borderRadius: '10px',
-                                    background: '#f3f4f6',
-                                    color: '#374151',
-                                    fontWeight: '500',
-                                  }}>
-                                    #{idx + 1} {role.startupName} - {getRoleDisplayLabel(role.startupId, role.positionIndex, role.roleType)}
-                                  </span>
-                                ))}
-                              </div>
-
-                              {/* AI Recs + Generate button */}
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}
-                                   onClick={(e) => e.stopPropagation()}>
-                                <button
-                                  onClick={() => handleGenerateAiRec(pref.applicationId)}
-                                  disabled={isGenerating}
-                                  style={{
-                                    fontSize: '12px',
-                                    fontWeight: '500',
-                                    color: 'white',
-                                    background: isGenerating ? '#9ca3af' : '#7c3aed',
-                                    border: 'none',
-                                    borderRadius: '6px',
-                                    padding: '5px 12px',
-                                    cursor: isGenerating ? 'not-allowed' : 'pointer',
-                                    flexShrink: 0,
-                                  }}
-                                >
-                                  {isGenerating ? 'Generating...' : rec ? 'Regenerate AI Recs' : 'Generate AI Recs'}
-                                </button>
-                                {rec && (
-                                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                                    {rec.roleScores.slice(0, 3).map((rs, idx) => (
+                              {/* Expanded body */}
+                              {isExpanded && (
+                                <div style={{ padding: '0 14px 14px 14px' }}>
+                                  {/* Ranked preferences as pills */}
+                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginBottom: '10px' }}>
+                                    {pref.rankedRoles.map((role, idx) => (
                                       <span key={idx} style={{
                                         fontSize: '11px',
-                                        padding: '2px 8px',
+                                        padding: '3px 8px',
                                         borderRadius: '10px',
-                                        background: rs.score >= 8 ? '#d1fae5' : rs.score >= 5 ? '#fef3c7' : '#fee2e2',
-                                        color: rs.score >= 8 ? '#065f46' : rs.score >= 5 ? '#92400e' : '#991b1b',
-                                        fontWeight: '600',
-                                      }}
-                                        title={rs.reasoning}
-                                      >
-                                        {rs.startupName} - {getRoleDisplayLabel(rs.startupId, rs.positionIndex, rs.roleType)}: {rs.score}/10
+                                        background: '#f3f4f6',
+                                        color: '#374151',
+                                        fontWeight: '500',
+                                      }}>
+                                        #{idx + 1} {role.startupName} - {getRoleDisplayLabel(role.startupId, role.positionIndex, role.roleType)}
                                       </span>
                                     ))}
                                   </div>
-                                )}
-                              </div>
 
-                              {/* Assign roles — searchable dropdown */}
-                              <div onClick={(e) => e.stopPropagation()} style={{ position: 'relative' }}>
-                                <label style={{ fontSize: '12px', color: '#666', fontWeight: '500', display: 'block', marginBottom: '6px' }}>Assigned Roles:</label>
-                                {/* Show assigned role chips */}
-                                {pref.matchedRoles && pref.matchedRoles.length > 0 && (
-                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginBottom: '6px' }}>
-                                    {pref.matchedRoles.map((r) => (
-                                      <span
-                                        key={`${r.startupId}::${r.positionIndex}`}
-                                        style={{
-                                          fontSize: '11px',
-                                          padding: '3px 8px',
-                                          borderRadius: '12px',
-                                          border: '1.5px solid #065f46',
-                                          background: '#d1fae5',
-                                          color: '#065f46',
-                                          fontWeight: '600',
-                                          display: 'inline-flex',
-                                          alignItems: 'center',
-                                          gap: '4px',
-                                        }}
-                                      >
-                                        {r.startupName} - {getRoleDisplayLabel(r.startupId, r.positionIndex, r.roleType)}
-                                        <button
-                                          onClick={() => handleToggleAssign(pref.applicationId, r)}
-                                          style={{
-                                            background: 'none',
-                                            border: 'none',
-                                            cursor: 'pointer',
-                                            color: '#065f46',
-                                            fontSize: '13px',
-                                            padding: '0 2px',
-                                            lineHeight: 1,
+                                  {/* AI Recs + Generate button */}
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}
+                                       onClick={(e) => e.stopPropagation()}>
+                                    <button
+                                      onClick={() => handleGenerateAiRec(pref.applicationId)}
+                                      disabled={isGenerating}
+                                      style={{
+                                        fontSize: '12px',
+                                        fontWeight: '500',
+                                        color: 'white',
+                                        background: isGenerating ? '#9ca3af' : '#7c3aed',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        padding: '5px 12px',
+                                        cursor: isGenerating ? 'not-allowed' : 'pointer',
+                                        flexShrink: 0,
+                                      }}
+                                    >
+                                      {isGenerating ? 'Generating...' : rec ? 'Regenerate AI Recs' : 'Generate AI Recs'}
+                                    </button>
+                                    {rec && (
+                                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                        {rec.roleScores.slice(0, 3).map((rs, idx) => (
+                                          <span key={idx} style={{
+                                            fontSize: '11px',
+                                            padding: '2px 8px',
+                                            borderRadius: '10px',
+                                            background: rs.score >= 8 ? '#d1fae5' : rs.score >= 5 ? '#fef3c7' : '#fee2e2',
+                                            color: rs.score >= 8 ? '#065f46' : rs.score >= 5 ? '#92400e' : '#991b1b',
+                                            fontWeight: '600',
                                           }}
-                                          title="Remove"
-                                        >
-                                          ×
-                                        </button>
-                                      </span>
-                                    ))}
+                                            title={rs.reasoning}
+                                          >
+                                            {rs.startupName} - {getRoleDisplayLabel(rs.startupId, rs.positionIndex, rs.roleType)}: {rs.score}/10
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )}
                                   </div>
-                                )}
-                                {/* Search input */}
-                                <input
-                                  type="text"
-                                  placeholder="Search roles to assign..."
-                                  value={assignDropdownOpen === pref.applicationId ? assignSearch : ''}
-                                  onFocus={() => { setAssignDropdownOpen(pref.applicationId); setAssignSearch(''); }}
-                                  onBlur={() => { setTimeout(() => { setAssignDropdownOpen(null); setAssignSearch(''); }, 200); }}
-                                  onChange={(e) => setAssignSearch(e.target.value)}
-                                  style={{
-                                    width: '100%',
-                                    padding: '6px 10px',
-                                    fontSize: '12px',
-                                    border: '1px solid #d1d5db',
-                                    borderRadius: '6px',
-                                    outline: 'none',
-                                    boxSizing: 'border-box',
-                                  }}
-                                />
-                                {/* Dropdown results */}
-                                {assignDropdownOpen === pref.applicationId && (() => {
-                                  const search = assignSearch.toLowerCase();
-                                  const filtered = allRoles.filter(role => {
-                                    const alreadyAssigned = pref.matchedRoles?.some(
-                                      r => r.startupId === role.startupId && r.positionIndex === role.positionIndex
-                                    );
-                                    if (alreadyAssigned) return false;
-                                    const label = `${role.startupName} - ${role.displayLabel}`.toLowerCase();
-                                    return label.includes(search);
-                                  });
-                                  if (filtered.length === 0) return null;
-                                  return (
-                                    <div style={{
-                                      position: 'absolute',
-                                      top: '100%',
-                                      left: 0,
-                                      right: 0,
-                                      background: 'white',
-                                      border: '1px solid #d1d5db',
-                                      borderRadius: '6px',
-                                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                                      maxHeight: '160px',
-                                      overflowY: 'auto',
-                                      zIndex: 50,
-                                    }}>
-                                      {filtered.map((role) => (
-                                        <div
-                                          key={`${role.startupId}::${role.positionIndex}`}
-                                          onMouseDown={(e) => {
-                                            e.preventDefault();
-                                            handleToggleAssign(pref.applicationId, {
-                                              startupId: role.startupId,
-                                              positionIndex: role.positionIndex,
-                                              startupName: role.startupName,
-                                              roleType: role.roleType,
-                                            });
-                                            setAssignSearch('');
-                                          }}
-                                          style={{
-                                            padding: '6px 10px',
-                                            fontSize: '12px',
-                                            cursor: 'pointer',
-                                            borderBottom: '1px solid #f3f4f6',
-                                          }}
-                                          onMouseEnter={(e) => (e.currentTarget.style.background = '#f0fdf4')}
-                                          onMouseLeave={(e) => (e.currentTarget.style.background = 'white')}
-                                        >
-                                          {role.startupName} - {role.displayLabel}
+
+                                  {/* Assign roles — searchable dropdown */}
+                                  <div onClick={(e) => e.stopPropagation()} style={{ position: 'relative' }}>
+                                    <label style={{ fontSize: '12px', color: '#666', fontWeight: '500', display: 'block', marginBottom: '6px' }}>Assigned Roles:</label>
+                                    {/* Show assigned role chips */}
+                                    {pref.matchedRoles && pref.matchedRoles.length > 0 && (
+                                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginBottom: '6px' }}>
+                                        {pref.matchedRoles.map((r) => (
+                                          <span
+                                            key={`${r.startupId}::${r.positionIndex}`}
+                                            style={{
+                                              fontSize: '11px',
+                                              padding: '3px 8px',
+                                              borderRadius: '12px',
+                                              border: '1.5px solid #065f46',
+                                              background: '#d1fae5',
+                                              color: '#065f46',
+                                              fontWeight: '600',
+                                              display: 'inline-flex',
+                                              alignItems: 'center',
+                                              gap: '4px',
+                                            }}
+                                          >
+                                            {r.startupName} - {getRoleDisplayLabel(r.startupId, r.positionIndex, r.roleType)}
+                                            <button
+                                              onClick={() => handleToggleAssign(pref.applicationId, r)}
+                                              style={{
+                                                background: 'none',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                color: '#065f46',
+                                                fontSize: '13px',
+                                                padding: '0 2px',
+                                                lineHeight: 1,
+                                              }}
+                                              title="Remove"
+                                            >
+                                              ×
+                                            </button>
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )}
+                                    {/* Search input */}
+                                    <input
+                                      type="text"
+                                      placeholder="Search roles to assign..."
+                                      value={assignDropdownOpen === pref.applicationId ? assignSearch : ''}
+                                      onFocus={() => { setAssignDropdownOpen(pref.applicationId); setAssignSearch(''); }}
+                                      onBlur={() => { setTimeout(() => { setAssignDropdownOpen(null); setAssignSearch(''); }, 200); }}
+                                      onChange={(e) => setAssignSearch(e.target.value)}
+                                      style={{
+                                        width: '100%',
+                                        padding: '6px 10px',
+                                        fontSize: '12px',
+                                        border: '1px solid #d1d5db',
+                                        borderRadius: '6px',
+                                        outline: 'none',
+                                        boxSizing: 'border-box',
+                                      }}
+                                    />
+                                    {/* Dropdown results — only show when typing */}
+                                    {assignDropdownOpen === pref.applicationId && assignSearch.length > 0 && (() => {
+                                      const search = assignSearch.toLowerCase();
+                                      const filtered = allRoles.filter(role => {
+                                        const alreadyAssigned = pref.matchedRoles?.some(
+                                          r => r.startupId === role.startupId && r.positionIndex === role.positionIndex
+                                        );
+                                        if (alreadyAssigned) return false;
+                                        const label = `${role.startupName} - ${role.displayLabel}`.toLowerCase();
+                                        return label.includes(search);
+                                      });
+                                      if (filtered.length === 0) return null;
+                                      return (
+                                        <div style={{
+                                          position: 'absolute',
+                                          top: '100%',
+                                          left: 0,
+                                          right: 0,
+                                          background: 'white',
+                                          border: '1px solid #d1d5db',
+                                          borderRadius: '6px',
+                                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                                          maxHeight: '160px',
+                                          overflowY: 'auto',
+                                          zIndex: 50,
+                                        }}>
+                                          {filtered.map((role) => (
+                                            <div
+                                              key={`${role.startupId}::${role.positionIndex}`}
+                                              onMouseDown={(e) => {
+                                                e.preventDefault();
+                                                handleToggleAssign(pref.applicationId, {
+                                                  startupId: role.startupId,
+                                                  positionIndex: role.positionIndex,
+                                                  startupName: role.startupName,
+                                                  roleType: role.roleType,
+                                                });
+                                                setAssignSearch('');
+                                              }}
+                                              style={{
+                                                padding: '6px 10px',
+                                                fontSize: '12px',
+                                                cursor: 'pointer',
+                                                borderBottom: '1px solid #f3f4f6',
+                                              }}
+                                              onMouseEnter={(e) => (e.currentTarget.style.background = '#f0fdf4')}
+                                              onMouseLeave={(e) => (e.currentTarget.style.background = 'white')}
+                                            >
+                                              {role.startupName} - {role.displayLabel}
+                                            </div>
+                                          ))}
                                         </div>
-                                      ))}
-                                    </div>
-                                  );
-                                })()}
-                              </div>
+                                      );
+                                    })()}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           );
                         })
