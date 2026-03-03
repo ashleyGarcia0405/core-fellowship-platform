@@ -13,7 +13,7 @@ const studentHowItWorks = [
     step: "02",
     title: "We interview strong candidates",
     description:
-      "Behavioral + technical (when relevant). Last cohort: 120 apps → 40 interviews → 20 accepted.",
+      "Behavioral + technical (when relevant). Last cohort: 300+ apps → 40 interviews → 20 accepted.",
   },
   {
     step: "03",
