@@ -242,7 +242,20 @@ export default function MatchPreferenceForm() {
 
           {/* Your Rankings */}
           <div style={{ marginBottom: '40px' }}>
-            <h2 style={{ fontSize: '20px', color: '#0a468f', marginBottom: '16px' }}>Your Rankings</h2>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <h2 style={{ fontSize: '20px', color: '#0a468f', margin: 0 }}>Your Rankings</h2>
+              {rankedRoles.length > 0 && (
+                <button
+                  onClick={() => setRankedRoles([])}
+                  style={{ padding: '6px 14px', border: '1px solid #dc3545', borderRadius: '6px', background: 'white', color: '#dc3545', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}
+                >
+                  Clear All
+                </button>
+              )}
+            </div>
+            <p style={{ fontSize: '13px', color: '#888', marginBottom: '16px', marginTop: 0 }}>
+              If you were contacted about resubmitting, please clear your rankings before adding new ones.
+            </p>
             {rankedRoles.length === 0 ? (
               <p style={{ color: '#999', fontStyle: 'italic' }}>No roles ranked yet. Browse available roles below and add them to your rankings.</p>
             ) : (
