@@ -617,12 +617,6 @@ public class StudentApplicationController {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No match preferences found for this application"));
 
-    // Cannot update if already submitted
-    if (pref.isSubmitted()) {
-      throw new ResponseStatusException(HttpStatus.CONFLICT,
-          "Match preferences have already been submitted and cannot be modified");
-    }
-
     if (request.getRankedRoles() != null) {
       pref.setRankedRoles(request.getRankedRoles());
     }

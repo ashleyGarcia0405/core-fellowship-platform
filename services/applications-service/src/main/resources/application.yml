@@ -14,3 +14,7 @@ gcs:
   bucket-name: core-application-resumes
   credentials-path: ${GCS_CREDENTIALS_PATH:../gcs-credentials.json}
   project-id: core-fellowship
+
+openai:
+  api-key: ${OPENAI_API_KEY:}
+  model: ${OPENAI_MODEL:gpt-4o}

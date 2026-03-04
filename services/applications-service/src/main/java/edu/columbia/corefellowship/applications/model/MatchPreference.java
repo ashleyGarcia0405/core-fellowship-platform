@@ -24,8 +24,8 @@ public class MatchPreference {
 
   private boolean submitted;
 
-  // Set by admin during matching — which role the student is assigned to
-  private RoleReference matchedRole;
+  // Set by admin during matching — roles the student is assigned to (may be multiple)
+  private List<RoleReference> matchedRoles;
 
   private Instant createdAt;
   private Instant updatedAt;
@@ -117,12 +117,12 @@ public class MatchPreference {
     this.submitted = submitted;
   }
 
-  public RoleReference getMatchedRole() {
-    return matchedRole;
+  public List<RoleReference> getMatchedRoles() {
+    return matchedRoles;
   }
 
-  public void setMatchedRole(RoleReference matchedRole) {
-    this.matchedRole = matchedRole;
+  public void setMatchedRoles(List<RoleReference> matchedRoles) {
+    this.matchedRoles = matchedRoles;
   }
 
   public Instant getCreatedAt() {

@@ -482,6 +482,54 @@ public class ApplicationsProxyController {
     return forwardResponse(response);
   }
 
+  // Admin Matching Endpoints
+  @GetMapping("/admin/matching/preferences")
+  public ResponseEntity<Object> getMatchingPreferences(HttpServletRequest request) {
+    RestClient.RequestHeadersUriSpec<?> spec = client.get();
+    ResponseEntity<String> response = addUserHeadersToGet(spec.uri("/v1/admin/matching/preferences"), request)
+        .retrieve()
+        .toEntity(String.class);
+    return forwardResponse(response);
+  }
+
+  @GetMapping("/admin/matching/recommendations/{applicationId}")
+  public ResponseEntity<Object> getAiRecommendation(
+      @PathVariable String applicationId,
+      HttpServletRequest request) {
+    RestClient.RequestHeadersUriSpec<?> spec = client.get();
+    ResponseEntity<String> response = addUserHeadersToGet(
+        spec.uri("/v1/admin/matching/recommendations/" + applicationId), request)
+        .retrieve()
+        .toEntity(String.class);
+    return forwardResponse(response);
+  }
+
+  @PostMapping("/admin/matching/recommendations/{applicationId}")
+  public ResponseEntity<Object> generateAiRecommendation(
+      @PathVariable String applicationId,
+      HttpServletRequest request) {
+    RestClient.RequestBodySpec spec = client.post()
+        .uri("/v1/admin/matching/recommendations/" + applicationId);
+    ResponseEntity<String> response = addUserHeadersToBody(spec, request)
+        .retrieve()
+        .toEntity(String.class);
+    return forwardResponse(response);
+  }
+
+  @PatchMapping("/admin/matching/preferences/{applicationId}/assign")
+  public ResponseEntity<Object> assignMatchRole(
+      @PathVariable String applicationId,
+      @RequestBody Map<String, Object> body,
+      HttpServletRequest request) {
+    RestClient.RequestBodySpec spec = client.patch()
+        .uri("/v1/admin/matching/preferences/" + applicationId + "/assign");
+    ResponseEntity<String> response = addUserHeadersToBody(spec, request)
+        .body(body)
+        .retrieve()
+        .toEntity(String.class);
+    return forwardResponse(response);
+  }
+
   // Cal.com Webhook Endpoint
   @PostMapping("/webhooks/cal")
   public ResponseEntity<Object> handleCalWebhook(

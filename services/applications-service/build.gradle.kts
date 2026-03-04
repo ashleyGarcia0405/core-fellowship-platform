@@ -13,6 +13,9 @@ dependencies {
     // Google Cloud Storage
     implementation("com.google.cloud:google-cloud-storage:2.30.1")
 
+    // Apache PDFBox for resume text extraction
+    implementation("org.apache.pdfbox:pdfbox:3.0.1")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
 }
