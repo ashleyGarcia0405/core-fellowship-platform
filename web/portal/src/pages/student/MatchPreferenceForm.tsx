@@ -94,7 +94,7 @@ export default function MatchPreferenceForm() {
 
   // Auto-save draft to localStorage
   useEffect(() => {
-    if (isSubmitted || !application) return;
+    if (!application) return;
     const timer = setTimeout(() => {
       localStorage.setItem(DRAFT_KEY, JSON.stringify({
         rankedRoles,
@@ -154,7 +154,7 @@ export default function MatchPreferenceForm() {
       setError('Please rank at least one role before submitting.');
       return;
     }
-    if (!window.confirm('Are you sure you want to submit? You will not be able to change your preferences after submission.')) {
+    if (!window.confirm(isSubmitted ? 'Are you sure you want to resubmit your preferences? This will overwrite your previous submission.' : 'Are you sure you want to submit your preferences?')) {
       return;
     }
     setSaving(true);
@@ -230,7 +230,7 @@ export default function MatchPreferenceForm() {
           {isSubmitted && (
             <div style={{ background: '#d4edda', border: '1px solid #c3e6cb', borderRadius: '8px', padding: '16px', marginBottom: '30px' }}>
               <strong style={{ color: '#155724' }}>Preferences Submitted</strong>
-              <p style={{ color: '#155724', margin: '8px 0 0' }}>Your match preferences have been submitted. You cannot make changes.</p>
+              <p style={{ color: '#155724', margin: '8px 0 0' }}>Your match preferences have been submitted. You can update and resubmit below.</p>
             </div>
           )}
 
@@ -276,8 +276,7 @@ export default function MatchPreferenceForm() {
                       <div style={{ fontWeight: '600', color: '#333' }}>{role.roleType}</div>
                       <div style={{ fontSize: '13px', color: '#666' }}>{role.startupName}</div>
                     </div>
-                    {!isSubmitted && (
-                      <div style={{ display: 'flex', gap: '6px' }}>
+                            <div style={{ display: 'flex', gap: '6px' }}>
                         <button onClick={() => moveUp(index)} disabled={index === 0}
                           style={{ ...smallBtnStyle, opacity: index === 0 ? 0.3 : 1 }} title="Move up">&#9650;</button>
                         <button onClick={() => moveDown(index)} disabled={index === rankedRoles.length - 1}
@@ -285,7 +284,6 @@ export default function MatchPreferenceForm() {
                         <button onClick={() => removeRole(index)}
                           style={{ ...smallBtnStyle, color: '#dc3545', borderColor: '#dc3545' }} title="Remove">&#10005;</button>
                       </div>
-                    )}
                   </div>
                 ))}
               </div>
@@ -301,7 +299,6 @@ export default function MatchPreferenceForm() {
             <textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
-              disabled={isSubmitted}
               placeholder="Any additional notes..."
               rows={4}
               style={{
@@ -312,46 +309,42 @@ export default function MatchPreferenceForm() {
                 fontSize: '14px',
                 resize: 'vertical',
                 boxSizing: 'border-box',
-                background: isSubmitted ? '#f8f9fa' : 'white'
               }}
             />
           </div>
 
           {/* Action buttons */}
-          {!isSubmitted && (
-            <div style={{ display: 'flex', gap: '12px', marginBottom: '40px' }}>
-              <button onClick={handleSaveDraft} disabled={saving} style={{
-                padding: '12px 28px',
-                border: '2px solid #0a468f',
-                borderRadius: '8px',
-                background: 'white',
-                color: '#0a468f',
-                fontWeight: '600',
-                fontSize: '15px',
-                cursor: saving ? 'not-allowed' : 'pointer',
-                opacity: saving ? 0.6 : 1
-              }}>
-                {saving ? 'Saving...' : 'Save Draft'}
-              </button>
-              <button onClick={handleSubmit} disabled={saving || rankedRoles.length === 0} style={{
-                padding: '12px 28px',
-                border: 'none',
-                borderRadius: '8px',
-                background: rankedRoles.length === 0 ? '#ccc' : '#0a468f',
-                color: 'white',
-                fontWeight: '600',
-                fontSize: '15px',
-                cursor: saving || rankedRoles.length === 0 ? 'not-allowed' : 'pointer',
-                opacity: saving ? 0.6 : 1
-              }}>
-                {saving ? 'Submitting...' : 'Submit Preferences'}
-              </button>
-            </div>
-          )}
+          <div style={{ display: 'flex', gap: '12px', marginBottom: '40px' }}>
+            <button onClick={handleSaveDraft} disabled={saving} style={{
+              padding: '12px 28px',
+              border: '2px solid #0a468f',
+              borderRadius: '8px',
+              background: 'white',
+              color: '#0a468f',
+              fontWeight: '600',
+              fontSize: '15px',
+              cursor: saving ? 'not-allowed' : 'pointer',
+              opacity: saving ? 0.6 : 1
+            }}>
+              {saving ? 'Saving...' : 'Save Draft'}
+            </button>
+            <button onClick={handleSubmit} disabled={saving || rankedRoles.length === 0} style={{
+              padding: '12px 28px',
+              border: 'none',
+              borderRadius: '8px',
+              background: rankedRoles.length === 0 ? '#ccc' : '#0a468f',
+              color: 'white',
+              fontWeight: '600',
+              fontSize: '15px',
+              cursor: saving || rankedRoles.length === 0 ? 'not-allowed' : 'pointer',
+              opacity: saving ? 0.6 : 1
+            }}>
+              {saving ? 'Submitting...' : isSubmitted ? 'Resubmit Preferences' : 'Submit Preferences'}
+            </button>
+          </div>
 
           {/* Available Roles */}
-          {!isSubmitted && (
-            <div>
+          <div>
               <h2 style={{ fontSize: '20px', color: '#0a468f', marginBottom: '16px' }}>Available Roles</h2>
               {startups.length === 0 ? (
                 <p style={{ color: '#999' }}>No startups available yet. Check back later.</p>
@@ -551,7 +544,6 @@ export default function MatchPreferenceForm() {
                 </div>
               )}
             </div>
-          )}
         </div>
       </div>
     </div>
