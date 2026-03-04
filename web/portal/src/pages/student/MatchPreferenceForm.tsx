@@ -24,6 +24,7 @@ export default function MatchPreferenceForm() {
   const [application, setApplication] = useState<StudentApplication | null>(null);
   const [existingPreferenceId, setExistingPreferenceId] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [showToast, setShowToast] = useState(false);
 
   // Available startups/roles
   const [startups, setStartups] = useState<AvailableStartup[]>([]);
@@ -166,6 +167,8 @@ export default function MatchPreferenceForm() {
         await createMatchPreferences(application.id, { rankedRoles, notes, submit: true });
       }
       setIsSubmitted(true);
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
       localStorage.removeItem(DRAFT_KEY);
     } catch (err: any) {
       setError(err.message || 'Failed to submit preferences');
@@ -227,10 +230,23 @@ export default function MatchPreferenceForm() {
             {!isSubmitted && ' You can save a draft and come back later.'}
           </p>
 
-          {isSubmitted && (
-            <div style={{ background: '#d4edda', border: '1px solid #c3e6cb', borderRadius: '8px', padding: '16px', marginBottom: '30px' }}>
-              <strong style={{ color: '#155724' }}>Preferences Submitted</strong>
-              <p style={{ color: '#155724', margin: '8px 0 0' }}>Your match preferences have been submitted. You can update and resubmit below.</p>
+          {showToast && (
+            <div style={{
+              position: 'fixed',
+              bottom: '32px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: '#155724',
+              color: 'white',
+              padding: '14px 28px',
+              borderRadius: '8px',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+              fontWeight: '600',
+              fontSize: '15px',
+              zIndex: 1000,
+              pointerEvents: 'none',
+            }}>
+              Preferences submitted!
             </div>
           )}
 
