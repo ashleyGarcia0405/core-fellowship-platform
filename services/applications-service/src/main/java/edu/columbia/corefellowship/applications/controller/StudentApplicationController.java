@@ -545,18 +545,18 @@ public class StudentApplicationController {
           "Only finalists can submit match preferences");
     }
 
-    // Check if preferences already exist
-    if (matchPreferenceRepository.existsByApplicationId(id)) {
-      throw new ResponseStatusException(HttpStatus.CONFLICT,
-          "Match preferences already exist for this application. Use PATCH to update.");
-    }
+    // Upsert: if preferences already exist, update them instead of rejecting
+    MatchPreference pref = matchPreferenceRepository.findByApplicationId(id)
+        .orElseGet(() -> {
+          MatchPreference p = new MatchPreference();
+          p.setApplicationId(id);
+          p.setCreatedAt(Instant.now());
+          return p;
+        });
 
-    MatchPreference pref = new MatchPreference();
-    pref.setApplicationId(id);
     pref.setRankedRoles(request.getRankedRoles());
     pref.setNotes(request.getNotes());
     pref.setSubmitted(Boolean.TRUE.equals(request.getSubmit()));
-    pref.setCreatedAt(Instant.now());
     pref.setUpdatedAt(Instant.now());
     if (pref.isSubmitted()) {
       pref.setSubmittedAt(Instant.now());
