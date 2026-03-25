@@ -85,7 +85,7 @@ export async function postJson<T>(path: string, body: unknown): Promise<T> {
 }
 
 // Auth types
-export type UserType = "STUDENT" | "STARTUP" | "ADMIN";
+export type UserType = "STUDENT" | "STARTUP" | "ADMIN" | "VC";
 export type UserRole = "ROLE_USER" | "ROLE_ADMIN";
 
 export interface LoginResponse {
@@ -105,6 +105,7 @@ export interface RegisterRequest {
   fullName?: string;
   companyName?: string;
   adminToken?: string;
+  vcToken?: string;
 }
 
 export interface RegisterResponse {
@@ -619,6 +620,95 @@ export async function updateMatchPreferences(
     throw new Error(`HTTP ${res.status}: ${text}`);
   }
   return res.json() as Promise<MatchPreference>;
+}
+
+// VC types
+export interface VcFavorite {
+  id: string;
+  vcUserId: string;
+  applicationId: string;
+  notes?: string;
+  portfolioCompany?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface VcPortfolioInvite {
+  id: string;
+  vcUserId: string;
+  vcName: string;
+  companyEmail: string;
+  companyName: string;
+  token: string;
+  status: string;
+  invitedAt: string;
+  registeredAt?: string;
+  expiresAt: string;
+}
+
+// VC API
+export async function getVcFavorites(): Promise<VcFavorite[]> {
+  return getJson<VcFavorite[]>('/v1/vc/favorites');
+}
+
+export async function saveVcFavorite(
+  applicationId: string,
+  notes?: string,
+  portfolioCompany?: string
+): Promise<VcFavorite> {
+  return postJson<VcFavorite>('/v1/vc/favorites', { applicationId, notes, portfolioCompany });
+}
+
+export async function removeVcFavorite(applicationId: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/v1/vc/favorites/${applicationId}`, {
+    method: 'DELETE',
+    headers: getHeaders(),
+  });
+  if (!res.ok) {
+    if (res.status === 401) handleUnauthorized();
+    const text = await res.text();
+    throw new Error(`HTTP ${res.status}: ${text}`);
+  }
+}
+
+export async function updateVcFavorite(
+  applicationId: string,
+  data: { notes?: string; portfolioCompany?: string }
+): Promise<VcFavorite> {
+  const res = await fetch(`${API_BASE}/v1/vc/favorites/${applicationId}`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    if (res.status === 401) handleUnauthorized();
+    const text = await res.text();
+    throw new Error(`HTTP ${res.status}: ${text}`);
+  }
+  return res.json() as Promise<VcFavorite>;
+}
+
+export async function exportVcFavoritesCsv(): Promise<Blob> {
+  const res = await fetch(`${API_BASE}/v1/vc/favorites/export.csv`, {
+    headers: getHeaders(),
+  });
+  if (!res.ok) {
+    if (res.status === 401) handleUnauthorized();
+    const text = await res.text();
+    throw new Error(`HTTP ${res.status}: ${text}`);
+  }
+  return res.blob();
+}
+
+export async function getVcPortfolioInvites(): Promise<VcPortfolioInvite[]> {
+  return getJson<VcPortfolioInvite[]>('/v1/vc/portfolio-invites');
+}
+
+export async function createVcPortfolioInvite(data: {
+  companyEmail: string;
+  companyName: string;
+}): Promise<VcPortfolioInvite> {
+  return postJson<VcPortfolioInvite>('/v1/vc/portfolio-invites', data);
 }
 
 // AI Recommendation types

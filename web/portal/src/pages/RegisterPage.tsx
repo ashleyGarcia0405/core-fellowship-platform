@@ -13,6 +13,7 @@ export default function RegisterPage() {
   const [userType, setUserType] = useState<UserType>(isAdminMode ? 'ADMIN' : 'STUDENT');
   const [fullName, setFullName] = useState('');
   const [companyName, setCompanyName] = useState('');
+  const [vcToken, setVcToken] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -49,6 +50,16 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!isAdminMode && userType === 'VC' && !fullName.trim()) {
+      setError('Full name is required for VC registration.');
+      return;
+    }
+
+    if (!isAdminMode && userType === 'VC' && !vcToken.trim()) {
+      setError('VC registration token is required.');
+      return;
+    }
+
     try {
       setSubmitting(true);
       const trimmedFullName = fullName.trim();
@@ -57,9 +68,10 @@ export default function RegisterPage() {
         email,
         password,
         userType,
-        fullName: (userType === 'STUDENT' || isAdminMode) && trimmedFullName ? trimmedFullName : undefined,
+        fullName: (userType === 'STUDENT' || isAdminMode || userType === 'VC') && trimmedFullName ? trimmedFullName : undefined,
         companyName: userType === 'STARTUP' && trimmedCompanyName ? trimmedCompanyName : undefined,
         adminToken: adminToken || undefined,
+        vcToken: userType === 'VC' && vcToken.trim() ? vcToken.trim() : undefined,
       });
 
       setSuccess(true);
@@ -124,7 +136,7 @@ export default function RegisterPage() {
         )}
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
           {!isAdminMode && (
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '4px' }}>
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '4px', flexWrap: 'wrap' }}>
               <button
                 type="button"
                 className={`account-type-toggle ${userType === 'STUDENT' ? 'active' : ''}`}
@@ -139,15 +151,22 @@ export default function RegisterPage() {
               >
                 Startup
               </button>
+              <button
+                type="button"
+                className={`account-type-toggle ${userType === 'VC' ? 'active' : ''}`}
+                onClick={() => setUserType('VC')}
+              >
+                VC
+              </button>
             </div>
           )}
-          {(isAdminMode || userType === 'STUDENT') && (
+          {(isAdminMode || userType === 'STUDENT' || userType === 'VC') && (
             <input
               type="text"
               placeholder={isAdminMode ? 'Full Name (required)' : 'Full Name'}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              required={isAdminMode || userType === 'STUDENT'}
+              required={isAdminMode || userType === 'STUDENT' || userType === 'VC'}
               style={{ padding: '12px', fontSize: '14px', border: '2px solid #e0e0e0', borderRadius: '6px', outline: 'none' }}
               onFocus={(e) => e.target.style.borderColor = '#93c5fd'}
               onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
@@ -188,6 +207,18 @@ export default function RegisterPage() {
               onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
             />
           )}
+          {!isAdminMode && userType === 'VC' && (
+            <input
+              type="password"
+              placeholder="VC Registration Token (required)"
+              value={vcToken}
+              onChange={(e) => setVcToken(e.target.value)}
+              required
+              style={{ padding: '12px', fontSize: '14px', border: '2px solid #e0e0e0', borderRadius: '6px', outline: 'none' }}
+              onFocus={(e) => e.target.style.borderColor = '#93c5fd'}
+              onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
+            />
+          )}
 
           {error && <div style={{ color: 'red', fontSize: '14px', padding: '10px', background: '#fee', borderRadius: '6px' }}>{error}</div>}
           {success && <div style={{ color: 'green', fontSize: '14px', padding: '10px', background: '#d4edda', borderRadius: '6px' }}>Redirecting to login...</div>}
@@ -208,7 +239,7 @@ export default function RegisterPage() {
               opacity: submitting ? 0.8 : 1
             }}
           >
-            {submitting ? 'Registering...' : (isAdminMode ? 'Register' : (userType === 'STUDENT' ? 'Apply as Student' : 'Apply as Startup'))}
+            {submitting ? 'Registering...' : (isAdminMode ? 'Register' : (userType === 'STUDENT' ? 'Apply as Student' : userType === 'VC' ? 'Register as VC' : 'Apply as Startup'))}
           </button>
         </form>
         <div style={{ marginTop: '20px', textAlign: 'center' }}>

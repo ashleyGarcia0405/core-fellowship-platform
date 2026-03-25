@@ -10,6 +10,8 @@ import AdminPortal from './pages/AdminPortal';
 import StudentDashboard from './pages/student/StudentDashboard';
 import StartupPortal from './pages/StartupPortal';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import VCPortal from './pages/VCPortal';
+import VCDashboard from './pages/vc/VCDashboard';
 import InterviewForm from './pages/admin/InterviewForm';
 import ApplicationForm from './pages/student/ApplicationForm';
 import IntakeForm from './pages/startup/IntakeForm';
@@ -104,6 +106,22 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <IntakeForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/vc"
+            element={
+              <ProtectedRoute>
+                <VCPortal />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/vc/talent"
+            element={
+              <ProtectedRoute>
+                <VCDashboard />
               </ProtectedRoute>
             }
           />

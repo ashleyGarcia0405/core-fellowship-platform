@@ -19,6 +19,8 @@ export default function LoginPage() {
       // Redirect based on user type
       if (response.role === 'ROLE_ADMIN') {
         navigate('/admin');
+      } else if (response.userType === 'VC') {
+        navigate('/vc');
       } else if (response.userType === 'STUDENT') {
         navigate('/student');
       } else if (response.userType === 'STARTUP') {
