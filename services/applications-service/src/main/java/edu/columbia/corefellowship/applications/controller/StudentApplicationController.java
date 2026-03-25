@@ -155,12 +155,16 @@ public class StudentApplicationController {
       @RequestParam(required = false) String term,
       @RequestParam(required = false) String status,
       @RequestHeader(value = "X-User-Id", required = false) String userId,
-      @RequestHeader(value = "X-User-Role", required = false) String userRole) {
+      @RequestHeader(value = "X-User-Role", required = false) String userRole,
+      @RequestHeader(value = "X-User-Type", required = false) String userType) {
 
     List<StudentApplication> applications;
 
-    // Admins can see all applications
-    if ("ROLE_ADMIN".equals(userRole)) {
+    // Admins and VCs can see all applications
+    boolean isAdmin = "ROLE_ADMIN".equals(userRole);
+    boolean isVc = "VC".equals(userType);
+
+    if (isAdmin || isVc) {
       if (term != null && status != null) {
         applications = repository.findByTermAndStatus(term, status);
       } else if (term != null) {
@@ -185,12 +189,13 @@ public class StudentApplicationController {
   public ResponseEntity<StudentApplication> getApplication(
       @PathVariable String id,
       @RequestHeader(value = "X-User-Id", required = false) String userId,
-      @RequestHeader(value = "X-User-Role", required = false) String userRole) {
+      @RequestHeader(value = "X-User-Role", required = false) String userRole,
+      @RequestHeader(value = "X-User-Type", required = false) String userType) {
 
     return repository.findById(id)
         .map(application -> {
-          // Admins can view any application
-          if ("ROLE_ADMIN".equals(userRole)) {
+          // Admins and VCs can view any application
+          if ("ROLE_ADMIN".equals(userRole) || "VC".equals(userType)) {
             return ResponseEntity.ok(application);
           }
 
@@ -253,18 +258,20 @@ public class StudentApplicationController {
   public ResponseEntity<Map<String, String>> getResumeUrl(
       @PathVariable String id,
       @RequestHeader(value = "X-User-Id", required = false) String userId,
-      @RequestHeader(value = "X-User-Role", required = false) String userRole) {
+      @RequestHeader(value = "X-User-Role", required = false) String userRole,
+      @RequestHeader(value = "X-User-Type", required = false) String userType) {
 
     // Find the application
     StudentApplication application = repository.findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "Application not found"));
 
-    // Verify access: user owns application OR user is admin
+    // Verify access: user owns application OR user is admin OR user is VC
     boolean isOwner = userId != null && application.getUserId().equals(userId);
     boolean isAdmin = "ROLE_ADMIN".equals(userRole);
+    boolean isVc = "VC".equals(userType);
 
-    if (!isOwner && !isAdmin) {
+    if (!isOwner && !isAdmin && !isVc) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN,
           "You can only access your own resume");
     }
@@ -403,7 +410,8 @@ public class StudentApplicationController {
   public ResponseEntity<Interview> getInterview(
       @PathVariable String id,
       @RequestHeader(value = "X-User-Id", required = false) String userId,
-      @RequestHeader(value = "X-User-Role", required = false) String userRole) {
+      @RequestHeader(value = "X-User-Role", required = false) String userRole,
+      @RequestHeader(value = "X-User-Type", required = false) String userType) {
 
     // Verify application exists
     if (!repository.existsById(id)) {
@@ -415,10 +423,13 @@ public class StudentApplicationController {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "No interview found for this application"));
 
-    // Only admins can view interviews
-    if (!"ROLE_ADMIN".equals(userRole)) {
+    // Admins and VCs can view interviews
+    boolean isAdmin = "ROLE_ADMIN".equals(userRole);
+    boolean isVc = "VC".equals(userType);
+
+    if (!isAdmin && !isVc) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-          "Only admins can view interview data");
+          "Only admins and VCs can view interview data");
     }
 
     return ResponseEntity.ok(interview);

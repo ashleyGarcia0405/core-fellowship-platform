@@ -29,6 +29,9 @@ public class AuthService {
   @Value("${admin.registration-token}")
   private String adminRegistrationToken;
 
+  @Value("${vc.registration-token}")
+  private String vcRegistrationToken;
+
   public AuthService(UserRepository userRepository,
                     PasswordEncoder passwordEncoder,
                     JwtUtil jwtUtil,
@@ -53,6 +56,7 @@ public class AuthService {
 
     // Check if attempting admin registration
     boolean isAdminRegistration = request.getAdminToken() != null && !request.getAdminToken().isBlank();
+    boolean isVcRegistration = request.getVcToken() != null && !request.getVcToken().isBlank();
 
     if (isAdminRegistration) {
       // Validate admin token
@@ -62,13 +66,29 @@ public class AuthService {
       }
     }
 
+    if (isVcRegistration) {
+      // Validate VC token
+      if (!vcRegistrationToken.equals(request.getVcToken())) {
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+            "Invalid VC registration token");
+      }
+    }
+
     // Create new user
     User user = new User();
     user.setEmail(normalizedEmail);
     user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-    user.setUserType(request.getUserType());
 
-    // Set role based on admin token validation
+    // Override userType based on token
+    if (isAdminRegistration) {
+      user.setUserType(edu.columbia.corefellowship.identity.model.UserType.ADMIN);
+    } else if (isVcRegistration) {
+      user.setUserType(edu.columbia.corefellowship.identity.model.UserType.VC);
+    } else {
+      user.setUserType(request.getUserType());
+    }
+
+    // Set role based on token validation
     if (isAdminRegistration) {
       user.setRole(UserRole.ROLE_ADMIN);
     } else {

@@ -38,6 +38,7 @@ public class ApplicationsProxyController {
     String userId = (String) request.getAttribute("X-User-Id");
     String userRole = (String) request.getAttribute("X-User-Role");
     String userEmail = (String) request.getAttribute("X-User-Email");
+    String userType = (String) request.getAttribute("X-User-Type");
 
     if (userId != null) {
       spec = spec.header("X-User-Id", userId);
@@ -47,6 +48,9 @@ public class ApplicationsProxyController {
     }
     if (userEmail != null) {
       spec = spec.header("X-User-Email", userEmail);
+    }
+    if (userType != null) {
+      spec = spec.header("X-User-Type", userType);
     }
 
     return spec;
@@ -60,6 +64,7 @@ public class ApplicationsProxyController {
     String userId = (String) request.getAttribute("X-User-Id");
     String userRole = (String) request.getAttribute("X-User-Role");
     String userEmail = (String) request.getAttribute("X-User-Email");
+    String userType = (String) request.getAttribute("X-User-Type");
 
     if (userId != null) {
       spec = spec.header("X-User-Id", userId);
@@ -69,6 +74,9 @@ public class ApplicationsProxyController {
     }
     if (userEmail != null) {
       spec = spec.header("X-User-Email", userEmail);
+    }
+    if (userType != null) {
+      spec = spec.header("X-User-Type", userType);
     }
 
     return spec;
@@ -523,6 +531,82 @@ public class ApplicationsProxyController {
       HttpServletRequest request) {
     RestClient.RequestBodySpec spec = client.patch()
         .uri("/v1/admin/matching/preferences/" + applicationId + "/assign");
+    ResponseEntity<String> response = addUserHeadersToBody(spec, request)
+        .body(body)
+        .retrieve()
+        .toEntity(String.class);
+    return forwardResponse(response);
+  }
+
+  // VC Endpoints
+  @GetMapping("/vc/favorites")
+  public ResponseEntity<Object> getVcFavorites(HttpServletRequest request) {
+    RestClient.RequestHeadersUriSpec<?> spec = client.get();
+    ResponseEntity<String> response = addUserHeadersToGet(spec.uri("/v1/vc/favorites"), request)
+        .retrieve()
+        .toEntity(String.class);
+    return forwardResponse(response);
+  }
+
+  @PostMapping("/vc/favorites")
+  public ResponseEntity<Object> saveVcFavorite(
+      @RequestBody Map<String, Object> body,
+      HttpServletRequest request) {
+    RestClient.RequestBodySpec spec = client.post().uri("/v1/vc/favorites");
+    ResponseEntity<String> response = addUserHeadersToBody(spec, request)
+        .body(body)
+        .retrieve()
+        .toEntity(String.class);
+    return forwardResponse(response);
+  }
+
+  @DeleteMapping("/vc/favorites/{applicationId}")
+  public ResponseEntity<Object> removeVcFavorite(
+      @PathVariable String applicationId,
+      HttpServletRequest request) {
+    RestClient.RequestHeadersUriSpec<?> spec = client.delete();
+    ResponseEntity<String> response = addUserHeadersToGet(spec.uri("/v1/vc/favorites/" + applicationId), request)
+        .retrieve()
+        .toEntity(String.class);
+    return forwardResponse(response);
+  }
+
+  @PatchMapping("/vc/favorites/{applicationId}")
+  public ResponseEntity<Object> updateVcFavorite(
+      @PathVariable String applicationId,
+      @RequestBody Map<String, Object> body,
+      HttpServletRequest request) {
+    RestClient.RequestBodySpec spec = client.patch().uri("/v1/vc/favorites/" + applicationId);
+    ResponseEntity<String> response = addUserHeadersToBody(spec, request)
+        .body(body)
+        .retrieve()
+        .toEntity(String.class);
+    return forwardResponse(response);
+  }
+
+  @GetMapping("/vc/favorites/export.csv")
+  public ResponseEntity<String> exportVcFavoritesCsv(HttpServletRequest request) {
+    RestClient.RequestHeadersUriSpec<?> spec = client.get();
+    ResponseEntity<String> response = addUserHeadersToGet(spec.uri("/v1/vc/favorites/export.csv"), request)
+        .retrieve()
+        .toEntity(String.class);
+    return forwardResponseString(response);
+  }
+
+  @GetMapping("/vc/portfolio-invites")
+  public ResponseEntity<Object> getVcPortfolioInvites(HttpServletRequest request) {
+    RestClient.RequestHeadersUriSpec<?> spec = client.get();
+    ResponseEntity<String> response = addUserHeadersToGet(spec.uri("/v1/vc/portfolio-invites"), request)
+        .retrieve()
+        .toEntity(String.class);
+    return forwardResponse(response);
+  }
+
+  @PostMapping("/vc/portfolio-invites")
+  public ResponseEntity<Object> createVcPortfolioInvite(
+      @RequestBody Map<String, Object> body,
+      HttpServletRequest request) {
+    RestClient.RequestBodySpec spec = client.post().uri("/v1/vc/portfolio-invites");
     ResponseEntity<String> response = addUserHeadersToBody(spec, request)
         .body(body)
         .retrieve()

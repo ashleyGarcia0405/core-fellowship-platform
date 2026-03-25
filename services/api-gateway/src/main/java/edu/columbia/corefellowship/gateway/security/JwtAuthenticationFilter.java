@@ -80,6 +80,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       String userId = jwtUtil.extractUserId(token);
       String role = jwtUtil.extractRole(token);
       String email = jwtUtil.extractEmail(token);
+      String userType = jwtUtil.extractUserType(token);
 
       // Create Spring Security Authentication
       SimpleGrantedAuthority authority = new SimpleGrantedAuthority(role);
@@ -97,6 +98,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       request.setAttribute("X-User-Id", userId);
       request.setAttribute("X-User-Role", role);
       request.setAttribute("X-User-Email", email);
+      if (userType != null) {
+        request.setAttribute("X-User-Type", userType);
+      }
 
     } catch (JwtException e) {
       // Invalid token - clear security context and let Spring Security handle it

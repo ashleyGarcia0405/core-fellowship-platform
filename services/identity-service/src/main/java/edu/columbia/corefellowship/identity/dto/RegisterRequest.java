@@ -22,6 +22,7 @@ public class RegisterRequest {
   private String fullName; // For students
   private String companyName; // For startups
   private String adminToken; // Secret token for admin registration
+  private String vcToken; // Secret token for VC registration
 
   // Getters and Setters
   public String getEmail() {
@@ -70,5 +71,13 @@ public class RegisterRequest {
 
   public void setAdminToken(String adminToken) {
     this.adminToken = adminToken;
+  }
+
+  public String getVcToken() {
+    return vcToken;
+  }
+
+  public void setVcToken(String vcToken) {
+    this.vcToken = vcToken;
   }
 }
