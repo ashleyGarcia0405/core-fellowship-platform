@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { FiHome, FiUsers, FiBriefcase, FiSettings, FiLogOut, FiMenu, FiX, FiCalendar, FiLink } from 'react-icons/fi';
 import {
+  ACTIVE_TERM,
+  TERM_OPTIONS,
   getAllApplications,
   updateApplicationStatus,
   updateInterviewEligibility,
@@ -18,7 +20,6 @@ import {
 } from '../../lib/api';
 import type { Startup, Interview, MatchPreference, AiRecommendation, RoleReference } from '../../lib/api';
 
-const ACTIVE_TERM = 'Spring 2026';
 const APPLICATIONS_PER_PAGE = 50;
 
 interface Application {
@@ -114,6 +115,7 @@ export default function AdminDashboard() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [interviewEligibilityFilter, setInterviewEligibilityFilter] = useState<string>('all');
   const [applicationsPage, setApplicationsPage] = useState(1);
+  const [selectedTerm, setSelectedTerm] = useState(ACTIVE_TERM);
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [resumeSignedUrl, setResumeSignedUrl] = useState<string | null>(null);
   const [interviewSummary, setInterviewSummary] = useState<Interview | null>(null);
@@ -175,8 +177,8 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    loadApplications();
-  }, []);
+    loadApplications(selectedTerm);
+  }, [selectedTerm]);
 
   useEffect(() => {
     filterApplications();
@@ -188,12 +190,29 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (activeTab === 'startups' && startups.length === 0) {
-      loadStartups();
+      loadStartups(selectedTerm);
     }
     if (activeTab === 'matching' && matchPreferences.length === 0) {
-      loadMatchingData();
+      loadMatchingData(selectedTerm);
     }
-  }, [activeTab]);
+  }, [activeTab, selectedTerm, startups.length, matchPreferences.length]);
+
+  useEffect(() => {
+    setSelectedApp(null);
+    setSelectedStartup(null);
+    setSelectedRole(null);
+    setSelectedStudent(null);
+    setMatchPreferences([]);
+    setMatchStartups([]);
+    setMatchApplications([]);
+    setAiRecommendations({});
+    if (activeTab === 'startups') {
+      loadStartups(selectedTerm);
+    }
+    if (activeTab === 'matching') {
+      loadMatchingData(selectedTerm);
+    }
+  }, [selectedTerm]);
 
   useEffect(() => {
     filterStartups();
@@ -284,10 +303,10 @@ export default function AdminDashboard() {
     };
   }, [isResizing]);
 
-  async function loadApplications() {
+  async function loadApplications(term: string) {
     try {
       setLoading(true);
-      const data = await getAllApplications({ term: ACTIVE_TERM });
+      const data = await getAllApplications({ term });
       const normalized = data.map(app => ({
         ...app,
         userType: 'STUDENT',
@@ -301,10 +320,10 @@ export default function AdminDashboard() {
     }
   }
 
-  async function loadStartups() {
+  async function loadStartups(term: string) {
     try {
       setStartupLoading(true);
-      const data = await getStartups({ term: ACTIVE_TERM });
+      const data = await getStartups({ term });
       setStartups(data);
       calculateStartupStats(data);
     } catch (err: any) {
@@ -401,14 +420,14 @@ export default function AdminDashboard() {
     setFilteredStartups(filtered);
   }
 
-  async function loadMatchingData() {
+  async function loadMatchingData(term: string) {
     try {
       setMatchLoading(true);
       setMatchError('');
       const [prefs, startupsData, appsData] = await Promise.all([
-        getAllSubmittedMatchPreferences(ACTIVE_TERM),
-        getStartups({ term: ACTIVE_TERM }),
-        getAllApplications({ term: ACTIVE_TERM }),
+        getAllSubmittedMatchPreferences(term),
+        getStartups({ term }),
+        getAllApplications({ term }),
       ]);
       setMatchPreferences(prefs);
       setMatchStartups(startupsData);
@@ -539,7 +558,7 @@ export default function AdminDashboard() {
   async function handleStatusChange(appId: string, newStatus: string) {
     try {
       await updateApplicationStatus(appId, newStatus as any);
-      const data = await getAllApplications({ term: ACTIVE_TERM });
+      const data = await getAllApplications({ term: selectedTerm });
       const normalized = data.map(app => ({
         ...app,
         userType: 'STUDENT',
@@ -558,7 +577,7 @@ export default function AdminDashboard() {
   async function handleInterviewEligibility(appId: string, eligible: boolean) {
     try {
       await updateInterviewEligibility(appId, eligible);
-      const data = await getAllApplications({ term: ACTIVE_TERM });
+      const data = await getAllApplications({ term: selectedTerm });
       const normalized = data.map(app => ({
         ...app,
         userType: 'STUDENT',
@@ -829,7 +848,7 @@ export default function AdminDashboard() {
             Student Applications
           </h1>
           <p style={{ color: '#666', marginBottom: '30px' }}>
-            Review and manage student applications for CORE Fellowship.
+            Review and manage student applications with <strong>{selectedTerm}</strong> as the current cohort focus.
           </p>
 
           {error && (
@@ -887,6 +906,23 @@ export default function AdminDashboard() {
             marginBottom: '25px'
           }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', marginBottom: '20px' }}>
+              <select
+                value={selectedTerm}
+                onChange={(e) => setSelectedTerm(e.target.value)}
+                style={{
+                  padding: '10px 15px',
+                  border: '1px solid #ddd',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  cursor: 'pointer',
+                  minWidth: '170px'
+                }}
+              >
+                {TERM_OPTIONS.map((term) => (
+                  <option key={term} value={term}>{term}</option>
+                ))}
+              </select>
               <input
                 type="text"
                 placeholder="Search by name or email..."
@@ -1179,7 +1215,7 @@ export default function AdminDashboard() {
                 Startup Intake Submissions
               </h1>
               <p style={{ color: '#666', marginBottom: '30px' }}>
-                Review submitted startup intake forms and partnership details.
+                Review startup intake forms for <strong>{selectedTerm}</strong>, with older cohorts available from the selector.
               </p>
 
               {startupError && (
@@ -1248,6 +1284,23 @@ export default function AdminDashboard() {
                     marginBottom: '25px'
                   }}>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
+                      <select
+                        value={selectedTerm}
+                        onChange={(e) => setSelectedTerm(e.target.value)}
+                        style={{
+                          padding: '10px 15px',
+                          border: '1px solid #ddd',
+                          borderRadius: '6px',
+                          fontSize: '14px',
+                          outline: 'none',
+                          cursor: 'pointer',
+                          minWidth: '170px'
+                        }}
+                      >
+                        {TERM_OPTIONS.map((term) => (
+                          <option key={term} value={term}>{term}</option>
+                        ))}
+                      </select>
                       <input
                         type="text"
                         placeholder="Search by company or contact..."
@@ -1441,7 +1494,7 @@ export default function AdminDashboard() {
                 Student-Role Matching
               </h1>
               <p style={{ color: '#666', marginBottom: '30px' }}>
-                View student preferences, get AI-powered match suggestions, and assign students to roles.
+                View student preferences, get AI-powered match suggestions, and assign students to roles for <strong>{selectedTerm}</strong>.
               </p>
 
               {matchError && (
@@ -1470,6 +1523,38 @@ export default function AdminDashboard() {
                 </div>
               ) : (
                 <>
+                  <div style={{
+                    background: 'white',
+                    borderRadius: '10px',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                    padding: '20px 25px',
+                    marginBottom: '25px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '15px',
+                    flexWrap: 'wrap'
+                  }}>
+                    <div style={{ fontSize: '13px', fontWeight: '600', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      Cohort Focus
+                    </div>
+                    <select
+                      value={selectedTerm}
+                      onChange={(e) => setSelectedTerm(e.target.value)}
+                      style={{
+                        padding: '10px 15px',
+                        border: '1px solid #ddd',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        outline: 'none',
+                        cursor: 'pointer',
+                        minWidth: '170px'
+                      }}
+                    >
+                      {TERM_OPTIONS.map((term) => (
+                        <option key={term} value={term}>{term}</option>
+                      ))}
+                    </select>
+                  </div>
                   {/* Stats Row */}
                   <div style={{
                     display: 'grid',

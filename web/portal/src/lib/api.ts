@@ -1,5 +1,8 @@
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 export const ACTIVE_TERM = import.meta.env.VITE_ACTIVE_TERM || "Summer 2026";
+export const TERM_OPTIONS = Array.from(
+  new Set([ACTIVE_TERM, "Spring 2026", "Summer 2026", "Fall 2026", "Spring 2027"])
+);
 
 // Auth token management
 const TOKEN_KEY = "auth_token";

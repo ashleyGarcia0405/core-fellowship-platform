@@ -2,10 +2,8 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { FiHome, FiUsers, FiBriefcase, FiDownload, FiSettings, FiLogOut, FiMenu, FiX, FiCalendar } from 'react-icons/fi';
-import { getAllApplications, getStartups } from '../lib/api';
+import { ACTIVE_TERM, TERM_OPTIONS, getAllApplications, getStartups } from '../lib/api';
 import type { Startup } from '../lib/api';
-
-const ACTIVE_TERM = 'Spring 2026';
 
 type Stats = {
   total: number;
@@ -40,6 +38,7 @@ export default function AdminPortal() {
   });
   const [statsLoading, setStatsLoading] = useState(true);
   const [statsError, setStatsError] = useState('');
+  const [selectedTerm, setSelectedTerm] = useState(ACTIVE_TERM);
 
   const handleLogout = () => {
     logout();
@@ -54,8 +53,8 @@ export default function AdminPortal() {
         setStatsLoading(true);
         setStatsError('');
         const [applications, startups] = await Promise.all([
-          getAllApplications({ term: ACTIVE_TERM }),
-          getStartups({ term: ACTIVE_TERM }),
+          getAllApplications({ term: selectedTerm }),
+          getStartups({ term: selectedTerm }),
         ]);
         if (!isMounted) return;
         const total = applications.length;
@@ -87,7 +86,7 @@ export default function AdminPortal() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [selectedTerm]);
 
   const statValue = (value: number) => (statsLoading ? '—' : value.toString());
   const startupValue = (value: number) => (statsLoading ? '—' : value.toString());
@@ -327,8 +326,41 @@ export default function AdminPortal() {
             Welcome, {user?.fullName || 'Admin'}!
           </h1>
           <p style={{ color: '#666', marginBottom: '40px' }}>
-            Manage CORE Fellowship applications and operations.
+            Manage CORE Fellowship applications and operations, currently focused on <strong>{selectedTerm}</strong>.
           </p>
+
+          <div style={{
+            background: 'white',
+            padding: '18px 20px',
+            borderRadius: '10px',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+            marginBottom: '24px',
+            display: 'flex',
+            gap: '15px',
+            alignItems: 'center',
+            flexWrap: 'wrap'
+          }}>
+            <div style={{ fontSize: '13px', fontWeight: '600', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Cohort Focus
+            </div>
+            <select
+              value={selectedTerm}
+              onChange={(e) => setSelectedTerm(e.target.value)}
+              style={{
+                padding: '10px 15px',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                fontSize: '14px',
+                outline: 'none',
+                cursor: 'pointer',
+                minWidth: '170px'
+              }}
+            >
+              {TERM_OPTIONS.map((term) => (
+                <option key={term} value={term}>{term}</option>
+              ))}
+            </select>
+          </div>
 
           {/* Stats Overview */}
           <h2 style={{ fontSize: '18px', color: '#0a468f', marginBottom: '12px' }}>

@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAllApplications } from '../../lib/api';
+import { ACTIVE_TERM, TERM_OPTIONS, getAllApplications } from '../../lib/api';
 import type { StudentApplication } from '../../lib/api';
 
-const ACTIVE_TERM = 'Spring 2026';
 const APPLICATIONS_PER_PAGE = 50;
 
 export default function ApplicationsDashboard() {
@@ -90,10 +89,9 @@ export default function ApplicationsDashboard() {
           onChange={(e) => setTerm(e.target.value)}
           style={{ padding: '8px', fontSize: '14px', minWidth: '160px' }}
         >
-          <option value="Spring 2026">Spring 2026</option>
-          <option value="Summer 2026">Summer 2026</option>
-          <option value="Fall 2026">Fall 2026</option>
-          <option value="Spring 2027">Spring 2027</option>
+          {TERM_OPTIONS.map((termOption) => (
+            <option key={termOption} value={termOption}>{termOption}</option>
+          ))}
         </select>
         <label style={{ fontWeight: 'bold' }}>Status:</label>
         <select
