@@ -394,7 +394,7 @@ export default function AdminDashboard() {
       setMatchLoading(true);
       setMatchError('');
       const [prefs, startupsData, appsData] = await Promise.all([
-        getAllSubmittedMatchPreferences(),
+        getAllSubmittedMatchPreferences(ACTIVE_TERM),
         getStartups({ term: ACTIVE_TERM }),
         getAllApplications({ term: ACTIVE_TERM }),
       ]);

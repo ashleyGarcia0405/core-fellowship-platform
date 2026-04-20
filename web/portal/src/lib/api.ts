@@ -752,8 +752,9 @@ export interface AiRecommendation {
 }
 
 // Admin Matching API
-export async function getAllSubmittedMatchPreferences(): Promise<MatchPreference[]> {
-  return getJson<MatchPreference[]>('/v1/admin/matching/preferences');
+export async function getAllSubmittedMatchPreferences(term: string): Promise<MatchPreference[]> {
+  const query = new URLSearchParams({ term }).toString();
+  return getJson<MatchPreference[]>(`/v1/admin/matching/preferences?${query}`);
 }
 
 export async function getAiRecommendation(applicationId: string): Promise<AiRecommendation> {
