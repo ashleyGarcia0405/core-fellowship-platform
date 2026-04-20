@@ -1,4 +1,5 @@
 const API_BASE = import.meta.env.VITE_API_BASE || "";
+export const ACTIVE_TERM = import.meta.env.VITE_ACTIVE_TERM || "Summer 2026";
 
 // Auth token management
 const TOKEN_KEY = "auth_token";

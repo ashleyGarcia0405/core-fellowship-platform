@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { FiFileText, FiEdit3, FiBarChart2, FiSettings, FiLogOut, FiCalendar, FiCheckCircle, FiMenu, FiX, FiStar } from 'react-icons/fi';
-import { getApplications } from '../../lib/api';
+import { ACTIVE_TERM, getApplications, type StudentApplication } from '../../lib/api';
 
 export default function StudentDashboard() {
   const { user, logout } = useAuth();
@@ -10,6 +10,7 @@ export default function StudentDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [interviewEligible, setInterviewEligible] = useState(false);
   const [isFinalist, setIsFinalist] = useState(false);
+  const [currentApplication, setCurrentApplication] = useState<StudentApplication | null>(null);
 
   const handleLogout = () => {
     logout();
@@ -20,9 +21,12 @@ export default function StudentDashboard() {
     async function loadEligibility() {
       try {
         const apps = await getApplications();
-        setInterviewEligible(apps.some(app => app.interviewEligible));
-        setIsFinalist(apps.some(app => app.status === 'FINALIST'));
+        const activeTermApplication = apps.find(app => app.term === ACTIVE_TERM) || null;
+        setCurrentApplication(activeTermApplication);
+        setInterviewEligible(Boolean(activeTermApplication?.interviewEligible));
+        setIsFinalist(activeTermApplication?.status === 'FINALIST');
       } catch (err) {
+        setCurrentApplication(null);
         setInterviewEligible(false);
         setIsFinalist(false);
       }
@@ -34,13 +38,13 @@ export default function StudentDashboard() {
     {
       date: 'Jan 27',
       title: 'Application Opens',
-      description: 'CORE Fellowship applications are now open! Click the application button on the left panel to apply.',
+      description: `${ACTIVE_TERM} CORE Fellowship applications are now open. Use the application tab to start or update your application for this term.`,
       status: 'completed'
     },
     {
-      date: 'Feb 4',
+      date: 'TBD',
       title: 'Application Deadline',
-      description: 'You must submit your application by Feb 1st at 11:59 PM EST to be considered for CORE Fellowship 2026.',
+      description: `Submit your application for ${ACTIVE_TERM} before the posted deadline to be considered.`,
       status: 'upcoming'
     },
     {
@@ -128,7 +132,7 @@ export default function StudentDashboard() {
 
         <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', marginBottom: '15px', minHeight: 0 }}>
           <h3 style={{ fontSize: '12px', color: '#999', textTransform: 'uppercase', marginBottom: '15px', fontWeight: '600', letterSpacing: '0.5px' }}>
-            CORE FELLOWSHIP 2026
+            {ACTIVE_TERM.toUpperCase()}
           </h3>
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <button
@@ -171,7 +175,7 @@ export default function StudentDashboard() {
               onMouseEnter={(e) => e.currentTarget.style.background = '#f5f5f5'}
               onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
             >
-              <FiEdit3 size={18} /> Application
+              <FiEdit3 size={18} /> {currentApplication ? 'Application' : `Apply for ${ACTIVE_TERM}`}
             </button>
             {interviewEligible && (
               <button
@@ -308,7 +312,9 @@ export default function StudentDashboard() {
             Welcome, {user?.fullName || user?.email?.split('@')[0] || 'Student'}!
           </h1>
           <p style={{ color: '#666', marginBottom: '40px' }}>
-            This is your application and logistics platform for CORE Fellowship.
+            {currentApplication
+              ? `This is your application and logistics platform for ${ACTIVE_TERM}.`
+              : `${ACTIVE_TERM} is a fresh cycle. Start a new application to participate this term.`}
           </p>
 
           <div style={{
@@ -319,7 +325,7 @@ export default function StudentDashboard() {
             marginBottom: '30px'
           }}>
             <h2 style={{ fontSize: '20px', color: '#0a468f', marginBottom: '20px' }}>
-              CORE Fellowship 2026: Spring Cohort
+              CORE Fellowship: {ACTIVE_TERM}
             </h2>
             <p style={{ color: '#666', lineHeight: '1.6', marginBottom: '20px' }}>
               Below is the timeline for CORE Fellowship. Deadlines are listed here for your convenience. Please check this page regularly for updates.

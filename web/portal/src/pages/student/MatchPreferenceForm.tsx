@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  ACTIVE_TERM,
   getApplications,
   getAvailableStartups,
   getMatchPreferences,
@@ -11,7 +12,7 @@ import {
   type StudentApplication,
 } from '../../lib/api';
 
-const DRAFT_KEY = 'match-preference-draft';
+const DRAFT_KEY = `match-preference-draft:${ACTIVE_TERM}`;
 
 export default function MatchPreferenceForm() {
   const navigate = useNavigate();
@@ -43,16 +44,16 @@ export default function MatchPreferenceForm() {
       try {
         // 1. Get user's application, verify finalist
         const apps = await getApplications();
-        const finalistApp = apps.find(a => a.status === 'FINALIST');
+        const finalistApp = apps.find(a => a.term === ACTIVE_TERM && a.status === 'FINALIST');
         if (!finalistApp) {
-          setError('Only finalists can submit match preferences.');
+          setError(`Only ${ACTIVE_TERM} finalists can submit match preferences.`);
           setLoading(false);
           return;
         }
         setApplication(finalistApp);
 
         // 2. Fetch available startups for this cohort
-        const availableStartups = await getAvailableStartups(finalistApp.term || 'Spring 2026');
+        const availableStartups = await getAvailableStartups(finalistApp.term || ACTIVE_TERM);
         setStartups(availableStartups);
 
         // 3. Check for existing preferences

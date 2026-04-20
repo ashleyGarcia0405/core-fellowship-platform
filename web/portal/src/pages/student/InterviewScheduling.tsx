@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiCalendar, FiInfo, FiEdit3, FiFileText, FiLogOut, FiMenu, FiSettings, FiX } from 'react-icons/fi';
-import { getApplications, getStudentInterviewBookings } from '../../lib/api';
+import { ACTIVE_TERM, getApplications, getStudentInterviewBookings } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 
 type InterviewType = 'technical' | 'non-technical';
@@ -30,7 +30,7 @@ export default function InterviewScheduling() {
           getApplications(),
           getStudentInterviewBookings(),
         ]);
-        const eligibleApps = apps.filter(app => app.interviewEligible);
+        const eligibleApps = apps.filter(app => app.term === ACTIVE_TERM && app.interviewEligible);
         setEligible(eligibleApps.length > 0);
         const app = eligibleApps[0];
         if (app?.rolePreferences?.some((role) => role.toLowerCase() === 'tech')) {
@@ -146,7 +146,7 @@ export default function InterviewScheduling() {
 
         <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', marginBottom: '15px', minHeight: 0 }}>
           <h3 style={{ fontSize: '12px', color: '#999', textTransform: 'uppercase', marginBottom: '15px', fontWeight: '600', letterSpacing: '0.5px' }}>
-            CORE FELLOWSHIP 2026
+            {ACTIVE_TERM.toUpperCase()}
           </h3>
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <button

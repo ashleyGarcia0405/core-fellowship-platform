@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createStudentApplication, uploadResumeBeforeCreate, getApplications } from '../../lib/api';
+import { ACTIVE_TERM, createStudentApplication, uploadResumeBeforeCreate, getApplications } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 
-const DRAFT_KEY = 'student-application-draft';
+const DRAFT_KEY = `student-application-draft:${ACTIVE_TERM}`;
 
 export default function ApplicationForm() {
   const { user } = useAuth();
@@ -46,7 +46,7 @@ export default function ApplicationForm() {
     const checkExistingApplication = async () => {
       try {
         const applications = await getApplications();
-        if (applications && applications.length > 0) {
+        if (applications.some(application => application.term === ACTIVE_TERM)) {
           setHasSubmittedApplication(true);
         }
       } catch (err) {
@@ -206,7 +206,7 @@ export default function ApplicationForm() {
 
       // Create the application with resumeUrl
       await createStudentApplication({
-        term: 'Spring 2026',
+        term: ACTIVE_TERM,
         fullName,
         pronouns: pronouns || undefined,
         gradYear,
@@ -269,7 +269,7 @@ export default function ApplicationForm() {
               marginBottom: '30px'
             }}>
               <p style={{ fontSize: '16px', color: '#155724', margin: '0 0 10px 0' }}>
-                ✓ You have already submitted your application for CORE Fellowship.
+                ✓ You have already submitted your application for {ACTIVE_TERM}.
               </p>
               <p style={{ fontSize: '14px', color: '#155724', margin: 0 }}>
                 We have received your application and will review it soon. You will be notified via email about the next steps.
@@ -300,7 +300,7 @@ export default function ApplicationForm() {
     <div style={{ minHeight: '100vh', background: 'var(--bg-blue)', paddingBottom: '40px' }}>
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: '40px 20px' }}>
         <div style={{ background: 'white', borderRadius: '12px', padding: '40px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
-          <h1 style={{ marginTop: 0, marginBottom: '10px', color: '#0a468f' }}>CORE Fellowship Application</h1>
+          <h1 style={{ marginTop: 0, marginBottom: '10px', color: '#0a468f' }}>CORE Fellowship Application: {ACTIVE_TERM}</h1>
 
           {lastSaved && (
             <div style={{
@@ -325,7 +325,7 @@ export default function ApplicationForm() {
             border: '2px solid #93c5fd'
           }}>
         <p style={{ marginTop: 0 }}>
-          <strong>CORE Fellows</strong> (previously Almaworks Fellows) are matched with startups founded by Columbia alumni and around NYC for an ~8 week internship. We will be considering applications for the <strong>Spring 2026 CORE Fellowship</strong> on a rolling basis, with a priority deadline of <strong>February 4th, 2026 at 11:59pm EST</strong>. We encourage you to sign up as soon as possible, applications submitted after the priority deadline have a significantly lower chance of getting matched. No prior startup experience is required to participate.
+          <strong>CORE Fellows</strong> (previously Almaworks Fellows) are matched with startups founded by Columbia alumni and around NYC for an ~8 week internship. We are currently accepting applications for the <strong>{ACTIVE_TERM} CORE Fellowship</strong>. No prior startup experience is required to participate.
         </p>
 
         <p>
