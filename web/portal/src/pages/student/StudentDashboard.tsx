@@ -42,9 +42,9 @@ export default function StudentDashboard() {
       status: 'completed'
     },
     {
-      date: '04/21',
+      date: '04/22',
       title: 'Resume Review Session',
-      description: 'Resume review session from 7:00 PM to 10:00 PM.',
+      description: 'Resume review session from 8:00 PM to 10:00 PM.',
       status: 'upcoming'
     },
     {
