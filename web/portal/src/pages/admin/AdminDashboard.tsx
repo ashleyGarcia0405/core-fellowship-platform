@@ -19,6 +19,7 @@ import {
 import type { Startup, Interview, MatchPreference, AiRecommendation, RoleReference } from '../../lib/api';
 
 const ACTIVE_TERM = 'Spring 2026';
+const APPLICATIONS_PER_PAGE = 50;
 
 interface Application {
   id: string;
@@ -112,6 +113,7 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [interviewEligibilityFilter, setInterviewEligibilityFilter] = useState<string>('all');
+  const [applicationsPage, setApplicationsPage] = useState(1);
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [resumeSignedUrl, setResumeSignedUrl] = useState<string | null>(null);
   const [interviewSummary, setInterviewSummary] = useState<Interview | null>(null);
@@ -178,6 +180,10 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     filterApplications();
+  }, [applications, searchTerm, statusFilter, interviewEligibilityFilter]);
+
+  useEffect(() => {
+    setApplicationsPage(1);
   }, [applications, searchTerm, statusFilter, interviewEligibilityFilter]);
 
   useEffect(() => {
@@ -360,6 +366,12 @@ export default function AdminDashboard() {
 
     setFilteredApps(filtered);
   }
+
+  const totalApplicationsPages = Math.max(1, Math.ceil(filteredApps.length / APPLICATIONS_PER_PAGE));
+  const paginatedApps = filteredApps.slice(
+    (applicationsPage - 1) * APPLICATIONS_PER_PAGE,
+    applicationsPage * APPLICATIONS_PER_PAGE
+  );
 
   function selectAdjacentApplication(direction: -1 | 1) {
     if (!selectedApp || filteredApps.length === 0) return;
@@ -1062,10 +1074,10 @@ export default function AdminDashboard() {
                       </td>
                     </tr>
                   ) : (
-                    filteredApps.map((app, index) => (
+                    paginatedApps.map((app, index) => (
                       <tr key={app.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
                         <td style={{ padding: '15px 20px', fontSize: '14px', fontWeight: '500', color: '#999' }}>
-                          {index + 1}
+                          {(applicationsPage - 1) * APPLICATIONS_PER_PAGE + index + 1}
                         </td>
                         <td style={{ padding: '15px 20px' }}>
                           <div style={{ fontSize: '14px', fontWeight: '500', color: '#333', marginBottom: '4px' }}>
@@ -1122,6 +1134,42 @@ export default function AdminDashboard() {
                 </tbody>
               </table>
             </div>
+            {filteredApps.length > 0 && (
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '16px 20px',
+                borderTop: '1px solid #e5e7eb',
+                background: '#fafafa',
+                flexWrap: 'wrap'
+              }}>
+                <div style={{ fontSize: '13px', color: '#666' }}>
+                  Showing {(applicationsPage - 1) * APPLICATIONS_PER_PAGE + 1}-
+                  {Math.min(applicationsPage * APPLICATIONS_PER_PAGE, filteredApps.length)} of {filteredApps.length}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button
+                    onClick={() => setApplicationsPage(applicationsPage - 1)}
+                    disabled={applicationsPage === 1}
+                    style={paginationButtonStyle(applicationsPage === 1)}
+                  >
+                    Previous
+                  </button>
+                  <span style={{ fontSize: '13px', color: '#374151', minWidth: '90px', textAlign: 'center' }}>
+                    Page {applicationsPage} of {totalApplicationsPages}
+                  </span>
+                  <button
+                    onClick={() => setApplicationsPage(applicationsPage + 1)}
+                    disabled={applicationsPage === totalApplicationsPages}
+                    style={paginationButtonStyle(applicationsPage === totalApplicationsPages)}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
             </>
           )}
@@ -2948,4 +2996,17 @@ export default function AdminDashboard() {
       `}</style>
     </div>
   );
+}
+
+function paginationButtonStyle(disabled: boolean) {
+  return {
+    padding: '8px 14px',
+    borderRadius: '6px',
+    border: '1px solid #d1d5db',
+    background: disabled ? '#f3f4f6' : 'white',
+    color: disabled ? '#9ca3af' : '#111827',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    fontSize: '14px',
+    fontWeight: '500',
+  } as const;
 }

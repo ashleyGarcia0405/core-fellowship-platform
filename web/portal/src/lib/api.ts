@@ -504,9 +504,37 @@ export async function getStartups(params?: { term?: string; status?: string }): 
 export async function getAllApplications(params?: {
   status?: string;
   term?: string;
+  page?: number;
+  size?: number;
 }): Promise<any[]> {
-  const query = params ? `?${new URLSearchParams(params as any).toString()}` : '';
-  return getJson<any[]>(`/v1/students/applications${query}`);
+  if (params?.page !== undefined) {
+    const query = `?${new URLSearchParams(params as any).toString()}`;
+    return getJson<any[]>(`/v1/students/applications${query}`);
+  }
+
+  const size = Math.min(params?.size ?? 200, 200);
+  const allApplications: any[] = [];
+  let page = 0;
+
+  while (true) {
+    const queryParams = new URLSearchParams({
+      ...(params?.status ? { status: params.status } : {}),
+      ...(params?.term ? { term: params.term } : {}),
+      page: String(page),
+      size: String(size),
+    });
+
+    const batch = await getJson<any[]>(`/v1/students/applications?${queryParams.toString()}`);
+    allApplications.push(...batch);
+
+    if (batch.length < size) {
+      break;
+    }
+
+    page += 1;
+  }
+
+  return allApplications;
 }
 
 export async function updateApplicationStatus(
