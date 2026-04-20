@@ -21,7 +21,7 @@ export default function StudentDashboard() {
       try {
         const apps = await getApplications();
         setInterviewEligible(apps.some(app => app.interviewEligible));
-        setIsFinalist(apps.some(app => app.status === 'finalist'));
+        setIsFinalist(apps.some(app => app.status === 'FINALIST'));
       } catch (err) {
         setInterviewEligible(false);
         setIsFinalist(false);

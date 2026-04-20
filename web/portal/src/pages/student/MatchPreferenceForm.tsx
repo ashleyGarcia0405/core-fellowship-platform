@@ -43,7 +43,7 @@ export default function MatchPreferenceForm() {
       try {
         // 1. Get user's application, verify finalist
         const apps = await getApplications();
-        const finalistApp = apps.find(a => a.status === 'finalist');
+        const finalistApp = apps.find(a => a.status === 'FINALIST');
         if (!finalistApp) {
           setError('Only finalists can submit match preferences.');
           setLoading(false);
@@ -51,8 +51,8 @@ export default function MatchPreferenceForm() {
         }
         setApplication(finalistApp);
 
-        // 2. Fetch available startups
-        const availableStartups = await getAvailableStartups();
+        // 2. Fetch available startups for this cohort
+        const availableStartups = await getAvailableStartups(finalistApp.term || 'Spring 2026');
         setStartups(availableStartups);
 
         // 3. Check for existing preferences

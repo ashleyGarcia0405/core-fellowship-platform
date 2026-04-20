@@ -10,6 +10,8 @@ import {
 } from '../lib/api';
 import type { VcPortfolioInvite } from '../lib/api';
 
+const ACTIVE_TERM = 'Spring 2026';
+
 export default function VCPortal() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -37,12 +39,12 @@ export default function VCPortal() {
 
   useEffect(() => {
     let mounted = true;
-    Promise.all([getAllApplications(), getVcFavorites()])
+    Promise.all([getAllApplications({ term: ACTIVE_TERM }), getVcFavorites()])
       .then(([apps, favs]) => {
         if (!mounted) return;
         setTotalStudents(apps.length);
-        setFinalists(apps.filter((a: any) => a.status === 'finalist').length);
-        setMatched(apps.filter((a: any) => a.status === 'matched').length);
+        setFinalists(apps.filter((a: any) => a.status === 'FINALIST').length);
+        setMatched(apps.filter((a: any) => a.status === 'MATCHED').length);
         setSavedCount(favs.length);
       })
       .catch(() => {})

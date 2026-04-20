@@ -32,7 +32,7 @@ export default function App() {
           <Route
             path="/admin"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="ROLE_ADMIN">
                 <AdminPortal />
               </ProtectedRoute>
             }
@@ -40,7 +40,7 @@ export default function App() {
           <Route
             path="/admin/applications"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="ROLE_ADMIN">
                 <AdminDashboard />
               </ProtectedRoute>
             }
@@ -48,7 +48,7 @@ export default function App() {
           <Route
             path="/admin/interview/:applicationId"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="ROLE_ADMIN">
                 <InterviewForm />
               </ProtectedRoute>
             }
@@ -56,7 +56,7 @@ export default function App() {
           <Route
             path="/admin/interviews"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="ROLE_ADMIN">
                 <InterviewSignup />
               </ProtectedRoute>
             }
@@ -112,7 +112,7 @@ export default function App() {
           <Route
             path="/vc"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredUserType="VC">
                 <VCPortal />
               </ProtectedRoute>
             }
@@ -120,7 +120,7 @@ export default function App() {
           <Route
             path="/vc/talent"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredUserType="VC">
                 <VCDashboard />
               </ProtectedRoute>
             }

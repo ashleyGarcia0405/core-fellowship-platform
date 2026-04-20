@@ -5,6 +5,8 @@ import { FiHome, FiUsers, FiBriefcase, FiDownload, FiSettings, FiLogOut, FiMenu,
 import { getAllApplications, getStartups } from '../lib/api';
 import type { Startup } from '../lib/api';
 
+const ACTIVE_TERM = 'Spring 2026';
+
 type Stats = {
   total: number;
   submitted: number;
@@ -52,15 +54,15 @@ export default function AdminPortal() {
         setStatsLoading(true);
         setStatsError('');
         const [applications, startups] = await Promise.all([
-          getAllApplications(),
-          getStartups(),
+          getAllApplications({ term: ACTIVE_TERM }),
+          getStartups({ term: ACTIVE_TERM }),
         ]);
         if (!isMounted) return;
         const total = applications.length;
-        const submitted = applications.filter(app => app.status === 'submitted').length;
-        const interviewed = applications.filter(app => app.status === 'interviewed').length;
-        const finalist = applications.filter(app => app.status === 'finalist').length;
-        const matched = applications.filter(app => app.status === 'matched').length;
+        const submitted = applications.filter(app => app.status === 'SUBMITTED').length;
+        const interviewed = applications.filter(app => app.status === 'INTERVIEWED').length;
+        const finalist = applications.filter(app => app.status === 'FINALIST').length;
+        const matched = applications.filter(app => app.status === 'MATCHED').length;
         const startupStats = calculateStartupStats(startups);
         setStats({
           total,

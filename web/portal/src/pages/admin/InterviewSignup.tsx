@@ -4,6 +4,8 @@ import { FiCalendar, FiFilter, FiUserPlus, FiUserMinus, FiHome, FiUsers, FiBrief
 import { useAuth } from '../../contexts/AuthContext';
 import { getInterviewBookings, updateInterviewBooking } from '../../lib/api';
 
+const ACTIVE_TERM = 'Spring 2026';
+
 type InterviewStatusFilter = 'all' | 'scheduled' | 'completed';
 type InterviewTypeFilter = 'all' | 'technical' | 'non-technical';
 type AssignmentFilter = 'all' | 'needs-interviewer' | 'fully-assigned';
@@ -24,7 +26,7 @@ export default function InterviewSignup() {
       try {
         setLoading(true);
         setError('');
-        const data = await getInterviewBookings();
+        const data = await getInterviewBookings(ACTIVE_TERM);
         setBookings(data);
       } catch (err: any) {
         setError(err.message || 'Failed to load interview bookings.');

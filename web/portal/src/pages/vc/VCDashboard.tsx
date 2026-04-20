@@ -14,6 +14,8 @@ import {
 } from '../../lib/api';
 import type { VcFavorite, Interview } from '../../lib/api';
 
+const ACTIVE_TERM = 'Spring 2026';
+
 interface Application {
   id: string;
   fullName?: string;
@@ -41,23 +43,23 @@ interface Application {
 }
 
 const STATUS_STYLES: Record<string, { bg: string; color: string; border: string }> = {
-  submitted: { bg: '#fef3c7', color: '#92400e', border: '#fcd34d' },
-  interview_scheduled: { bg: '#dbeafe', color: '#1e40af', border: '#93c5fd' },
-  interviewed: { bg: '#e0e7ff', color: '#3730a3', border: '#a5b4fc' },
-  finalist: { bg: '#fae8ff', color: '#86198f', border: '#e879f9' },
-  rejected: { bg: '#fee2e2', color: '#991b1b', border: '#fca5a5' },
-  matched: { bg: '#d1fae5', color: '#065f46', border: '#6ee7b7' },
-  not_matched: { bg: '#fef3c7', color: '#78350f', border: '#fbbf24' },
+  SUBMITTED: { bg: '#fef3c7', color: '#92400e', border: '#fcd34d' },
+  INTERVIEW_SCHEDULED: { bg: '#dbeafe', color: '#1e40af', border: '#93c5fd' },
+  INTERVIEWED: { bg: '#e0e7ff', color: '#3730a3', border: '#a5b4fc' },
+  FINALIST: { bg: '#fae8ff', color: '#86198f', border: '#e879f9' },
+  REJECTED: { bg: '#fee2e2', color: '#991b1b', border: '#fca5a5' },
+  MATCHED: { bg: '#d1fae5', color: '#065f46', border: '#6ee7b7' },
+  NOT_MATCHED: { bg: '#fef3c7', color: '#78350f', border: '#fbbf24' },
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  submitted: 'Submitted',
-  interview_scheduled: 'Interview Scheduled',
-  interviewed: 'Interviewed',
-  finalist: 'Finalist',
-  rejected: 'Rejected',
-  matched: 'Matched',
-  not_matched: 'Not Matched',
+  SUBMITTED: 'Submitted',
+  INTERVIEW_SCHEDULED: 'Interview Scheduled',
+  INTERVIEWED: 'Interviewed',
+  FINALIST: 'Finalist',
+  REJECTED: 'Rejected',
+  MATCHED: 'Matched',
+  NOT_MATCHED: 'Not Matched',
 };
 
 export default function VCDashboard() {
@@ -126,7 +128,7 @@ export default function VCDashboard() {
   useEffect(() => {
     let mounted = true;
     setLoading(true);
-    Promise.all([getAllApplications(), getVcFavorites()])
+    Promise.all([getAllApplications({ term: ACTIVE_TERM }), getVcFavorites()])
       .then(([apps, favs]) => {
         if (!mounted) return;
         setApplications(apps as Application[]);
@@ -327,13 +329,13 @@ export default function VCDashboard() {
                 style={{ padding: '10px 15px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '14px', outline: 'none', cursor: 'pointer' }}
               >
                 <option value="all">All Status</option>
-                <option value="submitted">Submitted</option>
-                <option value="interview_scheduled">Interview Scheduled</option>
-                <option value="interviewed">Interviewed</option>
-                <option value="finalist">Finalist</option>
-                <option value="rejected">Rejected</option>
-                <option value="matched">Matched</option>
-                <option value="not_matched">Not Matched</option>
+                <option value="SUBMITTED">Submitted</option>
+                <option value="INTERVIEW_SCHEDULED">Interview Scheduled</option>
+                <option value="INTERVIEWED">Interviewed</option>
+                <option value="FINALIST">Finalist</option>
+                <option value="REJECTED">Rejected</option>
+                <option value="MATCHED">Matched</option>
+                <option value="NOT_MATCHED">Not Matched</option>
               </select>
             </div>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>

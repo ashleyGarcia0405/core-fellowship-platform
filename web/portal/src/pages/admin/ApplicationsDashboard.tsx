@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getApplications } from '../../lib/api';
+import { getAllApplications } from '../../lib/api';
 import type { StudentApplication } from '../../lib/api';
+
+const ACTIVE_TERM = 'Spring 2026';
 
 export default function ApplicationsDashboard() {
   const [applications, setApplications] = useState<StudentApplication[]>([]);
@@ -9,11 +11,12 @@ export default function ApplicationsDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [term, setTerm] = useState(ACTIVE_TERM);
   const navigate = useNavigate();
 
   useEffect(() => {
-    loadApplications();
-  }, []);
+    loadApplications(term);
+  }, [term]);
 
   useEffect(() => {
     if (statusFilter === 'all') {
@@ -23,9 +26,11 @@ export default function ApplicationsDashboard() {
     }
   }, [statusFilter, applications]);
 
-  const loadApplications = async () => {
+  const loadApplications = async (selectedTerm: string) => {
+    setLoading(true);
+    setError('');
     try {
-      const data = await getApplications();
+      const data = await getAllApplications({ term: selectedTerm });
       setApplications(data);
       setFilteredApplications(data);
     } catch (err: any) {
@@ -66,19 +71,32 @@ export default function ApplicationsDashboard() {
         </button>
       </div>
 
-      <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-        <label style={{ fontWeight: 'bold' }}>Filter by Status:</label>
+      <div style={{ marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+        <label style={{ fontWeight: 'bold' }}>Cohort:</label>
+        <select
+          value={term}
+          onChange={(e) => setTerm(e.target.value)}
+          style={{ padding: '8px', fontSize: '14px', minWidth: '160px' }}
+        >
+          <option value="Spring 2026">Spring 2026</option>
+          <option value="Summer 2026">Summer 2026</option>
+          <option value="Fall 2026">Fall 2026</option>
+          <option value="Spring 2027">Spring 2027</option>
+        </select>
+        <label style={{ fontWeight: 'bold' }}>Status:</label>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           style={{ padding: '8px', fontSize: '14px', minWidth: '150px' }}
         >
           <option value="all">All Applications</option>
-          <option value="submitted">Submitted</option>
-          <option value="interviewed">Interviewed</option>
-          <option value="finalist">Finalist</option>
-          <option value="rejected">Rejected</option>
-          <option value="matched">Matched</option>
+          <option value="SUBMITTED">Submitted</option>
+          <option value="INTERVIEW_SCHEDULED">Interview Scheduled</option>
+          <option value="INTERVIEWED">Interviewed</option>
+          <option value="FINALIST">Finalist</option>
+          <option value="REJECTED">Rejected</option>
+          <option value="MATCHED">Matched</option>
+          <option value="NOT_MATCHED">Not Matched</option>
         </select>
         <span style={{ marginLeft: '10px', color: '#666' }}>
           Showing {filteredApplications.length} of {applications.length} applications
@@ -137,18 +155,18 @@ export default function ApplicationsDashboard() {
                   <td style={{ padding: '12px' }}>
                     <button
                       onClick={() => handleInterviewClick(app.id)}
-                      disabled={app.status === 'interviewed' || app.status === 'finalist'}
+                      disabled={app.status === 'INTERVIEWED' || app.status === 'FINALIST'}
                       style={{
                         padding: '6px 12px',
                         fontSize: '14px',
-                        cursor: app.status === 'interviewed' || app.status === 'finalist' ? 'not-allowed' : 'pointer',
-                        background: app.status === 'interviewed' || app.status === 'finalist' ? '#ccc' : '#28a745',
+                        cursor: app.status === 'INTERVIEWED' || app.status === 'FINALIST' ? 'not-allowed' : 'pointer',
+                        background: app.status === 'INTERVIEWED' || app.status === 'FINALIST' ? '#ccc' : '#28a745',
                         color: 'white',
                         border: 'none',
                         borderRadius: '4px'
                       }}
                     >
-                      {app.status === 'interviewed' || app.status === 'finalist' ? 'Interviewed' : 'Interview'}
+                      {app.status === 'INTERVIEWED' || app.status === 'FINALIST' ? 'Interviewed' : 'Interview'}
                     </button>
                   </td>
                 </tr>
@@ -169,19 +187,19 @@ export default function ApplicationsDashboard() {
           </div>
           <div>
             <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#28a745' }}>
-              {applications.filter(a => a.status === 'interviewed').length}
+              {applications.filter(a => a.status === 'INTERVIEWED').length}
             </div>
             <div style={{ color: '#666' }}>Interviewed</div>
           </div>
           <div>
             <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ffc107' }}>
-              {applications.filter(a => a.status === 'submitted').length}
+              {applications.filter(a => a.status === 'SUBMITTED').length}
             </div>
             <div style={{ color: '#666' }}>Pending Interview</div>
           </div>
           <div>
             <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#17a2b8' }}>
-              {applications.filter(a => a.status === 'finalist').length}
+              {applications.filter(a => a.status === 'FINALIST').length}
             </div>
             <div style={{ color: '#666' }}>Finalists</div>
           </div>
@@ -193,16 +211,20 @@ export default function ApplicationsDashboard() {
 
 function getStatusColor(status: string): string {
   switch (status) {
-    case 'submitted':
+    case 'SUBMITTED':
       return '#ffc107';
-    case 'interviewed':
+    case 'INTERVIEW_SCHEDULED':
+      return '#fd7e14';
+    case 'INTERVIEWED':
       return '#28a745';
-    case 'finalist':
+    case 'FINALIST':
       return '#17a2b8';
-    case 'matched':
+    case 'MATCHED':
       return '#93c5fd';
-    case 'rejected':
+    case 'REJECTED':
       return '#dc3545';
+    case 'NOT_MATCHED':
+      return '#6c757d';
     default:
       return '#6c757d';
   }

@@ -38,31 +38,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Check if user is already logged in on mount
     const token = getAuthToken();
+    let expiryTimer: ReturnType<typeof setTimeout> | null = null;
+
     if (token) {
-      // Check if token is expired
       if (isTokenExpired(token)) {
         apiLogout();
-        setLoading(false);
-        return;
-      }
-      // Parse JWT to get user info (simple base64 decode of payload)
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        setUser({
-          userId: payload.sub,
-          email: payload.email,
-          userType: payload.userType,
-          role: payload.role,
-          fullName: payload.fullName,
-          companyName: payload.companyName,
-        });
-      } catch (error) {
-        console.error('Failed to parse token:', error);
-        apiLogout();
+      } else {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          setUser({
+            userId: payload.sub,
+            email: payload.email,
+            userType: payload.userType,
+            role: payload.role,
+            fullName: payload.fullName,
+            companyName: payload.companyName,
+          });
+
+          // Schedule automatic logout at exact token expiry time
+          if (payload.exp) {
+            const msUntilExpiry = payload.exp * 1000 - Date.now();
+            if (msUntilExpiry > 0) {
+              expiryTimer = setTimeout(() => logout(), msUntilExpiry);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to parse token:', error);
+          apiLogout();
+        }
       }
     }
+
     setLoading(false);
-  }, []);
+    return () => { if (expiryTimer) clearTimeout(expiryTimer); };
+  }, [logout]);
 
   const login = async (email: string, password: string): Promise<LoginResponse> => {
     const response = await apiLogin(email, password);
@@ -77,6 +86,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         fullName: payload.fullName,
         companyName: payload.companyName,
       });
+
+      // Schedule automatic logout when this token expires
+      if (payload.exp) {
+        const msUntilExpiry = payload.exp * 1000 - Date.now();
+        if (msUntilExpiry > 0) {
+          setTimeout(() => logout(), msUntilExpiry);
+        }
+      }
     } catch (error) {
       // Fallback if JWT decode fails
       setUser({

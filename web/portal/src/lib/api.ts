@@ -52,6 +52,27 @@ function getHeaders(): HeadersInit {
   return headers;
 }
 
+/**
+ * Extracts a safe, user-facing error message from an error response.
+ * Parses JSON `message` field if present; falls back to generic messages
+ * for server errors to avoid leaking stack traces or internal paths.
+ */
+async function extractErrorMessage(res: Response): Promise<string> {
+  try {
+    const text = await res.text();
+    if (!text) return `Request failed (${res.status})`;
+    // Try to parse as JSON Spring error response
+    const json = JSON.parse(text);
+    if (json.message) return json.message;
+    if (json.error) return json.error;
+  } catch {
+    // Not JSON — fall through
+  }
+  // Never surface raw server internals for 5xx
+  if (res.status >= 500) return 'Something went wrong. Please try again.';
+  return `Request failed (${res.status})`;
+}
+
 export async function getJson<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     headers: getHeaders(),
@@ -60,8 +81,8 @@ export async function getJson<T>(path: string): Promise<T> {
     if (res.status === 401) {
       handleUnauthorized();
     }
-    const text = await res.text();
-    throw new Error(`HTTP ${res.status}: ${text}`);
+    const message = await extractErrorMessage(res);
+    throw new Error(message);
   }
   return res.json() as Promise<T>;
 }
@@ -78,8 +99,8 @@ export async function postJson<T>(path: string, body: unknown): Promise<T> {
     if (res.status === 401 && !path.startsWith("/v1/auth/")) {
       handleUnauthorized();
     }
-    const text = await res.text();
-    throw new Error(`HTTP ${res.status}: ${text}`);
+    const message = await extractErrorMessage(res);
+    throw new Error(message);
   }
   return res.json() as Promise<T>;
 }
@@ -252,8 +273,8 @@ export async function updateInterview(applicationId: string, data: UpdateIntervi
     if (res.status === 401) {
       handleUnauthorized();
     }
-    const text = await res.text();
-    throw new Error(`HTTP ${res.status}: ${text}`);
+    const message = await extractErrorMessage(res);
+    throw new Error(message);
   }
   return res.json() as Promise<Interview>;
 }
@@ -262,6 +283,7 @@ export async function updateInterview(applicationId: string, data: UpdateIntervi
 export interface StudentApplication {
   id: string;
   userId: string;
+  term: string;
   fullName: string;
   email: string;
   gradYear: string;
@@ -286,8 +308,8 @@ export interface InterviewBooking {
   interviewers: { userId: string; name: string; email: string }[];
 }
 
-export async function getInterviewBookings(): Promise<InterviewBooking[]> {
-  return getJson<InterviewBooking[]>('/v1/admin/interviews');
+export async function getInterviewBookings(term: string): Promise<InterviewBooking[]> {
+  return getJson<InterviewBooking[]>(`/v1/admin/interviews?term=${encodeURIComponent(term)}`);
 }
 
 export async function getStudentInterviewBookings(): Promise<InterviewBooking[]> {
@@ -307,8 +329,8 @@ export async function updateInterviewBooking(
     if (res.status === 401) {
       handleUnauthorized();
     }
-    const text = await res.text();
-    throw new Error(`HTTP ${res.status}: ${text}`);
+    const message = await extractErrorMessage(res);
+    throw new Error(message);
   }
   return res.json() as Promise<InterviewBooking>;
 }
@@ -319,6 +341,7 @@ export async function getApplications(): Promise<StudentApplication[]> {
 }
 
 export interface CreateStudentApplicationRequest {
+  term: string;
   fullName: string;
   pronouns?: string;
   gradYear: string;
@@ -364,8 +387,8 @@ export async function uploadResumeBeforeCreate(file: File): Promise<{ message: s
     if (res.status === 401) {
       handleUnauthorized();
     }
-    const text = await res.text();
-    throw new Error(`HTTP ${res.status}: ${text}`);
+    const message = await extractErrorMessage(res);
+    throw new Error(message);
   }
 
   return res.json();
@@ -388,8 +411,8 @@ export async function uploadResume(applicationId: string, file: File): Promise<{
     if (res.status === 401) {
       handleUnauthorized();
     }
-    const text = await res.text();
-    throw new Error(`HTTP ${res.status}: ${text}`);
+    const message = await extractErrorMessage(res);
+    throw new Error(message);
   }
 
   return res.json();
@@ -472,8 +495,9 @@ export async function createStartup(data: CreateStartupRequest): Promise<Startup
   return postJson<Startup>("/v1/startups/intake", data);
 }
 
-export async function getStartups(): Promise<Startup[]> {
-  return getJson<Startup[]>("/v1/startups");
+export async function getStartups(params?: { term?: string; status?: string }): Promise<Startup[]> {
+  const query = params ? `?${new URLSearchParams(params as any).toString()}` : '';
+  return getJson<Startup[]>(`/v1/startups${query}`);
 }
 
 // Admin API functions
@@ -487,7 +511,7 @@ export async function getAllApplications(params?: {
 
 export async function updateApplicationStatus(
   applicationId: string,
-  status: 'submitted' | 'interview_scheduled' | 'interviewed' | 'finalist' | 'rejected' | 'matched' | 'not_matched',
+  status: 'SUBMITTED' | 'INTERVIEW_SCHEDULED' | 'INTERVIEWED' | 'FINALIST' | 'REJECTED' | 'MATCHED' | 'NOT_MATCHED',
   reviewNotes?: string
 ): Promise<void> {
   const res = await fetch(`${API_BASE}/v1/students/applications/${applicationId}`, {
@@ -499,8 +523,8 @@ export async function updateApplicationStatus(
     if (res.status === 401) {
       handleUnauthorized();
     }
-    const text = await res.text();
-    throw new Error(`HTTP ${res.status}: ${text}`);
+    const message = await extractErrorMessage(res);
+    throw new Error(message);
   }
 }
 
@@ -517,8 +541,8 @@ export async function updateInterviewEligibility(
     if (res.status === 401) {
       handleUnauthorized();
     }
-    const text = await res.text();
-    throw new Error(`HTTP ${res.status}: ${text}`);
+    const message = await extractErrorMessage(res);
+    throw new Error(message);
   }
 }
 
@@ -530,8 +554,8 @@ export async function exportApplicationsCSV(): Promise<Blob> {
     if (res.status === 401) {
       handleUnauthorized();
     }
-    const text = await res.text();
-    throw new Error(`HTTP ${res.status}: ${text}`);
+    const message = await extractErrorMessage(res);
+    throw new Error(message);
   }
   return res.blob();
 }
@@ -544,8 +568,8 @@ export async function exportApplicationsJSON(): Promise<Blob> {
     if (res.status === 401) {
       handleUnauthorized();
     }
-    const text = await res.text();
-    throw new Error(`HTTP ${res.status}: ${text}`);
+    const message = await extractErrorMessage(res);
+    throw new Error(message);
   }
   return res.blob();
 }
@@ -554,8 +578,6 @@ export async function exportApplicationsJSON(): Promise<Blob> {
 export interface RoleReference {
   startupId: string;
   positionIndex: number;
-  startupName: string;
-  roleType: string;
 }
 
 export interface MatchPreference {
@@ -588,8 +610,8 @@ export interface AvailableStartup {
 }
 
 // Match Preference API
-export async function getAvailableStartups(): Promise<AvailableStartup[]> {
-  return getJson<AvailableStartup[]>('/v1/startups/available');
+export async function getAvailableStartups(term: string): Promise<AvailableStartup[]> {
+  return getJson<AvailableStartup[]>(`/v1/startups/available?term=${encodeURIComponent(term)}`);
 }
 
 export async function createMatchPreferences(
@@ -616,8 +638,8 @@ export async function updateMatchPreferences(
     if (res.status === 401) {
       handleUnauthorized();
     }
-    const text = await res.text();
-    throw new Error(`HTTP ${res.status}: ${text}`);
+    const message = await extractErrorMessage(res);
+    throw new Error(message);
   }
   return res.json() as Promise<MatchPreference>;
 }
@@ -666,8 +688,8 @@ export async function removeVcFavorite(applicationId: string): Promise<void> {
   });
   if (!res.ok) {
     if (res.status === 401) handleUnauthorized();
-    const text = await res.text();
-    throw new Error(`HTTP ${res.status}: ${text}`);
+    const message = await extractErrorMessage(res);
+    throw new Error(message);
   }
 }
 
@@ -682,8 +704,8 @@ export async function updateVcFavorite(
   });
   if (!res.ok) {
     if (res.status === 401) handleUnauthorized();
-    const text = await res.text();
-    throw new Error(`HTTP ${res.status}: ${text}`);
+    const message = await extractErrorMessage(res);
+    throw new Error(message);
   }
   return res.json() as Promise<VcFavorite>;
 }
@@ -694,8 +716,8 @@ export async function exportVcFavoritesCsv(): Promise<Blob> {
   });
   if (!res.ok) {
     if (res.status === 401) handleUnauthorized();
-    const text = await res.text();
-    throw new Error(`HTTP ${res.status}: ${text}`);
+    const message = await extractErrorMessage(res);
+    throw new Error(message);
   }
   return res.blob();
 }
@@ -756,8 +778,8 @@ export async function assignMatchRole(
     if (res.status === 401) {
       handleUnauthorized();
     }
-    const text = await res.text();
-    throw new Error(`HTTP ${res.status}: ${text}`);
+    const message = await extractErrorMessage(res);
+    throw new Error(message);
   }
   return res.json() as Promise<MatchPreference>;
 }

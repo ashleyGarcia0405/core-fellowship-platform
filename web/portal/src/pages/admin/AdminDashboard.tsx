@@ -18,13 +18,15 @@ import {
 } from '../../lib/api';
 import type { Startup, Interview, MatchPreference, AiRecommendation, RoleReference } from '../../lib/api';
 
+const ACTIVE_TERM = 'Spring 2026';
+
 interface Application {
   id: string;
   fullName?: string;
   companyName?: string;
   email: string;
   userType: 'STUDENT' | 'STARTUP';
-  status: 'submitted' | 'interview_scheduled' | 'interviewed' | 'finalist' | 'rejected' | 'matched' | 'not_matched';
+  status: 'SUBMITTED' | 'INTERVIEW_SCHEDULED' | 'INTERVIEWED' | 'FINALIST' | 'REJECTED' | 'MATCHED' | 'NOT_MATCHED';
   term?: string;
   submittedAt: string;
   interviewEligible?: boolean;
@@ -78,23 +80,23 @@ interface StartupStats {
 }
 
 const STATUS_STYLES: Record<string, { bg: string; color: string; border: string }> = {
-  submitted: { bg: '#fef3c7', color: '#92400e', border: '#fcd34d' },
-  interview_scheduled: { bg: '#dbeafe', color: '#1e40af', border: '#93c5fd' },
-  interviewed: { bg: '#e0e7ff', color: '#3730a3', border: '#a5b4fc' },
-  finalist: { bg: '#fae8ff', color: '#86198f', border: '#e879f9' },
-  rejected: { bg: '#fee2e2', color: '#991b1b', border: '#fca5a5' },
-  matched: { bg: '#d1fae5', color: '#065f46', border: '#6ee7b7' },
-  not_matched: { bg: '#fef3c7', color: '#78350f', border: '#fbbf24' },
+  SUBMITTED: { bg: '#fef3c7', color: '#92400e', border: '#fcd34d' },
+  INTERVIEW_SCHEDULED: { bg: '#dbeafe', color: '#1e40af', border: '#93c5fd' },
+  INTERVIEWED: { bg: '#e0e7ff', color: '#3730a3', border: '#a5b4fc' },
+  FINALIST: { bg: '#fae8ff', color: '#86198f', border: '#e879f9' },
+  REJECTED: { bg: '#fee2e2', color: '#991b1b', border: '#fca5a5' },
+  MATCHED: { bg: '#d1fae5', color: '#065f46', border: '#6ee7b7' },
+  NOT_MATCHED: { bg: '#fef3c7', color: '#78350f', border: '#fbbf24' },
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  submitted: 'Submitted',
-  interview_scheduled: 'Interview Scheduled',
-  interviewed: 'Interviewed',
-  finalist: 'Finalist',
-  rejected: 'Rejected',
-  matched: 'Matched',
-  not_matched: 'Not Matched',
+  SUBMITTED: 'Submitted',
+  INTERVIEW_SCHEDULED: 'Interview Scheduled',
+  INTERVIEWED: 'Interviewed',
+  FINALIST: 'Finalist',
+  REJECTED: 'Rejected',
+  MATCHED: 'Matched',
+  NOT_MATCHED: 'Not Matched',
 };
 
 
@@ -279,7 +281,7 @@ export default function AdminDashboard() {
   async function loadApplications() {
     try {
       setLoading(true);
-      const data = await getAllApplications();
+      const data = await getAllApplications({ term: ACTIVE_TERM });
       const normalized = data.map(app => ({
         ...app,
         userType: 'STUDENT',
@@ -296,7 +298,7 @@ export default function AdminDashboard() {
   async function loadStartups() {
     try {
       setStartupLoading(true);
-      const data = await getStartups();
+      const data = await getStartups({ term: ACTIVE_TERM });
       setStartups(data);
       calculateStartupStats(data);
     } catch (err: any) {
@@ -309,13 +311,13 @@ export default function AdminDashboard() {
   function calculateStats(apps: Application[]) {
     setStats({
       total: apps.length,
-      submitted: apps.filter(a => a.status === 'submitted').length,
-      interview_scheduled: apps.filter(a => a.status === 'interview_scheduled').length,
-      interviewed: apps.filter(a => a.status === 'interviewed').length,
-      finalist: apps.filter(a => a.status === 'finalist').length,
-      rejected: apps.filter(a => a.status === 'rejected').length,
-      matched: apps.filter(a => a.status === 'matched').length,
-      not_matched: apps.filter(a => a.status === 'not_matched').length,
+      submitted: apps.filter(a => a.status === 'SUBMITTED').length,
+      interview_scheduled: apps.filter(a => a.status === 'INTERVIEW_SCHEDULED').length,
+      interviewed: apps.filter(a => a.status === 'INTERVIEWED').length,
+      finalist: apps.filter(a => a.status === 'FINALIST').length,
+      rejected: apps.filter(a => a.status === 'REJECTED').length,
+      matched: apps.filter(a => a.status === 'MATCHED').length,
+      not_matched: apps.filter(a => a.status === 'NOT_MATCHED').length,
     });
   }
 
@@ -393,8 +395,8 @@ export default function AdminDashboard() {
       setMatchError('');
       const [prefs, startupsData, appsData] = await Promise.all([
         getAllSubmittedMatchPreferences(),
-        getStartups(),
-        getAllApplications(),
+        getStartups({ term: ACTIVE_TERM }),
+        getAllApplications({ term: ACTIVE_TERM }),
       ]);
       setMatchPreferences(prefs);
       setMatchStartups(startupsData);
@@ -520,7 +522,7 @@ export default function AdminDashboard() {
   async function handleStatusChange(appId: string, newStatus: string) {
     try {
       await updateApplicationStatus(appId, newStatus as any);
-      const data = await getAllApplications();
+      const data = await getAllApplications({ term: ACTIVE_TERM });
       const normalized = data.map(app => ({
         ...app,
         userType: 'STUDENT',
@@ -539,7 +541,7 @@ export default function AdminDashboard() {
   async function handleInterviewEligibility(appId: string, eligible: boolean) {
     try {
       await updateInterviewEligibility(appId, eligible);
-      const data = await getAllApplications();
+      const data = await getAllApplications({ term: ACTIVE_TERM });
       const normalized = data.map(app => ({
         ...app,
         userType: 'STUDENT',
@@ -896,13 +898,13 @@ export default function AdminDashboard() {
                 }}
               >
                 <option value="all">All Status</option>
-                <option value="submitted">Submitted</option>
-                <option value="interview_scheduled">Interview Scheduled</option>
-                <option value="interviewed">Interviewed</option>
-                <option value="finalist">Finalist</option>
-                <option value="rejected">Rejected</option>
-                <option value="matched">Matched</option>
-                <option value="not_matched">Not Matched</option>
+                <option value="SUBMITTED">Submitted</option>
+                <option value="INTERVIEW_SCHEDULED">Interview Scheduled</option>
+                <option value="INTERVIEWED">Interviewed</option>
+                <option value="FINALIST">Finalist</option>
+                <option value="REJECTED">Rejected</option>
+                <option value="MATCHED">Matched</option>
+                <option value="NOT_MATCHED">Not Matched</option>
               </select>
               <select
                 value={interviewEligibilityFilter}
@@ -2366,13 +2368,13 @@ export default function AdminDashboard() {
                         cursor: 'pointer'
                       }}
                     >
-                      <option value="submitted">Submitted</option>
-                      <option value="interview_scheduled">Interview Scheduled</option>
-                      <option value="interviewed">Interviewed</option>
-                      <option value="finalist">Finalist</option>
-                      <option value="rejected">Rejected</option>
-                      <option value="matched">Matched</option>
-                      <option value="not_matched">Not Matched</option>
+                      <option value="SUBMITTED">Submitted</option>
+                      <option value="INTERVIEW_SCHEDULED">Interview Scheduled</option>
+                      <option value="INTERVIEWED">Interviewed</option>
+                      <option value="FINALIST">Finalist</option>
+                      <option value="REJECTED">Rejected</option>
+                      <option value="MATCHED">Matched</option>
+                      <option value="NOT_MATCHED">Not Matched</option>
                     </select>
                   </div>
                 </div>

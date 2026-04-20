@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { createInterview, getApplications, getInterview, getInterviewBookings, updateInterview } from '../../lib/api';
+
+const ACTIVE_TERM = 'Spring 2026';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Interview, Recommendation, UpdateInterviewRequest } from '../../lib/api';
 
@@ -48,7 +50,7 @@ export default function InterviewForm() {
     async function loadInterviewers() {
       try {
         setBookingError('');
-        const bookings = await getInterviewBookings();
+        const bookings = await getInterviewBookings(ACTIVE_TERM);
         const matches = bookings
           .filter((booking) => booking.applicationId === applicationId && booking.status !== 'cancelled')
           .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());

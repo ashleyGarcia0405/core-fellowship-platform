@@ -206,6 +206,7 @@ export default function ApplicationForm() {
 
       // Create the application with resumeUrl
       await createStudentApplication({
+        term: 'Spring 2026',
         fullName,
         pronouns: pronouns || undefined,
         gradYear,
