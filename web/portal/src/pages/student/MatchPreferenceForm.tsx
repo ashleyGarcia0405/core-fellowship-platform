@@ -106,10 +106,18 @@ export default function MatchPreferenceForm() {
     return () => clearTimeout(timer);
   }, [rankedRoles, notes, isSubmitted, application]);
 
-  const addRole = (startupId: string, positionIndex: number, startupName: string, roleType: string) => {
+  const getStartupName = useCallback((startupId: string) => {
+    return startups.find(startup => startup.id === startupId)?.companyName || 'Unknown Startup';
+  }, [startups]);
+
+  const getRoleType = useCallback((startupId: string, positionIndex: number) => {
+    return startups.find(startup => startup.id === startupId)?.positions?.[positionIndex]?.roleType || 'Role';
+  }, [startups]);
+
+  const addRole = (startupId: string, positionIndex: number) => {
     // Don't add duplicates
     if (rankedRoles.some(r => r.startupId === startupId && r.positionIndex === positionIndex)) return;
-    setRankedRoles([...rankedRoles, { startupId, positionIndex, startupName, roleType }]);
+    setRankedRoles([...rankedRoles, { startupId, positionIndex }]);
   };
 
   const removeRole = (index: number) => {
@@ -302,8 +310,8 @@ export default function MatchPreferenceForm() {
                       {index + 1}
                     </span>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: '600', color: '#333' }}>{role.roleType}</div>
-                      <div style={{ fontSize: '13px', color: '#666' }}>{role.startupName}</div>
+                      <div style={{ fontWeight: '600', color: '#333' }}>{getRoleType(role.startupId, role.positionIndex)}</div>
+                      <div style={{ fontSize: '13px', color: '#666' }}>{getStartupName(role.startupId)}</div>
                     </div>
                             <div style={{ display: 'flex', gap: '6px' }}>
                         <button onClick={() => moveUp(index)} disabled={index === 0}
@@ -492,7 +500,7 @@ export default function MatchPreferenceForm() {
                                           <button
                                             onClick={(e) => {
                                               e.stopPropagation();
-                                              addRole(startup.id, posIdx, startup.companyName, pos.roleType);
+                                              addRole(startup.id, posIdx);
                                             }}
                                             disabled={added}
                                             style={{

@@ -455,18 +455,27 @@ export default function AdminDashboard() {
     return matchApplications.find(a => a.id === pref.applicationId);
   }
 
+  function getStartupName(startupId: string): string {
+    return matchStartups.find(s => s.id === startupId)?.companyName || 'Startup';
+  }
+
+  function getRoleType(startupId: string, positionIndex: number): string {
+    return matchStartups.find(s => s.id === startupId)?.positions?.[positionIndex]?.roleType || 'Role';
+  }
+
   // Build a flat list of all roles from startups
   // Build a display label that disambiguates duplicate role types within the same startup
   // e.g. two "Software Engineer" roles become "Software Engineer (1)" and "Software Engineer (2)"
-  function getRoleDisplayLabel(startupId: string, positionIndex: number, roleType: string): string {
+  function getRoleDisplayLabel(startupId: string, positionIndex: number, roleType?: string): string {
     const startup = matchStartups.find(s => s.id === startupId);
-    if (!startup?.positions) return roleType;
+    const resolvedRoleType = roleType || startup?.positions?.[positionIndex]?.roleType || 'Role';
+    if (!startup?.positions) return resolvedRoleType;
     const sameTypeIndices = startup.positions
       .map((p, idx) => ({ idx, roleType: p.roleType }))
-      .filter(p => p.roleType === roleType);
-    if (sameTypeIndices.length <= 1) return roleType;
+      .filter(p => p.roleType === resolvedRoleType);
+    if (sameTypeIndices.length <= 1) return resolvedRoleType;
     const rank = sameTypeIndices.findIndex(p => p.idx === positionIndex) + 1;
-    return `${roleType} (${rank})`;
+    return `${resolvedRoleType} (${rank})`;
   }
 
   function getAllRoles(): { startupId: string; positionIndex: number; startupName: string; roleType: string; displayLabel: string; description: string }[] {
@@ -1771,7 +1780,7 @@ export default function AdminDashboard() {
                                         color: '#374151',
                                         fontWeight: '500',
                                       }}>
-                                        #{idx + 1} {role.startupName} - {getRoleDisplayLabel(role.startupId, role.positionIndex, role.roleType)}
+                                        #{idx + 1} {getStartupName(role.startupId)} - {getRoleDisplayLabel(role.startupId, role.positionIndex)}
                                       </span>
                                     ))}
                                   </div>
@@ -1851,7 +1860,7 @@ export default function AdminDashboard() {
                                               gap: '4px',
                                             }}
                                           >
-                                            {r.startupName} - {getRoleDisplayLabel(r.startupId, r.positionIndex, r.roleType)}
+                                            {getStartupName(r.startupId)} - {getRoleDisplayLabel(r.startupId, r.positionIndex)}
                                             <button
                                               onClick={() => handleToggleAssign(pref.applicationId, r)}
                                               style={{
@@ -1923,8 +1932,6 @@ export default function AdminDashboard() {
                                                 handleToggleAssign(pref.applicationId, {
                                                   startupId: role.startupId,
                                                   positionIndex: role.positionIndex,
-                                                  startupName: role.startupName,
-                                                  roleType: role.roleType,
                                                 });
                                                 setAssignSearch('');
                                               }}
