@@ -470,6 +470,7 @@ export interface Position {
 }
 
 export interface CreateStartupRequest {
+  term: string;
   companyName: string;
   website?: string;
   industry?: string;

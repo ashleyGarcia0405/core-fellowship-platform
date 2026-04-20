@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createStartup, getStartups } from '../../lib/api';
+import { ACTIVE_TERM, createStartup, getStartups } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 
-const DRAFT_KEY = 'startup-intake-draft';
+const DRAFT_KEY = `startup-intake-draft:${ACTIVE_TERM}`;
 
 export default function IntakeForm() {
   const { user } = useAuth();
@@ -48,16 +48,10 @@ export default function IntakeForm() {
     const checkExistingIntake = async () => {
       try {
         const startups = await getStartups();
-        console.log('Fetched startups:', startups); // Debug log
-        if (startups && startups.length > 0) {
-          console.log('User has already submitted an intake form');
+        if (startups.some((startup) => startup.term === ACTIVE_TERM)) {
           setHasSubmittedIntake(true);
-        } else {
-          console.log('No existing intake forms found');
         }
       } catch (err: any) {
-        console.error('Failed to check existing intake forms:', err);
-        console.error('Error message:', err.message);
         // If the API call fails, we'll still let them try to submit
         // The backend will catch duplicates with a 409 error
       } finally {
@@ -188,6 +182,7 @@ export default function IntakeForm() {
         }));
 
       await createStartup({
+        term: ACTIVE_TERM,
         companyName,
         website: website || undefined,
         industry: industry || undefined,
@@ -220,7 +215,6 @@ export default function IntakeForm() {
     } catch (err: any) {
       // Check if it's a conflict error (409) - already submitted
       if (err.message && err.message.includes('409')) {
-        console.log('Caught 409 error - user already submitted');
         setHasSubmittedIntake(true);
         setCheckingExisting(false);
       } else {
@@ -257,7 +251,7 @@ export default function IntakeForm() {
               marginBottom: '30px'
             }}>
               <p style={{ fontSize: '16px', color: '#155724', margin: '0 0 10px 0' }}>
-                ✓ You have already submitted your intake form for CORE Fellowship.
+                ✓ You have already submitted your intake form for {ACTIVE_TERM}.
               </p>
               <p style={{ fontSize: '14px', color: '#155724', margin: 0 }}>
                 We have received your information and will review it soon. You will be notified via email about the next steps.
@@ -288,7 +282,7 @@ export default function IntakeForm() {
     <div style={{ minHeight: '100vh', background: 'var(--bg-blue)', paddingBottom: '40px' }}>
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: '40px 20px' }}>
         <div style={{ background: 'white', borderRadius: '12px', padding: '40px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
-          <h1 style={{ marginTop: 0, marginBottom: '10px', color: '#0a468f' }}>CORE Fellowship Startup Intake Form</h1>
+          <h1 style={{ marginTop: 0, marginBottom: '10px', color: '#0a468f' }}>CORE Fellowship Startup Intake Form: {ACTIVE_TERM}</h1>
 
           {lastSaved && (
             <div style={{
@@ -313,7 +307,7 @@ export default function IntakeForm() {
             border: '2px solid #93c5fd'
           }}>
             <p style={{ marginTop: 0, marginBottom: 0, color: '#333' }}>
-              Please fill out this form to request a CORE Fellow for <strong>Spring 2025 (February - May approximately)</strong>, although internships may be extended based on discussions with fellow.
+              Please fill out this form to request a CORE Fellow for <strong>{ACTIVE_TERM}</strong>. Returning startup partners can submit a new intake for each term.
             </p>
           </div>
 

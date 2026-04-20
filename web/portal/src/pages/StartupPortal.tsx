@@ -1,12 +1,26 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { FiFileText, FiEdit3, FiBriefcase, FiSettings, FiLogOut, FiCalendar, FiCheckCircle, FiMenu, FiX } from 'react-icons/fi';
+import { ACTIVE_TERM, getStartups, type Startup } from '../lib/api';
 
 export default function StartupPortal() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [currentIntake, setCurrentIntake] = useState<Startup | null>(null);
+
+  useEffect(() => {
+    async function loadCurrentIntake() {
+      try {
+        const startups = await getStartups();
+        setCurrentIntake(startups.find((startup) => startup.term === ACTIVE_TERM) || null);
+      } catch {
+        setCurrentIntake(null);
+      }
+    }
+    loadCurrentIntake();
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -15,33 +29,27 @@ export default function StartupPortal() {
 
   const timeline = [
     {
-      date: 'Jan 27',
+      date: '04/20',
       title: 'Startup Intake Opens',
-      description: 'Complete the intake form to share your team, product, and internship needs.',
+      description: `Complete the intake form to share your team, product, and internship needs for ${ACTIVE_TERM}.`,
       status: 'completed'
     },
     {
-      date: 'TBD',
+      date: '04/27',
       title: 'Intake Deadline',
-      description: 'Submit your intake form to be considered for the 2026 matching cycle.',
+      description: `Submit your intake form by 04/27 to be considered for the ${ACTIVE_TERM} matching cycle.`,
       status: 'upcoming'
     },
     {
-      date: 'TBD',
+      date: '05/02-05/03',
       title: 'Candidate Review',
       description: 'We will review student applications and share a short list with your team.',
       status: 'future'
     },
     {
-      date: 'TBD',
-      title: 'Matching & Offers',
-      description: 'Coordinate interviews and finalize matches with CORE Fellows.',
-      status: 'future'
-    },
-    {
-      date: 'TBD',
-      title: 'Internship Kickoff',
-      description: 'Onboarding and project scoping with your matched fellow(s).',
+      date: '05/08',
+      title: 'Decisions Released',
+      description: 'We will share outcomes and next steps with startup partners.',
       status: 'future'
     }
   ];
@@ -110,7 +118,7 @@ export default function StartupPortal() {
 
         <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', marginBottom: '15px', minHeight: 0 }}>
           <h3 style={{ fontSize: '12px', color: '#999', textTransform: 'uppercase', marginBottom: '15px', fontWeight: '600', letterSpacing: '0.5px' }}>
-            STARTUP PARTNERS 2026
+            {ACTIVE_TERM.toUpperCase()}
           </h3>
           <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <button
@@ -153,7 +161,7 @@ export default function StartupPortal() {
               onMouseEnter={(e) => e.currentTarget.style.background = '#f5f5f5'}
               onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
             >
-              <FiEdit3 size={18} /> Intake Form
+              <FiEdit3 size={18} /> {currentIntake ? 'Intake Form' : `Submit ${ACTIVE_TERM} Intake`}
             </button>
             <button
               style={{
@@ -238,7 +246,9 @@ export default function StartupPortal() {
             Welcome, {user?.companyName || user?.fullName || user?.email?.split('@')[0] || 'Startup Team'}!
           </h1>
           <p style={{ color: '#666', marginBottom: '30px' }}>
-            This is your startup dashboard for CORE Fellowship partnerships and matching.
+            {currentIntake
+              ? `This is your startup dashboard for ${ACTIVE_TERM}.`
+              : `${ACTIVE_TERM} is a fresh intake cycle. Returning startup partners can submit a new intake for this term.`}
           </p>
 
           <div style={{
@@ -255,10 +265,12 @@ export default function StartupPortal() {
           }} className="intake-card">
             <div style={{ flex: '1 1 300px' }}>
               <h2 style={{ fontSize: '20px', color: '#0a468f', marginBottom: '8px' }}>
-                Complete your startup intake
+                {currentIntake ? `${ACTIVE_TERM} intake submitted` : `Complete your ${ACTIVE_TERM} startup intake`}
               </h2>
               <p style={{ color: '#666', margin: 0, lineHeight: '1.6' }}>
-                Tell us about your product, team, and the role you want to host. We use this to match you with fellows.
+                {currentIntake
+                  ? 'You already have an intake on file for this term. You can review what was submitted from the intake page.'
+                  : 'Tell us about your product, team, and the role you want to host. We use this to match you with fellows.'}
               </p>
             </div>
             <button
@@ -276,7 +288,7 @@ export default function StartupPortal() {
                 flexShrink: 0
               }}
             >
-              Go to Intake Form
+              {currentIntake ? 'View Intake Form' : 'Go to Intake Form'}
             </button>
           </div>
 
@@ -287,9 +299,9 @@ export default function StartupPortal() {
             boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
             marginBottom: '30px'
           }} className="timeline-card">
-            <h2 style={{ fontSize: '20px', color: '#0a468f', marginBottom: '20px' }}>
-              Startup Partnership Timeline
-            </h2>
+              <h2 style={{ fontSize: '20px', color: '#0a468f', marginBottom: '20px' }}>
+              Startup Partnership Timeline: {ACTIVE_TERM}
+              </h2>
             <p style={{ color: '#666', lineHeight: '1.6', marginBottom: '20px' }}>
               Track the key dates for intake, matching, and onboarding. We'll notify you by email if anything changes.
             </p>
