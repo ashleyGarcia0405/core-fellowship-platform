@@ -74,6 +74,8 @@ public class IdentityProxyController {
           .body(request)
           .retrieve()
           .toEntity(String.class);
+      System.out.println(">>> IdentityProxyController.login success status "
+          + response.getStatusCode() + " contentType=" + response.getHeaders().getContentType());
       return forwardResponse(response);
     } catch (HttpClientErrorException | HttpServerErrorException ex) {
       System.out.println(">>> IdentityProxyController.login downstream status "
@@ -83,6 +85,11 @@ public class IdentityProxyController {
       System.out.println(">>> IdentityProxyController.login connection error: " + ex.getMessage());
       return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
           .body(Map.of("error", "Authentication service is starting up. Please try again in a few seconds."));
+    } catch (Exception ex) {
+      System.out.println(">>> IdentityProxyController.login unexpected error: " + ex.getClass().getName()
+          + " message=" + ex.getMessage());
+      ex.printStackTrace();
+      throw ex;
     }
   }
 

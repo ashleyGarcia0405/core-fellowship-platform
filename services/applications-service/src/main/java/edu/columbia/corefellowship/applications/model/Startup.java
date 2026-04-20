@@ -1,6 +1,8 @@
 package edu.columbia.corefellowship.applications.model;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -8,6 +10,9 @@ import java.time.Instant;
 import java.util.List;
 
 @Document(collection = "startups")
+@CompoundIndexes({
+    @CompoundIndex(name = "idx_term_status", def = "{'term':1,'status':1}")
+})
 public class Startup {
 
   @Id

@@ -12,6 +12,8 @@ public interface VcFavoriteRepository extends MongoRepository<VcFavorite, String
 
   List<VcFavorite> findByVcUserId(String vcUserId);
 
+  List<VcFavorite> findByVcUserIdAndTerm(String vcUserId, String term);
+
   Optional<VcFavorite> findByVcUserIdAndApplicationId(String vcUserId, String applicationId);
 
   boolean existsByVcUserIdAndApplicationId(String vcUserId, String applicationId);

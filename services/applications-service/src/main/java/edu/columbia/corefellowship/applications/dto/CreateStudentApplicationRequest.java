@@ -8,6 +8,9 @@ import java.util.List;
 
 public class CreateStudentApplicationRequest {
 
+  @NotBlank(message = "Term is required")
+  private String term; // e.g. "Spring 2026" — must match active cohort
+
   // Personal Information
   @NotBlank(message = "Full name is required")
   private String fullName;
@@ -69,6 +72,9 @@ public class CreateStudentApplicationRequest {
   private Boolean hasUpcomingInternshipOffers;
 
   // Getters and Setters
+  public String getTerm() { return term; }
+  public void setTerm(String term) { this.term = term; }
+
   public String getFullName() {
     return fullName;
   }

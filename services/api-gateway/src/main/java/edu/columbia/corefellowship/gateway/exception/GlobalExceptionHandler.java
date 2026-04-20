@@ -6,6 +6,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 
+import java.util.Map;
+
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -29,5 +31,16 @@ public class GlobalExceptionHandler {
     return ResponseEntity
         .status(ex.getStatusCode())
         .body(ex.getResponseBodyAsString());
+  }
+
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<Map<String, String>> handleUnexpectedException(Exception ex) {
+    ex.printStackTrace();
+    return ResponseEntity
+        .internalServerError()
+        .body(Map.of(
+            "error", "Gateway error",
+            "message", ex.getClass().getSimpleName() + ": " + String.valueOf(ex.getMessage())
+        ));
   }
 }

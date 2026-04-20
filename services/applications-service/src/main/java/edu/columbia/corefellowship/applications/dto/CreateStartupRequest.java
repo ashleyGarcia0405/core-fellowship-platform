@@ -9,6 +9,9 @@ import java.util.List;
 
 public class CreateStartupRequest {
 
+  @NotBlank(message = "Term is required")
+  private String term;
+
   // Company Info
   @NotBlank(message = "Company name is required")
   private String companyName;
@@ -66,6 +69,14 @@ public class CreateStartupRequest {
   private Boolean commitmentAcknowledged; // Commit to accepting at least one fellow
 
   // Getters and Setters
+  public String getTerm() {
+    return term;
+  }
+
+  public void setTerm(String term) {
+    this.term = term;
+  }
+
   public String getCompanyName() {
     return companyName;
   }

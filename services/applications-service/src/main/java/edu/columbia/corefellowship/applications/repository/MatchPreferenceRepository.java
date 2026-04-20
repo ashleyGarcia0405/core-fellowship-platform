@@ -14,5 +14,7 @@ public interface MatchPreferenceRepository extends MongoRepository<MatchPreferen
 
   boolean existsByApplicationId(String applicationId);
 
+  void deleteByApplicationId(String applicationId);
+
   List<MatchPreference> findBySubmitted(boolean submitted);
 }

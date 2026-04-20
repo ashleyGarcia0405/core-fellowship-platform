@@ -36,8 +36,9 @@ public class InterviewBookingController {
 
   @GetMapping("/v1/admin/interviews")
   @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<List<InterviewBooking>> listBookings() {
-    return ResponseEntity.ok(bookingRepository.findAll());
+  public ResponseEntity<List<InterviewBooking>> listBookings(
+      @RequestParam String term) {
+    return ResponseEntity.ok(bookingRepository.findByTerm(term));
   }
 
   @GetMapping("/v1/students/interviews")
@@ -176,7 +177,11 @@ public class InterviewBookingController {
     if (booking.getApplicationId() == null && booking.getStudentEmail() != null) {
       List<StudentApplication> apps = applicationRepository.findByEmail(booking.getStudentEmail());
       if (!apps.isEmpty()) {
-        booking.setApplicationId(apps.get(0).getId());
+        StudentApplication app = apps.get(0);
+        booking.setApplicationId(app.getId());
+        if (booking.getTerm() == null && app.getTerm() != null) {
+          booking.setTerm(app.getTerm());
+        }
       }
     }
 

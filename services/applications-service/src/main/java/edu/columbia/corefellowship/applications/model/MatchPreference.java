@@ -31,12 +31,12 @@ public class MatchPreference {
   private Instant updatedAt;
   private Instant submittedAt;
 
-  // Nested class to identify a specific role/position at a startup
+  // Nested class to identify a specific role/position at a startup.
+  // startupName and roleType are intentionally NOT stored here — look them up
+  // live from the Startup document via startupId to avoid stale denormalized data.
   public static class RoleReference {
     private String startupId;
     private int positionIndex; // index into Startup.positions list
-    private String startupName; // denormalized for display convenience
-    private String roleType; // denormalized from Position.roleType
 
     public RoleReference() {
     }
@@ -55,22 +55,6 @@ public class MatchPreference {
 
     public void setPositionIndex(int positionIndex) {
       this.positionIndex = positionIndex;
-    }
-
-    public String getStartupName() {
-      return startupName;
-    }
-
-    public void setStartupName(String startupName) {
-      this.startupName = startupName;
-    }
-
-    public String getRoleType() {
-      return roleType;
-    }
-
-    public void setRoleType(String roleType) {
-      this.roleType = roleType;
     }
   }
 

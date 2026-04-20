@@ -16,6 +16,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Instant;
 
 @Service
@@ -59,16 +61,20 @@ public class AuthService {
     boolean isVcRegistration = request.getVcToken() != null && !request.getVcToken().isBlank();
 
     if (isAdminRegistration) {
-      // Validate admin token
-      if (!adminRegistrationToken.equals(request.getAdminToken())) {
+      // Constant-time comparison to prevent timing attacks
+      if (!MessageDigest.isEqual(
+          adminRegistrationToken.getBytes(StandardCharsets.UTF_8),
+          request.getAdminToken().getBytes(StandardCharsets.UTF_8))) {
         throw new ResponseStatusException(HttpStatus.FORBIDDEN,
             "Invalid admin registration token");
       }
     }
 
     if (isVcRegistration) {
-      // Validate VC token
-      if (!vcRegistrationToken.equals(request.getVcToken())) {
+      // Constant-time comparison to prevent timing attacks
+      if (!MessageDigest.isEqual(
+          vcRegistrationToken.getBytes(StandardCharsets.UTF_8),
+          request.getVcToken().getBytes(StandardCharsets.UTF_8))) {
         throw new ResponseStatusException(HttpStatus.FORBIDDEN,
             "Invalid VC registration token");
       }

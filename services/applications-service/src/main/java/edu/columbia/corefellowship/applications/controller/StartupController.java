@@ -3,6 +3,7 @@ package edu.columbia.corefellowship.applications.controller;
 import edu.columbia.corefellowship.applications.dto.CreateStartupRequest;
 import edu.columbia.corefellowship.applications.model.Startup;
 import edu.columbia.corefellowship.applications.repository.StartupRepository;
+import edu.columbia.corefellowship.applications.util.TermValidator;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,23 +38,26 @@ public class StartupController {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User ID is required");
     }
 
+    TermValidator.validate(request.getTerm());
+
     // Validate that request email matches authenticated email
     if (authenticatedEmail != null && !request.getContactEmail().equalsIgnoreCase(authenticatedEmail)) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN,
           "Contact email must match your account email");
     }
 
-    // Check if user already has a startup submission (one submission per user)
-    List<Startup> existingStartups = repository.findByUserId(userId);
+    // Check if user already has a startup submission for this cohort
+    List<Startup> existingStartups = repository.findByUserIdAndTerm(userId, request.getTerm());
     if (!existingStartups.isEmpty()) {
       throw new ResponseStatusException(HttpStatus.CONFLICT,
-          "You have already submitted a startup intake form");
+          "You have already submitted a startup intake form for this term");
     }
 
     Startup startup = new Startup();
 
     // Set userId from authenticated user
     startup.setUserId(userId);
+    startup.setTerm(request.getTerm());
 
     // Company Info
     startup.setCompanyName(request.getCompanyName());
@@ -100,9 +104,11 @@ public class StartupController {
   }
 
   @GetMapping("/available")
-  public ResponseEntity<List<Map<String, Object>>> getAvailableStartups() {
-    // Returns all submitted startups with student-safe fields only (no contact details or review notes)
-    List<Startup> approved = repository.findAll();
+  public ResponseEntity<List<Map<String, Object>>> getAvailableStartups(
+      @RequestParam String term) {
+    TermValidator.validate(term);
+    // Returns only approved startups for the given term with student-safe fields only
+    List<Startup> approved = repository.findByTermAndStatus(term, "approved");
     List<Map<String, Object>> result = new ArrayList<>();
 
     for (Startup s : approved) {
@@ -138,14 +144,14 @@ public class StartupController {
 
     // Admins can see all startups
     if ("ROLE_ADMIN".equals(userRole)) {
-      if (term != null && status != null) {
+      if (term == null || term.isBlank()) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+            "term is required for admin queries");
+      }
+      if (status != null && !status.isBlank()) {
         startups = repository.findByTermAndStatus(term, status);
-      } else if (term != null) {
-        startups = repository.findByTerm(term);
-      } else if (status != null) {
-        startups = repository.findByStatus(status);
       } else {
-        startups = repository.findAll();
+        startups = repository.findByTerm(term);
       }
     } else {
       // Regular users can only see their own startups

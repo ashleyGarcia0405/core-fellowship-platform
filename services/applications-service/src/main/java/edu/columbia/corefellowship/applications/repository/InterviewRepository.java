@@ -18,4 +18,6 @@ public interface InterviewRepository extends MongoRepository<Interview, String> 
 
   // Check if application has been interviewed
   boolean existsByApplicationId(String applicationId);
+
+  void deleteByApplicationId(String applicationId);
 }

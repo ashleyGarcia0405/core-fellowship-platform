@@ -1,5 +1,6 @@
 package edu.columbia.corefellowship.applications.controller;
 
+import edu.columbia.corefellowship.applications.model.ApplicationStatus;
 import edu.columbia.corefellowship.applications.model.StudentApplication;
 import edu.columbia.corefellowship.applications.model.Startup;
 import edu.columbia.corefellowship.applications.repository.StudentApplicationRepository;
@@ -33,13 +34,14 @@ public class ExportController {
       @RequestParam(required = false) String status) {
 
     List<StudentApplication> applications;
+    ApplicationStatus statusEnum = status != null ? ApplicationStatus.valueOf(status.toUpperCase()) : null;
 
-    if (term != null && status != null) {
-      applications = studentRepository.findByTermAndStatus(term, status);
+    if (term != null && statusEnum != null) {
+      applications = studentRepository.findByTermAndStatus(term, statusEnum);
     } else if (term != null) {
       applications = studentRepository.findByTerm(term);
-    } else if (status != null) {
-      applications = studentRepository.findByStatus(status);
+    } else if (statusEnum != null) {
+      applications = studentRepository.findByStatus(statusEnum);
     } else {
       applications = studentRepository.findAll();
     }
@@ -56,13 +58,14 @@ public class ExportController {
       @RequestParam(required = false) String status) {
 
     List<StudentApplication> applications;
+    ApplicationStatus statusEnum = status != null ? ApplicationStatus.valueOf(status.toUpperCase()) : null;
 
-    if (term != null && status != null) {
-      applications = studentRepository.findByTermAndStatus(term, status);
+    if (term != null && statusEnum != null) {
+      applications = studentRepository.findByTermAndStatus(term, statusEnum);
     } else if (term != null) {
       applications = studentRepository.findByTerm(term);
-    } else if (status != null) {
-      applications = studentRepository.findByStatus(status);
+    } else if (statusEnum != null) {
+      applications = studentRepository.findByStatus(statusEnum);
     } else {
       applications = studentRepository.findAll();
     }
@@ -86,11 +89,11 @@ public class ExportController {
       csv.append(escapeCsv(app.getRolePreferences() != null ? String.join(";", app.getRolePreferences()) : "")).append(",");
       csv.append(escapeCsv(app.getHowDidYouHear())).append(",");
       csv.append(escapeCsv(app.getReferralSource())).append(",");
-      csv.append(app.getPreviouslyApplied() != null ? app.getPreviouslyApplied().toString() : "").append(",");
-      csv.append(app.getPreviouslyParticipated() != null ? app.getPreviouslyParticipated().toString() : "").append(",");
-      csv.append(app.getHasUpcomingInternshipOffers() != null ? app.getHasUpcomingInternshipOffers().toString() : "").append(",");
+      csv.append(app.isPreviouslyApplied()).append(",");
+      csv.append(app.isPreviouslyParticipated()).append(",");
+      csv.append(app.isHasUpcomingInternshipOffers()).append(",");
       csv.append(escapeCsv(app.getTerm())).append(",");
-      csv.append(escapeCsv(app.getStatus())).append(",");
+      csv.append(app.getStatus() != null ? app.getStatus().name() : "").append(",");
       csv.append(app.getSubmittedAt() != null ? app.getSubmittedAt().toString() : "");
       csv.append("\n");
     }

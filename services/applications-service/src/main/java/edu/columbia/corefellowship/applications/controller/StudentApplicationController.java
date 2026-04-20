@@ -7,13 +7,17 @@ import edu.columbia.corefellowship.applications.dto.UpdateApplicationStatusReque
 import edu.columbia.corefellowship.applications.dto.UpdateInterviewEligibilityRequest;
 import edu.columbia.corefellowship.applications.dto.UpdateInterviewRequest;
 import edu.columbia.corefellowship.applications.dto.UpdateMatchPreferenceRequest;
+import edu.columbia.corefellowship.applications.model.ApplicationStatus;
 import edu.columbia.corefellowship.applications.model.Interview;
 import edu.columbia.corefellowship.applications.model.MatchPreference;
 import edu.columbia.corefellowship.applications.model.StudentApplication;
+import edu.columbia.corefellowship.applications.repository.AiRecommendationRepository;
+import edu.columbia.corefellowship.applications.repository.InterviewBookingRepository;
 import edu.columbia.corefellowship.applications.repository.InterviewRepository;
 import edu.columbia.corefellowship.applications.repository.MatchPreferenceRepository;
 import edu.columbia.corefellowship.applications.repository.StudentApplicationRepository;
 import edu.columbia.corefellowship.applications.service.StorageService;
+import edu.columbia.corefellowship.applications.util.TermValidator;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -35,16 +39,22 @@ public class StudentApplicationController {
   private final StorageService storageService;
   private final InterviewRepository interviewRepository;
   private final MatchPreferenceRepository matchPreferenceRepository;
+  private final InterviewBookingRepository interviewBookingRepository;
+  private final AiRecommendationRepository aiRecommendationRepository;
 
   public StudentApplicationController(
       StudentApplicationRepository repository,
       StorageService storageService,
       InterviewRepository interviewRepository,
-      MatchPreferenceRepository matchPreferenceRepository) {
+      MatchPreferenceRepository matchPreferenceRepository,
+      InterviewBookingRepository interviewBookingRepository,
+      AiRecommendationRepository aiRecommendationRepository) {
     this.repository = repository;
     this.storageService = storageService;
     this.interviewRepository = interviewRepository;
     this.matchPreferenceRepository = matchPreferenceRepository;
+    this.interviewBookingRepository = interviewBookingRepository;
+    this.aiRecommendationRepository = aiRecommendationRepository;
   }
 
   @PostMapping
@@ -58,17 +68,20 @@ public class StudentApplicationController {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User ID is required");
     }
 
+    // Validate term format
+    TermValidator.validate(request.getTerm());
+
     // Validate that request email matches authenticated email
     if (authenticatedEmail != null && !request.getEmail().equalsIgnoreCase(authenticatedEmail)) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN,
           "Email must match your account email");
     }
 
-    // Check if user already has an application (one application per user)
-    List<StudentApplication> existingApplications = repository.findByUserId(userId);
+    // Check if user already has an application for this cohort (allows re-applying in future terms)
+    List<StudentApplication> existingApplications = repository.findByUserIdAndTerm(userId, request.getTerm());
     if (!existingApplications.isEmpty()) {
       throw new ResponseStatusException(HttpStatus.CONFLICT,
-          "You have already submitted an application");
+          "You have already submitted an application for this term");
     }
 
     String resumeUrl = request.getResumeUrl();
@@ -89,6 +102,7 @@ public class StudentApplicationController {
 
     // Set userId from authenticated user
     application.setUserId(userId);
+    application.setTerm(request.getTerm());
 
     // Personal Information
     application.setFullName(request.getFullName());
@@ -123,7 +137,7 @@ public class StudentApplicationController {
     application.setHasUpcomingInternshipOffers(request.getHasUpcomingInternshipOffers());
 
     // Set defaults (admin fields)
-    application.setStatus("submitted");
+    application.setStatus(ApplicationStatus.SUBMITTED);
     application.setSubmittedAt(Instant.now());
     application.setUpdatedAt(Instant.now());
     application.setInterviewEligible(false);
@@ -141,6 +155,13 @@ public class StudentApplicationController {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User ID is required");
     }
 
+    if (!"application/pdf".equals(file.getContentType())) {
+      throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Only PDF resumes are accepted");
+    }
+    if (file.getSize() > 10 * 1024 * 1024) {
+      throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "Resume must be under 10MB");
+    }
+
     String fileName = String.format("resume-%s-%d.pdf", userId, System.currentTimeMillis());
     String blobName = storageService.uploadFile(file, userId, fileName);
 
@@ -154,9 +175,14 @@ public class StudentApplicationController {
   public ResponseEntity<List<StudentApplication>> getApplications(
       @RequestParam(required = false) String term,
       @RequestParam(required = false) String status,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "50") int size,
       @RequestHeader(value = "X-User-Id", required = false) String userId,
       @RequestHeader(value = "X-User-Role", required = false) String userRole,
       @RequestHeader(value = "X-User-Type", required = false) String userType) {
+
+    // Cap page size to prevent runaway queries
+    size = Math.min(size, 200);
 
     List<StudentApplication> applications;
 
@@ -165,15 +191,30 @@ public class StudentApplicationController {
     boolean isVc = "VC".equals(userType);
 
     if (isAdmin || isVc) {
-      if (term != null && status != null) {
-        applications = repository.findByTermAndStatus(term, status);
-      } else if (term != null) {
-        applications = repository.findByTerm(term);
-      } else if (status != null) {
-        applications = repository.findByStatus(status);
-      } else {
-        applications = repository.findAll();
+      if (term == null || term.isBlank()) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+            "term is required for admin/VC queries");
       }
+      if (status != null && !status.isBlank()) {
+        ApplicationStatus statusEnum;
+        try {
+          statusEnum = ApplicationStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+          throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+              "Invalid status value: " + status);
+        }
+        applications = repository.findByTermAndStatus(term, statusEnum);
+      } else {
+        applications = repository.findByTerm(term);
+      }
+
+      // Apply pagination
+      int fromIndex = page * size;
+      if (fromIndex >= applications.size()) {
+        return ResponseEntity.ok(List.of());
+      }
+      int toIndex = Math.min(fromIndex + size, applications.size());
+      applications = applications.subList(fromIndex, toIndex);
     } else {
       // Regular users can only see their own applications
       if (userId == null || userId.isBlank()) {
@@ -223,6 +264,13 @@ public class StudentApplicationController {
     // Validate user is authenticated
     if (userId == null || userId.isBlank()) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User ID is required");
+    }
+
+    if (!"application/pdf".equals(file.getContentType())) {
+      throw new ResponseStatusException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Only PDF resumes are accepted");
+    }
+    if (file.getSize() > 10 * 1024 * 1024) {
+      throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "Resume must be under 10MB");
     }
 
     // Find the application
@@ -295,12 +343,14 @@ public class StudentApplicationController {
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<StudentApplication> updateApplicationStatus(
       @PathVariable String id,
-      @Valid @RequestBody UpdateApplicationStatusRequest request) {
+      @Valid @RequestBody UpdateApplicationStatusRequest request,
+      @RequestHeader(value = "X-User-Email", required = false) String adminEmail) {
 
     return repository.findById(id)
         .map(application -> {
           application.setStatus(request.getStatus());
           application.setUpdatedAt(Instant.now());
+          application.setUpdatedBy(adminEmail);
 
           if (request.getReviewedBy() != null) {
             application.setReviewedBy(request.getReviewedBy());
@@ -338,7 +388,13 @@ public class StudentApplicationController {
       return ResponseEntity.notFound().build();
     }
 
+    // Cascade delete all dependent documents
+    interviewRepository.deleteByApplicationId(id);
+    matchPreferenceRepository.deleteByApplicationId(id);
+    aiRecommendationRepository.deleteByApplicationId(id);
+    interviewBookingRepository.deleteByApplicationId(id);
     repository.deleteById(id);
+
     return ResponseEntity.ok(Map.of("message", "Application deleted successfully"));
   }
 
@@ -399,7 +455,7 @@ public class StudentApplicationController {
     Interview saved = interviewRepository.save(interview);
 
     // Update application status to INTERVIEWED
-    application.setStatus("interviewed");
+    application.setStatus(ApplicationStatus.INTERVIEWED);
     application.setUpdatedAt(Instant.now());
     repository.save(application);
 
@@ -551,7 +607,7 @@ public class StudentApplicationController {
     }
 
     // Must be a finalist
-    if (!"finalist".equals(application.getStatus())) {
+    if (ApplicationStatus.FINALIST != application.getStatus()) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN,
           "Only finalists can submit match preferences");
     }

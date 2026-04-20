@@ -10,4 +10,5 @@ import java.util.Optional;
 public interface AiRecommendationRepository extends MongoRepository<AiRecommendation, String> {
   Optional<AiRecommendation> findByApplicationId(String applicationId);
   boolean existsByApplicationId(String applicationId);
+  void deleteByApplicationId(String applicationId);
 }

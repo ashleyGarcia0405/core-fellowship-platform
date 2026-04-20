@@ -63,6 +63,7 @@ public class SecurityConfig {
         new AntPathRequestMatcher("/v1/auth/**"),
         new AntPathRequestMatcher("/v1/identity/health"),
         new AntPathRequestMatcher("/health"),
+        new AntPathRequestMatcher("/error"),
         new AntPathRequestMatcher("/v1/webhooks/cal")
     );
   }
@@ -113,7 +114,7 @@ public class SecurityConfig {
       .csrf(csrf -> csrf.disable())
       .authorizeHttpRequests(auth -> auth
         // Public endpoints (defensive: permit even if protected chain is selected)
-        .requestMatchers("/v1/auth/**", "/v1/identity/health", "/health", "/v1/webhooks/cal").permitAll()
+        .requestMatchers("/v1/auth/**", "/v1/identity/health", "/health", "/error", "/v1/webhooks/cal").permitAll()
         // Admin-only endpoints
         .requestMatchers("/v1/export/**").hasRole("ADMIN")
         .requestMatchers("/v1/students/applications/*/status").hasRole("ADMIN")

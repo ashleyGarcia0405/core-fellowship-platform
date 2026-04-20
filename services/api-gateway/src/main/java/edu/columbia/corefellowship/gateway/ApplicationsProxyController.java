@@ -10,23 +10,53 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Duration;
+import java.util.Base64;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/v1")
 public class ApplicationsProxyController {
 
   private final RestClient client;
+  private final String interServiceSecret;
 
-  public ApplicationsProxyController(@Value("${services.applications.baseUrl}") String baseUrl) {
+  public ApplicationsProxyController(
+      @Value("${services.applications.baseUrl}") String baseUrl,
+      @Value("${inter.service.secret}") String interServiceSecret) {
+    this.interServiceSecret = interServiceSecret;
     JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory();
+
     requestFactory.setReadTimeout(Duration.ofSeconds(60));
     this.client = RestClient.builder()
         .baseUrl(baseUrl)
         .requestFactory(requestFactory)
         .build();
+  }
+
+  /**
+   * Computes an HMAC-SHA256 signature over userId:role:email using the shared inter-service secret.
+   * Added as X-Service-Signature on every forwarded request so the applications service
+   * can verify the headers came from the gateway and not a spoofed caller.
+   */
+  private String computeSignature(String userId, String role, String email) {
+    try {
+      String payload = (userId != null ? userId : "") + ":"
+          + (role != null ? role : "") + ":"
+          + (email != null ? email : "");
+      Mac mac = Mac.getInstance("HmacSHA256");
+      mac.init(new SecretKeySpec(interServiceSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+      return Base64.getEncoder().encodeToString(mac.doFinal(payload.getBytes(StandardCharsets.UTF_8)));
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to compute inter-service signature", e);
+    }
   }
 
   /**
@@ -52,6 +82,7 @@ public class ApplicationsProxyController {
     if (userType != null) {
       spec = spec.header("X-User-Type", userType);
     }
+    spec = spec.header("X-Service-Signature", computeSignature(userId, userRole, userEmail));
 
     return spec;
   }
@@ -78,6 +109,7 @@ public class ApplicationsProxyController {
     if (userType != null) {
       spec = spec.header("X-User-Type", userType);
     }
+    spec = spec.header("X-Service-Signature", computeSignature(userId, userRole, userEmail));
 
     return spec;
   }
@@ -106,18 +138,20 @@ public class ApplicationsProxyController {
   public ResponseEntity<Object> getStudentApplications(
       @RequestParam(required = false) String term,
       @RequestParam(required = false) String status,
+      @RequestParam(required = false) Integer page,
+      @RequestParam(required = false) Integer size,
       HttpServletRequest request) {
 
-    StringBuilder uri = new StringBuilder("/v1/students/applications?");
-    if (term != null) {
-      uri.append("term=").append(term).append("&");
-    }
-    if (status != null) {
-      uri.append("status=").append(status);
-    }
+    String uri = UriComponentsBuilder.fromPath("/v1/students/applications")
+        .queryParamIfPresent("term", Optional.ofNullable(term))
+        .queryParamIfPresent("status", Optional.ofNullable(status))
+        .queryParamIfPresent("page", Optional.ofNullable(page))
+        .queryParamIfPresent("size", Optional.ofNullable(size))
+        .build()
+        .toUriString();
 
     RestClient.RequestHeadersUriSpec<?> spec = client.get();
-    ResponseEntity<String> response = addUserHeadersToGet(spec.uri(uri.toString()), request)
+    ResponseEntity<String> response = addUserHeadersToGet(spec.uri(uri), request)
         .retrieve()
         .toEntity(String.class);
     return forwardResponse(response);
@@ -165,27 +199,9 @@ public class ApplicationsProxyController {
       @PathVariable String id,
       @RequestParam("file") MultipartFile file,
       HttpServletRequest request) {
-
-    // Forward multipart file upload to applications-service
-    // Note: RestClient doesn't support multipart easily, so we use a workaround
-    // by forwarding the request headers and using Spring's built-in multipart handling
-
-    String userId = (String) request.getAttribute("X-User-Id");
-    String userRole = (String) request.getAttribute("X-User-Role");
-    String userEmail = (String) request.getAttribute("X-User-Email");
-
-    RestClient.RequestBodySpec spec = client.post()
-        .uri("/v1/students/applications/" + id + "/resume");
-
-    if (userId != null) {
-      spec = spec.header("X-User-Id", userId);
-    }
-    if (userRole != null) {
-      spec = spec.header("X-User-Role", userRole);
-    }
-    if (userEmail != null) {
-      spec = spec.header("X-User-Email", userEmail);
-    }
+    RestClient.RequestBodySpec spec = addUserHeadersToBody(
+        client.post().uri("/v1/students/applications/" + id + "/resume"),
+        request);
 
     // Forward the file as multipart
     org.springframework.http.client.MultipartBodyBuilder builder =
@@ -203,23 +219,9 @@ public class ApplicationsProxyController {
   public ResponseEntity<Object> uploadResumeBeforeCreate(
       @RequestParam("file") MultipartFile file,
       HttpServletRequest request) {
-
-    String userId = (String) request.getAttribute("X-User-Id");
-    String userRole = (String) request.getAttribute("X-User-Role");
-    String userEmail = (String) request.getAttribute("X-User-Email");
-
-    RestClient.RequestBodySpec spec = client.post()
-        .uri("/v1/students/applications/resume");
-
-    if (userId != null) {
-      spec = spec.header("X-User-Id", userId);
-    }
-    if (userRole != null) {
-      spec = spec.header("X-User-Role", userRole);
-    }
-    if (userEmail != null) {
-      spec = spec.header("X-User-Email", userEmail);
-    }
+    RestClient.RequestBodySpec spec = addUserHeadersToBody(
+        client.post().uri("/v1/students/applications/resume"),
+        request);
 
     org.springframework.http.client.MultipartBodyBuilder builder =
         new org.springframework.http.client.MultipartBodyBuilder();
@@ -321,9 +323,12 @@ public class ApplicationsProxyController {
 
   // Startup Endpoints
   @GetMapping("/startups/available")
-  public ResponseEntity<Object> getAvailableStartups(HttpServletRequest request) {
+  public ResponseEntity<Object> getAvailableStartups(
+      @RequestParam String term,
+      HttpServletRequest request) {
     RestClient.RequestHeadersUriSpec<?> spec = client.get();
-    ResponseEntity<String> response = addUserHeadersToGet(spec.uri("/v1/startups/available"), request)
+    ResponseEntity<String> response = addUserHeadersToGet(
+        spec.uri("/v1/startups/available?term=" + term), request)
         .retrieve()
         .toEntity(String.class);
     return forwardResponse(response);
@@ -460,9 +465,12 @@ public class ApplicationsProxyController {
 
   // Interview Booking Endpoints
   @GetMapping("/admin/interviews")
-  public ResponseEntity<Object> getInterviewBookings(HttpServletRequest request) {
+  public ResponseEntity<Object> getInterviewBookings(
+      @RequestParam String term,
+      HttpServletRequest request) {
     RestClient.RequestHeadersUriSpec<?> spec = client.get();
-    ResponseEntity<String> response = addUserHeadersToGet(spec.uri("/v1/admin/interviews"), request)
+    ResponseEntity<String> response = addUserHeadersToGet(
+        spec.uri("/v1/admin/interviews?term=" + term), request)
         .retrieve()
         .toEntity(String.class);
     return forwardResponse(response);
@@ -492,9 +500,12 @@ public class ApplicationsProxyController {
 
   // Admin Matching Endpoints
   @GetMapping("/admin/matching/preferences")
-  public ResponseEntity<Object> getMatchingPreferences(HttpServletRequest request) {
+  public ResponseEntity<Object> getMatchingPreferences(
+      @RequestParam String term,
+      HttpServletRequest request) {
     RestClient.RequestHeadersUriSpec<?> spec = client.get();
-    ResponseEntity<String> response = addUserHeadersToGet(spec.uri("/v1/admin/matching/preferences"), request)
+    ResponseEntity<String> response = addUserHeadersToGet(
+        spec.uri("/v1/admin/matching/preferences?term=" + term), request)
         .retrieve()
         .toEntity(String.class);
     return forwardResponse(response);

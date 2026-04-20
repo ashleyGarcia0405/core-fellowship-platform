@@ -12,6 +12,10 @@ jwt:
   issuer: ${JWT_ISSUER}
   audience: ${JWT_AUDIENCE}
 
+inter:
+  service:
+    secret: ${INTER_SERVICE_SECRET}
+
 logging:
   level:
     org.springframework.security: DEBUG

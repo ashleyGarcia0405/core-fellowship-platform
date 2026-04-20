@@ -186,7 +186,7 @@ public class OpenAiService {
       if (pos.getTimeCommitment() != null && !pos.getTimeCommitment().isBlank()) {
         sb.append(String.format("  Role Time Commitment: %s\n", pos.getTimeCommitment()));
       }
-      sb.append(String.format("  Technical Role: %s\n", isTechnicalRole(pos, roleRef.getRoleType()) ? "yes" : "no"));
+      sb.append(String.format("  Technical Role: %s\n", isTechnicalRole(pos, pos.getRoleType()) ? "yes" : "no"));
       sb.append("\n");
     }
     return sb.toString();

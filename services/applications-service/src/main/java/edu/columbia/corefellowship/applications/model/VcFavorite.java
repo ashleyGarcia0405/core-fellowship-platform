@@ -1,12 +1,17 @@
 package edu.columbia.corefellowship.applications.model;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
 
 @Document(collection = "vc_favorites")
+@CompoundIndexes({
+    @CompoundIndex(name = "idx_vcUserId_term", def = "{'vcUserId':1,'term':1}")
+})
 public class VcFavorite {
 
   @Id
@@ -18,6 +23,7 @@ public class VcFavorite {
   @Indexed
   private String applicationId;
 
+  private String term;
   private String notes;
   private String portfolioCompany;
   private Instant createdAt;
@@ -31,6 +37,9 @@ public class VcFavorite {
 
   public String getApplicationId() { return applicationId; }
   public void setApplicationId(String applicationId) { this.applicationId = applicationId; }
+
+  public String getTerm() { return term; }
+  public void setTerm(String term) { this.term = term; }
 
   public String getNotes() { return notes; }
   public void setNotes(String notes) { this.notes = notes; }

@@ -1,6 +1,8 @@
 package edu.columbia.corefellowship.applications.model;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -9,6 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Document(collection = "interview_bookings")
+@CompoundIndexes({
+    @CompoundIndex(name = "idx_term_email", def = "{'term':1,'studentEmail':1}")
+})
 public class InterviewBooking {
 
   @Id
@@ -18,6 +23,7 @@ public class InterviewBooking {
   private String calBookingUid;
 
   private String applicationId;
+  private String term;
   private String studentName;
   private String studentEmail;
   private String interviewType; // technical | non-technical
@@ -54,6 +60,14 @@ public class InterviewBooking {
 
   public void setApplicationId(String applicationId) {
     this.applicationId = applicationId;
+  }
+
+  public String getTerm() {
+    return term;
+  }
+
+  public void setTerm(String term) {
+    this.term = term;
   }
 
   public String getStudentName() {

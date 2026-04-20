@@ -23,6 +23,8 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/v1/admin/matching")
@@ -55,8 +57,18 @@ public class MatchingController {
   }
 
   @GetMapping("/preferences")
-  public ResponseEntity<List<MatchPreference>> getAllSubmittedPreferences() {
-    List<MatchPreference> preferences = matchPreferenceRepository.findBySubmitted(true);
+  public ResponseEntity<List<MatchPreference>> getAllSubmittedPreferences(@RequestParam String term) {
+    if (term == null || term.isBlank()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "term is required");
+    }
+
+    Set<String> applicationIdsForTerm = studentApplicationRepository.findByTerm(term).stream()
+        .map(StudentApplication::getId)
+        .collect(Collectors.toSet());
+
+    List<MatchPreference> preferences = matchPreferenceRepository.findBySubmitted(true).stream()
+        .filter(pref -> applicationIdsForTerm.contains(pref.getApplicationId()))
+        .toList();
     return ResponseEntity.ok(preferences);
   }
 
@@ -92,10 +104,11 @@ public class MatchingController {
           "No ranked roles found for this application");
     }
 
-    // Load all approved startups with positions
-    List<Startup> startups = startupRepository.findByStatus("approved");
+    // Load approved startups for this application's cohort
+    String term = application.getTerm();
+    List<Startup> startups = startupRepository.findByTermAndStatus(term, "approved");
     if (startups.isEmpty()) {
-      startups = startupRepository.findAll();
+      startups = startupRepository.findByTerm(term);
     }
 
     // Call OpenAI
@@ -163,8 +176,6 @@ public class MatchingController {
           MatchPreference.RoleReference role = new MatchPreference.RoleReference();
           role.setStartupId(startupId);
           role.setPositionIndex(positionIndex);
-          role.setStartupName((String) roleData.get("startupName"));
-          role.setRoleType((String) roleData.get("roleType"));
           matched.add(role);
         }
       }

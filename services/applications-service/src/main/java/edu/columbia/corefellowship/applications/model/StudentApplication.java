@@ -1,6 +1,9 @@
 package edu.columbia.corefellowship.applications.model;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -8,6 +11,10 @@ import java.time.Instant;
 import java.util.List;
 
 @Document(collection = "student_applications")
+@CompoundIndexes({
+    @CompoundIndex(name = "idx_userId_term", def = "{'userId':1,'term':1}"),
+    @CompoundIndex(name = "idx_term_status", def = "{'term':1,'status':1}")
+})
 public class StudentApplication {
 
   @Id
@@ -45,18 +52,20 @@ public class StudentApplication {
 
   // Miscellaneous
   private String additionalComments;
-  private Boolean previouslyApplied;
-  private Boolean previouslyParticipated;
-  private Boolean hasUpcomingInternshipOffers;
+  private boolean previouslyApplied = false;
+  private boolean previouslyParticipated = false;
+  private boolean hasUpcomingInternshipOffers = false;
 
   // Administrative Fields (not visible to applicants)
   private String term; // e.g., "Fall 2025", "Spring 2026" - set by admin
-  private String status; // see ApplicationStatus enum: submitted, interview_scheduled, interviewed, finalist, rejected, matched, not_matched
+  private ApplicationStatus status = ApplicationStatus.SUBMITTED;
   private Instant submittedAt;
+  @LastModifiedDate
   private Instant updatedAt;
   private String reviewedBy;
   private String reviewNotes;
-  private Boolean interviewEligible;
+  private boolean interviewEligible = false;
+  private String updatedBy;
 
   // Constructors
   public StudentApplication() {
@@ -231,27 +240,27 @@ public class StudentApplication {
     this.additionalComments = additionalComments;
   }
 
-  public Boolean getPreviouslyApplied() {
+  public boolean isPreviouslyApplied() {
     return previouslyApplied;
   }
 
-  public void setPreviouslyApplied(Boolean previouslyApplied) {
+  public void setPreviouslyApplied(boolean previouslyApplied) {
     this.previouslyApplied = previouslyApplied;
   }
 
-  public Boolean getPreviouslyParticipated() {
+  public boolean isPreviouslyParticipated() {
     return previouslyParticipated;
   }
 
-  public void setPreviouslyParticipated(Boolean previouslyParticipated) {
+  public void setPreviouslyParticipated(boolean previouslyParticipated) {
     this.previouslyParticipated = previouslyParticipated;
   }
 
-  public Boolean getHasUpcomingInternshipOffers() {
+  public boolean isHasUpcomingInternshipOffers() {
     return hasUpcomingInternshipOffers;
   }
 
-  public void setHasUpcomingInternshipOffers(Boolean hasUpcomingInternshipOffers) {
+  public void setHasUpcomingInternshipOffers(boolean hasUpcomingInternshipOffers) {
     this.hasUpcomingInternshipOffers = hasUpcomingInternshipOffers;
   }
 
@@ -263,11 +272,11 @@ public class StudentApplication {
     this.term = term;
   }
 
-  public String getStatus() {
+  public ApplicationStatus getStatus() {
     return status;
   }
 
-  public void setStatus(String status) {
+  public void setStatus(ApplicationStatus status) {
     this.status = status;
   }
 
@@ -303,11 +312,19 @@ public class StudentApplication {
     this.reviewNotes = reviewNotes;
   }
 
-  public Boolean getInterviewEligible() {
+  public boolean isInterviewEligible() {
     return interviewEligible;
   }
 
-  public void setInterviewEligible(Boolean interviewEligible) {
+  public void setInterviewEligible(boolean interviewEligible) {
     this.interviewEligible = interviewEligible;
+  }
+
+  public String getUpdatedBy() {
+    return updatedBy;
+  }
+
+  public void setUpdatedBy(String updatedBy) {
+    this.updatedBy = updatedBy;
   }
 }

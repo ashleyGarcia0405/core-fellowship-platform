@@ -1,21 +1,22 @@
 package edu.columbia.corefellowship.applications.dto;
 
-import jakarta.validation.constraints.NotBlank;
+import edu.columbia.corefellowship.applications.model.ApplicationStatus;
+import jakarta.validation.constraints.NotNull;
 
 public class UpdateApplicationStatusRequest {
 
-  @NotBlank(message = "Status is required")
-  private String status;
+  @NotNull(message = "Status is required")
+  private ApplicationStatus status;
 
   private String reviewedBy;
   private String reviewNotes;
 
   // Getters and Setters
-  public String getStatus() {
+  public ApplicationStatus getStatus() {
     return status;
   }
 
-  public void setStatus(String status) {
+  public void setStatus(ApplicationStatus status) {
     this.status = status;
   }
 
