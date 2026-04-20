@@ -459,10 +459,6 @@ export default function AdminDashboard() {
     return matchStartups.find(s => s.id === startupId)?.companyName || 'Startup';
   }
 
-  function getRoleType(startupId: string, positionIndex: number): string {
-    return matchStartups.find(s => s.id === startupId)?.positions?.[positionIndex]?.roleType || 'Role';
-  }
-
   // Build a flat list of all roles from startups
   // Build a display label that disambiguates duplicate role types within the same startup
   // e.g. two "Software Engineer" roles become "Software Engineer (1)" and "Software Engineer (2)"
