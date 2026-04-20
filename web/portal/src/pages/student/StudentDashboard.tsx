@@ -36,36 +36,35 @@ export default function StudentDashboard() {
 
   const timeline = [
     {
-      date: 'Jan 27',
+      date: '04/20',
       title: 'Application Opens',
       description: `${ACTIVE_TERM} CORE Fellowship applications are now open. Use the application tab to start or update your application for this term.`,
       status: 'completed'
     },
     {
-      date: 'TBD',
-      title: 'Application Deadline',
-      description: `Submit your application for ${ACTIVE_TERM} before the posted deadline to be considered.`,
+      date: '04/21',
+      title: 'Resume Review Session',
+      description: 'Resume review session from 7:00 PM to 10:00 PM.',
       status: 'upcoming'
     },
     {
-        date: 'TBD',
-        title: 'Interviews',
-        description: 'Selected students will receive an invitation to interview',
-        status: 'future'
+      date: '04/27',
+      title: 'Application Closes',
+      description: `Submit your application for ${ACTIVE_TERM} by 11:59 PM on 04/27.`,
+      status: 'upcoming'
     },
     {
-      date: 'TBD',
+      date: '05/02-05/03',
+      title: 'Interviews',
+      description: 'Selected students will receive an invitation to interview during this window.',
+      status: 'future'
+    },
+    {
+      date: '05/08',
       title: 'Decisions Released',
       description: 'Decisions will be sent to you via email. You will either be accepted, waitlisted, or rejected.',
       status: 'future'
-    },
-    {
-      date: 'TBD',
-      title: 'Matching Preference Form Due',
-      description: 'If accepted, you must submit the match preference form to confirm your spot in this cohort.',
-      status: 'future'
-    },
-
+    }
   ];
 
   return (
