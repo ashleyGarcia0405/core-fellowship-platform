@@ -329,6 +329,14 @@ export default function ApplicationForm() {
         </p>
 
         <p>
+          <strong>Important dates:</strong> Applications open on 04/20, close on 04/27, interviews run from 05/02 to 05/03, and decisions are released on 05/08.
+        </p>
+
+        <p>
+          <strong>Extra:</strong> Resume Review Session on 04/22 from 8:00 PM to 10:00 PM.
+        </p>
+
+        <p>
           Fellows take on substantive projects that have a direct impact on the startup. Fellows work closely with the company's founding team to impact organizational strategy, product development, or go-to-market strategy.
         </p>
 
