@@ -232,7 +232,7 @@ export default function ApplicationForm() {
         workAuthorization: workAuthorization || undefined,
         additionalComments: additionalComments || undefined,
         previouslyApplied,
-        previouslyParticipated: previouslyParticipated || undefined,
+        previouslyParticipated,
         hasUpcomingInternshipOffers,
       });
 
