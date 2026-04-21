@@ -41,6 +41,12 @@ export default function ApplicationForm() {
 
   const hasPromptedForDraft = useRef(false);
 
+  useEffect(() => {
+    if (user?.email) {
+      setEmail(user.email);
+    }
+  }, [user?.email]);
+
   // Check if user has already submitted an application
   useEffect(() => {
     const checkExistingApplication = async () => {
@@ -77,7 +83,7 @@ export default function ApplicationForm() {
           setGradYear(parsed.gradYear || '');
           setSchool(parsed.school || '');
           setMajor(parsed.major || '');
-          setEmail(parsed.email || user?.email || '');
+          setEmail(user?.email || '');
           setLinkedinProfile(parsed.linkedinProfile || '');
           setPortfolioWebsite(parsed.portfolioWebsite || '');
           setHowDidYouHear(parsed.howDidYouHear || '');
@@ -107,14 +113,13 @@ export default function ApplicationForm() {
   // Auto-save to localStorage whenever form fields change
   useEffect(() => {
     // Only save if user has started filling the form
-    if (fullName || email || major || startupsAndIndustries || contributionAndExperience) {
+    if (fullName || major || startupsAndIndustries || contributionAndExperience) {
       const draft = {
         fullName,
         pronouns,
         gradYear,
         school,
         major,
-        email,
         linkedinProfile,
         portfolioWebsite,
         howDidYouHear,
@@ -136,7 +141,7 @@ export default function ApplicationForm() {
       setLastSaved(new Date());
     }
   }, [
-    fullName, pronouns, gradYear, school, major, email,
+    fullName, pronouns, gradYear, school, major,
     linkedinProfile, portfolioWebsite, howDidYouHear, referralSource,
     rolePreferences, startupsAndIndustries,
     contributionAndExperience, workMode, timeCommitment, isUSCitizen,
@@ -212,7 +217,7 @@ export default function ApplicationForm() {
         gradYear,
         school: school || undefined,
         major,
-        email,
+        email: user?.email || email,
         linkedinProfile: normalizedLinkedin || undefined,
         portfolioWebsite: normalizedPortfolio || undefined,
         resumeUrl,
@@ -459,9 +464,9 @@ export default function ApplicationForm() {
           <input
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            readOnly
             required
-            style={{ width: '100%', padding: '8px', fontSize: '14px' }}
+            style={{ width: '100%', padding: '8px', fontSize: '14px', background: '#f8fafc', color: '#475569' }}
           />
         </div>
 
