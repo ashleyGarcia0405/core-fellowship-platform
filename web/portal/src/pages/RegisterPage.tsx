@@ -77,13 +77,8 @@ export default function RegisterPage() {
       setSuccess(true);
       setTimeout(() => navigate('/login'), 2000);
     } catch (err: any) {
-      // Check if it's a conflict error (409) - user already exists
       if (err.message && err.message.includes('409')) {
-        setSuccess(true);
-        setError('');
-        setTimeout(() => {
-          navigate('/login');
-        }, 2000);
+        setError('That email is already registered with an account. Please log in instead.');
       } else {
         setError(err.message || 'Registration failed. Please try again.');
       }
@@ -111,6 +106,11 @@ export default function RegisterPage() {
             <h1 style={{ margin: '10px 0 6px 0', fontSize: '22px' }}>Create an account</h1>
             <p style={{ margin: 0, fontSize: '13px', color: '#7b8794' }}>
               Join the CORE Fellowship community
+            </p>
+            <p style={{ margin: '10px 0 0 0', fontSize: '12px', color: '#7b8794' }}>
+              Had an account before and forgot your password? Email{' '}
+              <a href="mailto:ag4647@columbia.edu" style={{ color: '#0a468f', fontWeight: '600' }}>ag4647@columbia.edu</a>{' '}
+              to get access.
             </p>
           </div>
         )}

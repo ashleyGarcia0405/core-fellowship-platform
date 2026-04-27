@@ -6,6 +6,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [failedAttempts, setFailedAttempts] = useState(0);
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -29,7 +30,13 @@ export default function LoginPage() {
     } catch (err: any) {
       const msg = err.message || '';
       if (msg.includes('401')) {
-        setError('Incorrect email or password. Please try again.');
+        const newCount = failedAttempts + 1;
+        setFailedAttempts(newCount);
+        if (newCount >= 5) {
+          setError('Incorrect email or password. To reset your password, email ag4647@columbia.edu.');
+        } else {
+          setError('Incorrect email or password. Please try again.');
+        }
       } else if (msg.includes('503') || msg.includes('unavailable') || msg.includes('starting up')) {
         setError('Service is starting up. Please wait a moment and try again.');
       } else if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
