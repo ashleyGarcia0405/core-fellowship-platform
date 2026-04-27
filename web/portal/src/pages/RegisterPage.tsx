@@ -77,8 +77,8 @@ export default function RegisterPage() {
       setSuccess(true);
       setTimeout(() => navigate('/login'), 2000);
     } catch (err: any) {
-      if (err.message && err.message.includes('409')) {
-        setError('That email is already registered with an account. Please log in instead.');
+      if (err.message && (err.message.includes('409') || err.message.toLowerCase().includes('already registered'))) {
+        setError('That email is already registered. Please log in or reset your password.');
       } else {
         setError(err.message || 'Registration failed. Please try again.');
       }
