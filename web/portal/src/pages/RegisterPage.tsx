@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { ApiError } from '../lib/api';
 import type { UserType } from '../lib/api';
 
 export default function RegisterPage() {
@@ -77,7 +78,7 @@ export default function RegisterPage() {
       setSuccess(true);
       setTimeout(() => navigate('/login'), 2000);
     } catch (err: any) {
-      if (err.message && (err.message.includes('409') || err.message.toLowerCase().includes('already registered'))) {
+      if (err instanceof ApiError && err.status === 409) {
         setError('That email is already registered. Please log in or reset your password.');
       } else {
         setError(err.message || 'Registration failed. Please try again.');

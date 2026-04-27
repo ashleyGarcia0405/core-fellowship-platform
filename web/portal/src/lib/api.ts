@@ -1,5 +1,13 @@
 const API_BASE = import.meta.env.VITE_API_BASE || "";
 export const ACTIVE_TERM = import.meta.env.VITE_ACTIVE_TERM || "Summer 2026";
+
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
+}
 export const TERM_OPTIONS = Array.from(
   new Set([ACTIVE_TERM, "Spring 2026", "Summer 2026", "Fall 2026", "Spring 2027"])
 );
@@ -104,7 +112,7 @@ export async function postJson<T>(path: string, body: unknown): Promise<T> {
       handleUnauthorized();
     }
     const message = await extractErrorMessage(res);
-    throw new Error(message);
+    throw new ApiError(message, res.status);
   }
   return res.json() as Promise<T>;
 }
