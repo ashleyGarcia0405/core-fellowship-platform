@@ -202,8 +202,10 @@ public class InterviewBookingController {
       }
     }
 
-    if (booking.getTerm() == null) {
-      booking.setTerm(termParam != null && !termParam.isBlank() ? termParam : activeTerm);
+    if (termParam != null && !termParam.isBlank()) {
+      booking.setTerm(termParam);
+    } else if (booking.getTerm() == null) {
+      booking.setTerm(activeTerm);
     }
 
     bookingRepository.save(booking);
