@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { createInterview, getApplications, getInterview, getInterviewBookings, updateInterview } from '../../lib/api';
-
-const ACTIVE_TERM = 'Spring 2026';
+import { ACTIVE_TERM, createInterview, getAllApplications, getInterview, getInterviewBookings, updateInterview } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Interview, Recommendation, UpdateInterviewRequest } from '../../lib/api';
 
@@ -104,8 +102,9 @@ export default function InterviewForm() {
         setCommitmentConcerns(interview.commitmentConcerns || '');
         setRecommendation(interview.recommendation || 'YES');
       } catch (err: any) {
-        if (!String(err.message || '').includes('HTTP 404')) {
-          setInterviewLoadError(err.message || 'Failed to load interview.');
+        const msg = String(err.message || '');
+        if (!msg.includes('HTTP 404') && !msg.includes('No interview found')) {
+          setInterviewLoadError(msg || 'Failed to load interview.');
         }
       }
     }
@@ -119,7 +118,7 @@ export default function InterviewForm() {
     async function loadCandidate() {
       try {
         setCandidateError('');
-        const applications = await getApplications();
+        const applications = await getAllApplications({ term: ACTIVE_TERM });
         const match = applications.find((app) => app.id === applicationId);
         if (match) {
           setCandidateName(match.fullName || null);
