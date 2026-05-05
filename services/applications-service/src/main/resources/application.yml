@@ -14,6 +14,13 @@ inter:
   service:
     secret: ${INTER_SERVICE_SECRET}
 
+app:
+  active-term: ${APP_ACTIVE_TERM:Summer 2026}
+
+cal:
+  webhook:
+    secret: ${CAL_WEBHOOK_SECRET:}
+
 gcs:
   bucket-name: core-application-resumes
   credentials-path: ${GCS_CREDENTIALS_PATH:../gcs-credentials.json}

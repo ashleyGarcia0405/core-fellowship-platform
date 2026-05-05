@@ -71,11 +71,9 @@ public class StudentApplicationController {
     // Validate term format
     TermValidator.validate(request.getTerm());
 
-    // Validate that request email matches authenticated email
-    if (authenticatedEmail != null && !request.getEmail().equalsIgnoreCase(authenticatedEmail)) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-          "Email must match your account email");
-    }
+    String applicationEmail = authenticatedEmail != null && !authenticatedEmail.isBlank()
+        ? authenticatedEmail.trim()
+        : request.getEmail().trim();
 
     // Check if user already has an application for this cohort (allows re-applying in future terms)
     List<StudentApplication> existingApplications = repository.findByUserIdAndTerm(userId, request.getTerm());
@@ -110,7 +108,7 @@ public class StudentApplicationController {
     application.setGradYear(request.getGradYear());
     application.setSchool(request.getSchool());
     application.setMajor(request.getMajor());
-    application.setEmail(request.getEmail());
+    application.setEmail(applicationEmail);
     application.setLinkedinProfile(request.getLinkedinProfile());
     application.setPortfolioWebsite(request.getPortfolioWebsite());
     application.setResumeUrl(resumeUrl);
@@ -133,7 +131,7 @@ public class StudentApplicationController {
     // Miscellaneous
     application.setAdditionalComments(request.getAdditionalComments());
     application.setPreviouslyApplied(request.getPreviouslyApplied());
-    application.setPreviouslyParticipated(request.getPreviouslyParticipated());
+    application.setPreviouslyParticipated(Boolean.TRUE.equals(request.getPreviouslyParticipated()));
     application.setHasUpcomingInternshipOffers(request.getHasUpcomingInternshipOffers());
 
     // Set defaults (admin fields)

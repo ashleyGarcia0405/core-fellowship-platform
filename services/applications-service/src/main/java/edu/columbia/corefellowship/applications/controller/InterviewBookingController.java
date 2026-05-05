@@ -27,6 +27,9 @@ public class InterviewBookingController {
   @Value("${cal.webhook.secret:}")
   private String calWebhookSecret;
 
+  @Value("${app.active-term:Summer 2026}")
+  private String activeTerm;
+
   public InterviewBookingController(
       InterviewBookingRepository bookingRepository,
       StudentApplicationRepository applicationRepository) {
@@ -108,6 +111,7 @@ public class InterviewBookingController {
   @PostMapping("/v1/webhooks/cal")
   public ResponseEntity<Map<String, String>> handleCalWebhook(
       @RequestHeader(value = "X-Cal-Webhook-Secret", required = false) String secret,
+      @RequestParam(value = "term", required = false) String termParam,
       @RequestBody Map<String, Object> body) {
 
     if (calWebhookSecret != null && !calWebhookSecret.isBlank()) {
@@ -120,6 +124,19 @@ public class InterviewBookingController {
     Map<String, Object> payload = getMap(body, "payload");
     if (payload == null) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing payload");
+    }
+
+    // When a booking is rescheduled, cal.com sends the old UID in rescheduleUid.
+    // Cancel the old record so it doesn't appear as a ghost slot.
+    if ("BOOKING_RESCHEDULED".equalsIgnoreCase(trigger)) {
+      String rescheduleUid = getString(payload, "rescheduleUid");
+      if (rescheduleUid != null && !rescheduleUid.isBlank()) {
+        bookingRepository.findByCalBookingUid(rescheduleUid).ifPresent(old -> {
+          old.setStatus("cancelled");
+          old.setUpdatedAt(Instant.now());
+          bookingRepository.save(old);
+        });
+      }
     }
 
     String bookingUid = getString(payload, "uid");
@@ -183,6 +200,10 @@ public class InterviewBookingController {
           booking.setTerm(app.getTerm());
         }
       }
+    }
+
+    if (booking.getTerm() == null) {
+      booking.setTerm(termParam != null && !termParam.isBlank() ? termParam : activeTerm);
     }
 
     bookingRepository.save(booking);

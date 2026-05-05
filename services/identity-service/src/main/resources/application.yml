@@ -17,7 +17,7 @@ admin:
   registration-token: ${ADMIN_REGISTRATION_TOKEN}
 
 vc:
-  registration-token: ${VC_REGISTRATION_TOKEN:vcR3g1str4t10nT0k3n2024}
+  registration-token: ${VC_REGISTRATION_TOKEN}
 
 logging:
   level:

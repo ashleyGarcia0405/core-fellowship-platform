@@ -629,8 +629,12 @@ public class ApplicationsProxyController {
   @PostMapping("/webhooks/cal")
   public ResponseEntity<Object> handleCalWebhook(
       @RequestBody Map<String, Object> body,
+      @RequestParam(value = "term", required = false) String term,
       HttpServletRequest request) {
-    RestClient.RequestBodySpec spec = client.post().uri("/v1/webhooks/cal");
+    String uri = term != null && !term.isBlank()
+        ? "/v1/webhooks/cal?term=" + java.net.URLEncoder.encode(term, java.nio.charset.StandardCharsets.UTF_8)
+        : "/v1/webhooks/cal";
+    RestClient.RequestBodySpec spec = client.post().uri(uri);
     ResponseEntity<String> response = spec
         .headers(headers -> copyWebhookHeaders(headers, request))
         .body(body)
