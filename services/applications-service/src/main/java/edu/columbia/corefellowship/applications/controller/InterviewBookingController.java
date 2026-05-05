@@ -7,6 +7,10 @@ import edu.columbia.corefellowship.applications.model.StudentApplication;
 import edu.columbia.corefellowship.applications.repository.InterviewBookingRepository;
 import edu.columbia.corefellowship.applications.repository.StudentApplicationRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,6 +27,7 @@ public class InterviewBookingController {
 
   private final InterviewBookingRepository bookingRepository;
   private final StudentApplicationRepository applicationRepository;
+  private final MongoTemplate mongoTemplate;
 
   @Value("${cal.webhook.secret:}")
   private String calWebhookSecret;
@@ -32,9 +37,11 @@ public class InterviewBookingController {
 
   public InterviewBookingController(
       InterviewBookingRepository bookingRepository,
-      StudentApplicationRepository applicationRepository) {
+      StudentApplicationRepository applicationRepository,
+      MongoTemplate mongoTemplate) {
     this.bookingRepository = bookingRepository;
     this.applicationRepository = applicationRepository;
+    this.mongoTemplate = mongoTemplate;
   }
 
   @GetMapping("/v1/admin/interviews")
@@ -143,72 +150,64 @@ public class InterviewBookingController {
     if (bookingUid == null || bookingUid.isBlank()) {
       bookingUid = getString(payload, "id");
     }
-
-    InterviewBooking booking = bookingUid != null
-        ? bookingRepository.findByCalBookingUid(bookingUid).orElseGet(InterviewBooking::new)
-        : new InterviewBooking();
-
-    if (bookingUid != null) {
-      booking.setCalBookingUid(bookingUid);
+    if (bookingUid == null || bookingUid.isBlank()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing booking uid");
     }
 
-    booking.setTitle(getString(payload, "title"));
+    String title = getString(payload, "title");
     String eventType = getString(payload, "type");
     if (eventType == null || eventType.isBlank()) {
       eventType = getString(payload, "eventTypeSlug");
     }
-    booking.setEventType(eventType);
-
-    String startTime = getString(payload, "startTime");
-    String endTime = getString(payload, "endTime");
-    if (startTime != null) {
-      booking.setStartTime(Instant.parse(startTime));
-    }
-    if (endTime != null) {
-      booking.setEndTime(Instant.parse(endTime));
-    }
-
+    String startTimeStr = getString(payload, "startTime");
+    String endTimeStr   = getString(payload, "endTime");
     String studentEmail = extractAttendeeEmail(payload);
-    String studentName = extractAttendeeName(payload);
-    if (studentEmail != null) {
-      booking.setStudentEmail(studentEmail);
-    }
-    if (studentName != null) {
-      booking.setStudentName(studentName);
-    }
-
-    booking.setInterviewType(resolveInterviewType(booking.getEventType(), booking.getTitle()));
+    String studentName  = extractAttendeeName(payload);
+    String interviewType = resolveInterviewType(eventType, title);
 
     String payloadStatus = getString(payload, "status");
-    if ("BOOKING_CANCELLED".equalsIgnoreCase(trigger) || "CANCELLED".equalsIgnoreCase(payloadStatus)) {
-      booking.setStatus("cancelled");
-    } else {
-      booking.setStatus("scheduled");
-    }
+    String status = ("BOOKING_CANCELLED".equalsIgnoreCase(trigger) || "CANCELLED".equalsIgnoreCase(payloadStatus))
+        ? "cancelled" : "scheduled";
 
-    if (booking.getCreatedAt() == null) {
-      booking.setCreatedAt(Instant.now());
-    }
-    booking.setUpdatedAt(Instant.now());
-
-    if (booking.getApplicationId() == null && booking.getStudentEmail() != null) {
-      List<StudentApplication> apps = applicationRepository.findByEmail(booking.getStudentEmail());
-      if (!apps.isEmpty()) {
-        StudentApplication app = apps.get(0);
-        booking.setApplicationId(app.getId());
-        if (booking.getTerm() == null && app.getTerm() != null) {
-          booking.setTerm(app.getTerm());
-        }
+    String term = termParam != null && !termParam.isBlank() ? termParam : null;
+    if (term == null && studentEmail != null) {
+      List<StudentApplication> apps = applicationRepository.findByEmail(studentEmail);
+      if (!apps.isEmpty() && apps.get(0).getTerm() != null) {
+        term = apps.get(0).getTerm();
       }
     }
+    if (term == null) term = activeTerm;
 
-    if (termParam != null && !termParam.isBlank()) {
-      booking.setTerm(termParam);
-    } else if (booking.getTerm() == null) {
-      booking.setTerm(activeTerm);
+    String applicationId = null;
+    if (studentEmail != null) {
+      List<StudentApplication> apps = applicationRepository.findByEmail(studentEmail);
+      if (!apps.isEmpty()) applicationId = apps.get(0).getId();
     }
 
-    bookingRepository.save(booking);
+    // Atomic upsert — prevents duplicate records when two webhooks arrive simultaneously
+    Query query = new Query(Criteria.where("calBookingUid").is(bookingUid));
+    Update update = new Update()
+        .set("calBookingUid", bookingUid)
+        .set("status", status)
+        .set("interviewType", interviewType)
+        .set("updatedAt", Instant.now())
+        .setOnInsert("createdAt", Instant.now())
+        .setOnInsert("interviewers", List.of());
+    if (title != null)        update.set("title", title);
+    if (eventType != null)    update.set("eventType", eventType);
+    if (startTimeStr != null) update.set("startTime", Instant.parse(startTimeStr));
+    if (endTimeStr != null)   update.set("endTime", Instant.parse(endTimeStr));
+    if (studentEmail != null) update.set("studentEmail", studentEmail);
+    if (studentName != null)  update.set("studentName", studentName);
+    if (applicationId != null) update.set("applicationId", applicationId);
+    // Always set term when we have a termParam; only set on insert otherwise
+    if (termParam != null && !termParam.isBlank()) {
+      update.set("term", term);
+    } else {
+      update.setOnInsert("term", term);
+    }
+
+    mongoTemplate.upsert(query, update, InterviewBooking.class);
     return ResponseEntity.ok(Map.of("status", "ok"));
   }
 
