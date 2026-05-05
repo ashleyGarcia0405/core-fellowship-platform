@@ -4,7 +4,7 @@ import { FiCalendar, FiFilter, FiUserPlus, FiUserMinus, FiHome, FiUsers, FiBrief
 import { useAuth } from '../../contexts/AuthContext';
 import { getInterviewBookings, updateInterviewBooking } from '../../lib/api';
 
-const ACTIVE_TERM = 'Spring 2026';
+const TERMS = ['Summer 2026', 'Spring 2026'];
 
 type InterviewStatusFilter = 'all' | 'scheduled' | 'completed';
 type InterviewTypeFilter = 'all' | 'technical' | 'non-technical';
@@ -17,6 +17,7 @@ export default function InterviewSignup() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [bookings, setBookings] = useState<any[]>([]);
+  const [selectedTerm, setSelectedTerm] = useState(TERMS[0]);
   const [statusFilter, setStatusFilter] = useState<InterviewStatusFilter>('scheduled');
   const [typeFilter, setTypeFilter] = useState<InterviewTypeFilter>('all');
   const [assignmentFilter, setAssignmentFilter] = useState<AssignmentFilter>('all');
@@ -26,7 +27,7 @@ export default function InterviewSignup() {
       try {
         setLoading(true);
         setError('');
-        const data = await getInterviewBookings(ACTIVE_TERM);
+        const data = await getInterviewBookings(selectedTerm);
         setBookings(data);
       } catch (err: any) {
         setError(err.message || 'Failed to load interview bookings.');
@@ -35,7 +36,7 @@ export default function InterviewSignup() {
       }
     }
     loadBookings();
-  }, []);
+  }, [selectedTerm]);
 
   const handleLogout = () => {
     logout();
@@ -291,7 +292,7 @@ export default function InterviewSignup() {
       <div style={{ flex: 1, padding: '40px 60px', overflow: 'auto' }} className="main-content">
         <div style={{ maxWidth: '1200px' }}>
           <h1 style={{ fontSize: '28px', color: '#0a468f', marginBottom: '8px' }}>
-            Interview Sign-Up
+            Interview Sign-Up — {selectedTerm}
           </h1>
           <p style={{ color: '#666', marginBottom: '24px' }}>
             Claim interviews to join, and keep coverage balanced across technical and non-technical slots.
@@ -317,6 +318,13 @@ export default function InterviewSignup() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600', color: '#0a468f' }}>
               <FiFilter size={16} /> Filters
             </div>
+            <select
+              value={selectedTerm}
+              onChange={(e) => setSelectedTerm(e.target.value)}
+              style={{ padding: '8px 12px', borderRadius: '6px', border: '2px solid #0a468f', fontWeight: '600', color: '#0a468f' }}
+            >
+              {TERMS.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as InterviewStatusFilter)}
