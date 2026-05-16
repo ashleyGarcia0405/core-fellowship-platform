@@ -185,6 +185,11 @@ export default function AdminDashboard() {
     navigate('/');
   };
 
+  const navigateToTab = (tab: 'students' | 'startups' | 'matching') => {
+    const url = tab === 'students' ? '/admin/applications' : `/admin/applications?tab=${tab}`;
+    navigate(url);
+  };
+
   useEffect(() => {
     loadApplications(selectedTerm);
   }, [selectedTerm]);
@@ -703,7 +708,7 @@ export default function AdminDashboard() {
             </button>
             <button
               onClick={() => {
-                setActiveTab('students');
+                navigateToTab('students');
                 setSidebarOpen(false);
               }}
               style={{
@@ -731,7 +736,7 @@ export default function AdminDashboard() {
             </button>
             <button
               onClick={() => {
-                setActiveTab('startups');
+                navigateToTab('startups');
                 setSidebarOpen(false);
               }}
               style={{
@@ -759,7 +764,7 @@ export default function AdminDashboard() {
             </button>
             <button
               onClick={() => {
-                setActiveTab('matching');
+                navigateToTab('matching');
                 setSidebarOpen(false);
               }}
               style={{
