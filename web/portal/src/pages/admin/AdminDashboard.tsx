@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { FiHome, FiUsers, FiBriefcase, FiSettings, FiLogOut, FiMenu, FiX, FiCalendar, FiLink } from 'react-icons/fi';
 import {
@@ -105,8 +105,13 @@ const STATUS_LABELS: Record<string, string> = {
 export default function AdminDashboard() {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'students' | 'startups' | 'matching'>('students');
+  const initialTab = (() => {
+    const tab = new URLSearchParams(location.search).get('tab');
+    return (tab === 'startups' || tab === 'matching') ? tab : 'students';
+  })() as 'students' | 'startups' | 'matching';
+  const [activeTab, setActiveTab] = useState<'students' | 'startups' | 'matching'>(initialTab);
   const [applications, setApplications] = useState<Application[]>([]);
   const [filteredApps, setFilteredApps] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
