@@ -1314,7 +1314,7 @@ export default function AdminDashboard() {
                     padding: '25px',
                     marginBottom: '25px'
                   }}>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', alignItems: 'center' }}>
                       <select
                         value={selectedTerm}
                         onChange={(e) => setSelectedTerm(e.target.value)}
@@ -1365,6 +1365,23 @@ export default function AdminDashboard() {
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
                       </select>
+                      <button
+                        onClick={() => navigate('/admin/startups/new')}
+                        style={{
+                          padding: '10px 16px',
+                          fontSize: '14px',
+                          fontWeight: '600',
+                          color: 'white',
+                          background: '#0a468f',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: 'pointer'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = '#08376f'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = '#0a468f'}
+                      >
+                        Create Startup Intake
+                      </button>
                     </div>
                   </div>
 

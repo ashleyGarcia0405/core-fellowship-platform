@@ -1,13 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ACTIVE_TERM, createStartup, getStartups } from '../../lib/api';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { ACTIVE_TERM, TERM_OPTIONS, createAdminStartup, createStartup, getStartups } from '../../lib/api';
 import { useAuth } from '../../contexts/AuthContext';
-
-const DRAFT_KEY = `startup-intake-draft:${ACTIVE_TERM}`;
 
 export default function IntakeForm() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isAdminMode = user?.role === 'ROLE_ADMIN' && location.pathname.startsWith('/admin/');
+  const [selectedTerm, setSelectedTerm] = useState(ACTIVE_TERM);
+  const draftKey = `${isAdminMode ? 'admin-' : ''}startup-intake-draft:${selectedTerm}`;
 
   const [companyName, setCompanyName] = useState('');
   const [website, setWebsite] = useState('');
@@ -41,14 +43,23 @@ export default function IntakeForm() {
   const [checkingExisting, setCheckingExisting] = useState(true);
   const [hasSubmittedIntake, setHasSubmittedIntake] = useState(false);
 
-  const hasPromptedForDraft = useRef(false);
+  const lastPromptedDraftKey = useRef<string | null>(null);
+
+  const dashboardPath = isAdminMode ? '/admin/applications?tab=startups' : '/startup';
+  const headingTerm = selectedTerm;
 
   // Check if startup has already submitted an intake form
   useEffect(() => {
+    if (isAdminMode) {
+      setCheckingExisting(false);
+      setHasSubmittedIntake(false);
+      return;
+    }
+
     const checkExistingIntake = async () => {
       try {
         const startups = await getStartups();
-        if (startups.some((startup) => startup.term === ACTIVE_TERM)) {
+        if (startups.some((startup) => startup.term === selectedTerm)) {
           setHasSubmittedIntake(true);
         }
       } catch (err: any) {
@@ -60,13 +71,13 @@ export default function IntakeForm() {
     };
 
     checkExistingIntake();
-  }, []);
+  }, [isAdminMode, selectedTerm]);
 
   // Load draft from localStorage on mount
   useEffect(() => {
-    const draft = localStorage.getItem(DRAFT_KEY);
-    if (draft && !hasPromptedForDraft.current) {
-      hasPromptedForDraft.current = true;
+    const draft = localStorage.getItem(draftKey);
+    if (draft && lastPromptedDraftKey.current !== draftKey) {
+      lastPromptedDraftKey.current = draftKey;
       try {
         const parsed = JSON.parse(draft);
         const savedDate = new Date(parsed.savedAt);
@@ -101,14 +112,14 @@ export default function IntakeForm() {
           setCommitmentAcknowledged(parsed.commitmentAcknowledged || false);
           setLastSaved(savedDate);
         } else {
-          localStorage.removeItem(DRAFT_KEY);
+          localStorage.removeItem(draftKey);
         }
       } catch (err) {
         console.error('Failed to load draft:', err);
-        localStorage.removeItem(DRAFT_KEY);
+        localStorage.removeItem(draftKey);
       }
     }
-  }, [user?.email]);
+  }, [draftKey, user?.email]);
 
   // Auto-save to localStorage whenever form fields change
   useEffect(() => {
@@ -141,7 +152,7 @@ export default function IntakeForm() {
         commitmentAcknowledged,
         savedAt: new Date().toISOString(),
       };
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+      localStorage.setItem(draftKey, JSON.stringify(draft));
       setLastSaved(new Date());
     }
   }, [
@@ -149,7 +160,7 @@ export default function IntakeForm() {
     contactName, contactTitle, contactEmail, contactPhone, operatingMode, timeZone,
     internsSupervisor, hasHiredInternsPreviously, numberOfInternsNeeded, positions,
     willPayInterns, payAmount, payAmountOther, lookingForPermanentIntern,
-    permanentInternOther, referralSource, commitmentAcknowledged
+    permanentInternOther, referralSource, commitmentAcknowledged, draftKey
   ]);
 
   // Initialize positions array when numberOfInternsNeeded changes
@@ -181,8 +192,8 @@ export default function IntakeForm() {
           timeCommitment: p.timeCommitment || undefined
         }));
 
-      await createStartup({
-        term: ACTIVE_TERM,
+      const payload = {
+        term: selectedTerm,
         companyName,
         website: website || undefined,
         industry: industry || undefined,
@@ -205,16 +216,22 @@ export default function IntakeForm() {
         lookingForPermanentIntern: lookingForPermanentIntern === 'Other' ? permanentInternOther : lookingForPermanentIntern,
         referralSource: referralSource || undefined,
         commitmentAcknowledged: commitmentAcknowledged || undefined,
-      });
+      };
+
+      if (isAdminMode) {
+        await createAdminStartup(payload);
+      } else {
+        await createStartup(payload);
+      }
 
       // Clear the draft after successful submission
-      localStorage.removeItem(DRAFT_KEY);
+      localStorage.removeItem(draftKey);
 
-      alert('Startup intake form submitted successfully!');
-      navigate('/startup');
+      alert(isAdminMode ? 'Startup intake form created successfully!' : 'Startup intake form submitted successfully!');
+      navigate(dashboardPath);
     } catch (err: any) {
       // Check if it's a conflict error (409) - already submitted
-      if (err.message && err.message.includes('409')) {
+      if (!isAdminMode && err.message && err.message.includes('409')) {
         setHasSubmittedIntake(true);
         setCheckingExisting(false);
       } else {
@@ -226,7 +243,7 @@ export default function IntakeForm() {
   };
 
   // Show loading while checking for existing intake forms
-  if (checkingExisting) {
+  if (!isAdminMode && checkingExisting) {
     return (
       <div style={{ minHeight: '100vh', background: 'var(--bg-blue)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ background: 'white', borderRadius: '12px', padding: '40px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', textAlign: 'center' }}>
@@ -237,7 +254,7 @@ export default function IntakeForm() {
   }
 
   // Show "Already Submitted" message if intake form exists
-  if (hasSubmittedIntake) {
+  if (!isAdminMode && hasSubmittedIntake) {
     return (
       <div style={{ minHeight: '100vh', background: 'var(--bg-blue)', paddingBottom: '40px' }}>
         <div style={{ maxWidth: '900px', margin: '0 auto', padding: '40px 20px' }}>
@@ -251,14 +268,14 @@ export default function IntakeForm() {
               marginBottom: '30px'
             }}>
               <p style={{ fontSize: '16px', color: '#155724', margin: '0 0 10px 0' }}>
-                ✓ You have already submitted your intake form for {ACTIVE_TERM}.
+                ✓ You have already submitted your intake form for {headingTerm}.
               </p>
               <p style={{ fontSize: '14px', color: '#155724', margin: 0 }}>
                 We have received your information and will review it soon. You will be notified via email about the next steps.
               </p>
             </div>
             <button
-              onClick={() => navigate('/startup')}
+              onClick={() => navigate(dashboardPath)}
               style={{
                 padding: '12px 24px',
                 fontSize: '16px',
@@ -282,7 +299,9 @@ export default function IntakeForm() {
     <div style={{ minHeight: '100vh', background: 'var(--bg-blue)', paddingBottom: '40px' }}>
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: '40px 20px' }}>
         <div style={{ background: 'white', borderRadius: '12px', padding: '40px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
-          <h1 style={{ marginTop: 0, marginBottom: '10px', color: '#0a468f' }}>CORE Fellowship Startup Intake Form: {ACTIVE_TERM}</h1>
+          <h1 style={{ marginTop: 0, marginBottom: '10px', color: '#0a468f' }}>
+            {isAdminMode ? `Create Startup Intake: ${headingTerm}` : `CORE Fellowship Startup Intake Form: ${headingTerm}`}
+          </h1>
 
           {lastSaved && (
             <div style={{
@@ -307,9 +326,28 @@ export default function IntakeForm() {
             border: '2px solid #93c5fd'
           }}>
             <p style={{ marginTop: 0, marginBottom: 0, color: '#333' }}>
-              Please fill out this form to request a CORE Fellow for <strong>{ACTIVE_TERM}</strong>. Returning startup partners can submit a new intake for each term.
+              {isAdminMode
+                ? <>Use this admin form to create a startup intake for <strong>{headingTerm}</strong>. Admin-created intakes are unclaimed records that can be reviewed and used in matching without going through the startup self-serve flow.</>
+                : <>Please fill out this form to request a CORE Fellow for <strong>{headingTerm}</strong>. Returning startup partners can submit a new intake for each term.</>}
             </p>
           </div>
+
+          {isAdminMode && (
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                Cohort / Term *
+              </label>
+              <select
+                value={selectedTerm}
+                onChange={(e) => setSelectedTerm(e.target.value)}
+                style={{ width: '100%', padding: '10px', fontSize: '14px' }}
+              >
+                {TERM_OPTIONS.map((term) => (
+                  <option key={term} value={term}>{term}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
@@ -801,11 +839,11 @@ export default function IntakeForm() {
               borderRadius: '5px'
             }}
           >
-            {loading ? 'Submitting...' : 'Submit Intake Form'}
+            {loading ? (isAdminMode ? 'Creating...' : 'Submitting...') : (isAdminMode ? 'Create Intake Form' : 'Submit Intake Form')}
           </button>
           <button
             type="button"
-            onClick={() => navigate('/startup')}
+            onClick={() => navigate(dashboardPath)}
             style={{
               padding: '12px 24px',
               fontSize: '16px',

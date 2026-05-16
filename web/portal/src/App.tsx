@@ -62,6 +62,14 @@ export default function App() {
             }
           />
           <Route
+            path="/admin/startups/new"
+            element={
+              <ProtectedRoute requiredRole="ROLE_ADMIN">
+                <IntakeForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/student"
             element={
               <ProtectedRoute>

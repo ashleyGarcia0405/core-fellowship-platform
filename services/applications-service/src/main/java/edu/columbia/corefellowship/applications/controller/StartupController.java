@@ -53,53 +53,15 @@ public class StartupController {
           "You have already submitted a startup intake form for this term");
     }
 
-    Startup startup = new Startup();
+    Startup saved = repository.save(buildStartupFromRequest(request, userId));
+    return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+  }
 
-    // Set userId from authenticated user
-    startup.setUserId(userId);
-    startup.setTerm(request.getTerm());
-
-    // Company Info
-    startup.setCompanyName(request.getCompanyName());
-    startup.setWebsite(request.getWebsite());
-    startup.setIndustry(request.getIndustry());
-    startup.setDescription(request.getDescription());
-    startup.setStage(request.getStage());
-    startup.setTeamSize(request.getTeamSize());
-    startup.setFoundedYear(request.getFoundedYear());
-
-    // Contact Info
-    startup.setContactName(request.getContactName());
-    startup.setContactTitle(request.getContactTitle());
-    startup.setContactEmail(request.getContactEmail());
-    startup.setContactPhone(request.getContactPhone());
-
-    // Operating Details
-    startup.setOperatingMode(request.getOperatingMode());
-    startup.setTimeZone(request.getTimeZone());
-
-    // Internship Details
-    startup.setInternsSupervisor(request.getInternsSupervisor());
-    startup.setHasHiredInternsPreviously(request.getHasHiredInternsPreviously());
-    startup.setNumberOfInternsNeeded(request.getNumberOfInternsNeeded());
-    startup.setPositions(request.getPositions());
-    startup.setWillPayInterns(request.getWillPayInterns());
-    startup.setPayAmount(request.getPayAmount());
-    startup.setLookingForPermanentIntern(request.getLookingForPermanentIntern());
-    startup.setProjectDescriptionUrl(request.getProjectDescriptionUrl());
-
-    // Discovery
-    startup.setReferralSource(request.getReferralSource());
-
-    // Commitment
-    startup.setCommitmentAcknowledged(request.getCommitmentAcknowledged());
-
-    // Set defaults (admin fields)
-    startup.setStatus("submitted");
-    startup.setSubmittedAt(Instant.now());
-    startup.setUpdatedAt(Instant.now());
-
-    Startup saved = repository.save(startup);
+  @PostMapping("/admin/intake")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<Startup> createStartupAsAdmin(@Valid @RequestBody CreateStartupRequest request) {
+    TermValidator.validate(request.getTerm());
+    Startup saved = repository.save(buildStartupFromRequest(request, null));
     return ResponseEntity.status(HttpStatus.CREATED).body(saved);
   }
 
@@ -226,5 +188,46 @@ public class StartupController {
 
     repository.deleteById(id);
     return ResponseEntity.ok(Map.of("message", "Startup deleted successfully"));
+  }
+
+  private Startup buildStartupFromRequest(CreateStartupRequest request, String userId) {
+    Startup startup = new Startup();
+
+    startup.setUserId(userId);
+    startup.setTerm(request.getTerm());
+
+    startup.setCompanyName(request.getCompanyName());
+    startup.setWebsite(request.getWebsite());
+    startup.setIndustry(request.getIndustry());
+    startup.setDescription(request.getDescription());
+    startup.setStage(request.getStage());
+    startup.setTeamSize(request.getTeamSize());
+    startup.setFoundedYear(request.getFoundedYear());
+
+    startup.setContactName(request.getContactName());
+    startup.setContactTitle(request.getContactTitle());
+    startup.setContactEmail(request.getContactEmail());
+    startup.setContactPhone(request.getContactPhone());
+
+    startup.setOperatingMode(request.getOperatingMode());
+    startup.setTimeZone(request.getTimeZone());
+
+    startup.setInternsSupervisor(request.getInternsSupervisor());
+    startup.setHasHiredInternsPreviously(request.getHasHiredInternsPreviously());
+    startup.setNumberOfInternsNeeded(request.getNumberOfInternsNeeded());
+    startup.setPositions(request.getPositions());
+    startup.setWillPayInterns(request.getWillPayInterns());
+    startup.setPayAmount(request.getPayAmount());
+    startup.setLookingForPermanentIntern(request.getLookingForPermanentIntern());
+    startup.setProjectDescriptionUrl(request.getProjectDescriptionUrl());
+
+    startup.setReferralSource(request.getReferralSource());
+    startup.setCommitmentAcknowledged(request.getCommitmentAcknowledged());
+
+    startup.setStatus("submitted");
+    startup.setSubmittedAt(Instant.now());
+    startup.setUpdatedAt(Instant.now());
+
+    return startup;
   }
 }

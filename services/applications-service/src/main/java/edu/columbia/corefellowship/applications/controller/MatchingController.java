@@ -21,6 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -66,8 +67,18 @@ public class MatchingController {
         .map(StudentApplication::getId)
         .collect(Collectors.toSet());
 
+    Map<String, String> applicationNameById = studentApplicationRepository.findByTerm(term).stream()
+        .collect(Collectors.toMap(StudentApplication::getId, app -> {
+          String fullName = app.getFullName();
+          return fullName == null ? "" : fullName;
+        }));
+
     List<MatchPreference> preferences = matchPreferenceRepository.findBySubmitted(true).stream()
         .filter(pref -> applicationIdsForTerm.contains(pref.getApplicationId()))
+        .sorted(Comparator
+            .comparing((MatchPreference pref) -> applicationNameById.getOrDefault(pref.getApplicationId(), ""),
+                String.CASE_INSENSITIVE_ORDER)
+            .thenComparing(MatchPreference::getApplicationId))
         .toList();
     return ResponseEntity.ok(preferences);
   }

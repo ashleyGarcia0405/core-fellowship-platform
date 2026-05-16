@@ -346,6 +346,18 @@ public class ApplicationsProxyController {
     return forwardResponse(response);
   }
 
+  @PostMapping("/startups/admin/intake")
+  public ResponseEntity<Object> createStartupAsAdmin(
+      @RequestBody Map<String, Object> body,
+      HttpServletRequest request) {
+    RestClient.RequestBodySpec spec = client.post().uri("/v1/startups/admin/intake");
+    ResponseEntity<String> response = addUserHeadersToBody(spec, request)
+        .body(body)
+        .retrieve()
+        .toEntity(String.class);
+    return forwardResponse(response);
+  }
+
   @GetMapping("/startups")
   public ResponseEntity<Object> getStartups(
       @RequestParam(required = false) String term,

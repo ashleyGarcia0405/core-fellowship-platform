@@ -508,6 +508,10 @@ export async function createStartup(data: CreateStartupRequest): Promise<Startup
   return postJson<Startup>("/v1/startups/intake", data);
 }
 
+export async function createAdminStartup(data: CreateStartupRequest): Promise<Startup> {
+  return postJson<Startup>("/v1/startups/admin/intake", data);
+}
+
 export async function getStartups(params?: { term?: string; status?: string }): Promise<Startup[]> {
   const query = params ? `?${new URLSearchParams(params as any).toString()}` : '';
   return getJson<Startup[]>(`/v1/startups${query}`);
