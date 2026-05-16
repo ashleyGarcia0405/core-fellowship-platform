@@ -215,30 +215,6 @@ export default function AdminPortal() {
             </button>
             <button
               onClick={() => {
-                navigate('/admin/interviews');
-                setSidebarOpen(false);
-              }}
-              style={{
-                padding: '10px 15px',
-                textAlign: 'left',
-                background: 'transparent',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '500',
-                color: '#333',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = '#f5f5f5'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-            >
-              <FiCalendar size={18} /> Interview Sign-Up
-            </button>
-            <button
-              onClick={() => {
                 navigate('/admin/applications?tab=startups');
                 setSidebarOpen(false);
               }}
@@ -284,6 +260,30 @@ export default function AdminPortal() {
               onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
             >
               <FiLink size={18} /> Matching
+            </button>
+            <button
+              onClick={() => {
+                navigate('/admin/interviews');
+                setSidebarOpen(false);
+              }}
+              style={{
+                padding: '10px 15px',
+                textAlign: 'left',
+                background: 'transparent',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#333',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = '#f5f5f5'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+            >
+              <FiCalendar size={18} /> Interview Sign-Up
             </button>
           </nav>
         </div>

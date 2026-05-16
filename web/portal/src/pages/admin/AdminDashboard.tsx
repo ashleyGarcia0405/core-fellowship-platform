@@ -107,6 +107,10 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const getTabFromSearch = (search: string): 'students' | 'startups' | 'matching' => {
+    const tab = new URLSearchParams(search).get('tab');
+    return (tab === 'startups' || tab === 'matching') ? tab : 'students';
+  };
   const initialTab = (() => {
     const tab = new URLSearchParams(location.search).get('tab');
     return (tab === 'startups' || tab === 'matching') ? tab : 'students';
@@ -184,6 +188,10 @@ export default function AdminDashboard() {
   useEffect(() => {
     loadApplications(selectedTerm);
   }, [selectedTerm]);
+
+  useEffect(() => {
+    setActiveTab(getTabFromSearch(location.search));
+  }, [location.search]);
 
   useEffect(() => {
     filterApplications();
@@ -434,9 +442,22 @@ export default function AdminDashboard() {
         getStartups({ term }),
         getAllApplications({ term }),
       ]);
-      setMatchPreferences(prefs);
-      setMatchStartups(startupsData);
-      setMatchApplications(appsData);
+      const sortedApps = [...appsData].sort((a, b) =>
+        (a.fullName || '').localeCompare(b.fullName || '', undefined, { sensitivity: 'base' }) ||
+        a.id.localeCompare(b.id)
+      );
+      const appNameById = new Map(sortedApps.map(app => [app.id, app.fullName || '']));
+      const sortedPrefs = [...prefs].sort((a, b) =>
+        (appNameById.get(a.applicationId) || '').localeCompare(appNameById.get(b.applicationId) || '', undefined, { sensitivity: 'base' }) ||
+        a.applicationId.localeCompare(b.applicationId)
+      );
+      const sortedStartups = [...startupsData].sort((a, b) =>
+        (a.companyName || '').localeCompare(b.companyName || '', undefined, { sensitivity: 'base' }) ||
+        a.id.localeCompare(b.id)
+      );
+      setMatchPreferences(sortedPrefs);
+      setMatchStartups(sortedStartups);
+      setMatchApplications(sortedApps);
 
       // Load cached AI recommendations for each preference (404 = not generated yet)
       const recs: Record<string, AiRecommendation> = {};

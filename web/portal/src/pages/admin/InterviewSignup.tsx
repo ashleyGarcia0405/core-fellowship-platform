@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiCalendar, FiFilter, FiUserPlus, FiUserMinus, FiHome, FiUsers, FiBriefcase, FiSettings, FiLogOut, FiMenu, FiX } from 'react-icons/fi';
+import { FiCalendar, FiFilter, FiUserPlus, FiUserMinus, FiHome, FiUsers, FiBriefcase, FiSettings, FiLogOut, FiMenu, FiX, FiLink } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import { getInterviewBookings, updateInterviewBooking } from '../../lib/api';
 
@@ -190,7 +190,7 @@ export default function InterviewSignup() {
             </button>
             <button
               onClick={() => {
-                navigate('/admin/applications');
+                navigate('/admin/applications?tab=startups');
                 setSidebarOpen(false);
               }}
               style={{
@@ -211,6 +211,30 @@ export default function InterviewSignup() {
               onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
             >
               <FiBriefcase size={18} /> Startup Applications
+            </button>
+            <button
+              onClick={() => {
+                navigate('/admin/applications?tab=matching');
+                setSidebarOpen(false);
+              }}
+              style={{
+                padding: '10px 15px',
+                textAlign: 'left',
+                background: 'transparent',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#333',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = '#f5f5f5'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+            >
+              <FiLink size={18} /> Matching
             </button>
             <button
               onClick={() => {
