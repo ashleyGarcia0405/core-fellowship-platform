@@ -591,6 +591,26 @@ export async function updateInterviewEligibility(
   }
 }
 
+export async function updateStartupStatus(
+  startupId: string,
+  status: 'submitted' | 'approved' | 'active' | 'inactive',
+  reviewNotes?: string
+): Promise<Startup> {
+  const res = await fetch(`${API_BASE}/v1/startups/${startupId}`, {
+    method: 'PATCH',
+    headers: getHeaders(),
+    body: JSON.stringify({ status, reviewNotes }),
+  });
+  if (!res.ok) {
+    if (res.status === 401) {
+      handleUnauthorized();
+    }
+    const message = await extractErrorMessage(res);
+    throw new Error(message);
+  }
+  return res.json() as Promise<Startup>;
+}
+
 export async function exportApplicationsCSV(): Promise<Blob> {
   const res = await fetch(`${API_BASE}/v1/export/students.csv`, {
     headers: getHeaders(),

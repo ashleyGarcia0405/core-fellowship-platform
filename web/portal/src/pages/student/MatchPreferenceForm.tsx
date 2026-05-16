@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ACTIVE_TERM,
   getApplications,
   getAvailableStartups,
   getMatchPreferences,
@@ -12,7 +11,9 @@ import {
   type StudentApplication,
 } from '../../lib/api';
 
-const DRAFT_KEY = `match-preference-draft:${ACTIVE_TERM}`;
+const MATCH_PREFERENCE_TERM = 'Summer 2026';
+const DRAFT_KEY = `match-preference-draft:${MATCH_PREFERENCE_TERM}`;
+const MAX_RANKED_ROLES = 7;
 const MATCH_STATUS_OPTIONS = [
   "I'm already matched and interviewing with a company I like",
   "I'm already matched and plan on working with a company I like",
@@ -86,16 +87,16 @@ export default function MatchPreferenceForm() {
       try {
         // 1. Get user's application, verify finalist
         const apps = await getApplications();
-        const finalistApp = apps.find(a => a.term === ACTIVE_TERM && a.status === 'FINALIST');
+        const finalistApp = apps.find(a => a.term === MATCH_PREFERENCE_TERM && a.status === 'FINALIST');
         if (!finalistApp) {
-          setError(`Only ${ACTIVE_TERM} finalists can submit match preferences.`);
+          setError(`Only ${MATCH_PREFERENCE_TERM} finalists can submit match preferences.`);
           setLoading(false);
           return;
         }
         setApplication(finalistApp);
 
         // 2. Fetch available startups for this cohort
-        const availableStartups = await getAvailableStartups(finalistApp.term || ACTIVE_TERM);
+        const availableStartups = await getAvailableStartups(MATCH_PREFERENCE_TERM);
         setStartups(availableStartups);
 
         // 3. Check for existing preferences
@@ -120,7 +121,7 @@ export default function MatchPreferenceForm() {
                   `We found a saved draft from ${savedDate.toLocaleString()}. Would you like to continue where you left off?`
                 );
                 if (shouldRestore) {
-                  setRankedRoles(parsed.rankedRoles || []);
+                  setRankedRoles((parsed.rankedRoles || []).slice(0, MAX_RANKED_ROLES));
                   setMatchStatus(parsed.matchStatus || '');
                   setNotes(parsed.notes || '');
                 }
@@ -162,6 +163,7 @@ export default function MatchPreferenceForm() {
   }, [startups]);
 
   const addRole = (startupId: string, positionIndex: number) => {
+    if (rankedRoles.length >= MAX_RANKED_ROLES) return;
     // Don't add duplicates
     if (rankedRoles.some(r => r.startupId === startupId && r.positionIndex === positionIndex)) return;
     setRankedRoles([...rankedRoles, { startupId, positionIndex }]);
@@ -328,6 +330,9 @@ export default function MatchPreferenceForm() {
             </div>
             <p style={{ fontSize: '13px', color: '#888', marginBottom: '16px', marginTop: 0 }}>
               If you were contacted about resubmitting, please clear your rankings before adding new ones.
+            </p>
+            <p style={{ fontSize: '13px', color: rankedRoles.length >= MAX_RANKED_ROLES ? '#92400e' : '#666', marginBottom: '16px', marginTop: 0 }}>
+              You can rank up to {MAX_RANKED_ROLES} roles.
             </p>
             {rankedRoles.length === 0 ? (
               <p style={{ color: '#999', fontStyle: 'italic' }}>No roles ranked yet. Browse available roles below and add them to your rankings.</p>
@@ -557,6 +562,7 @@ export default function MatchPreferenceForm() {
                                 {startup.positions.map((pos, posIdx) => {
                                   const roleKey = `${startup.id}-${posIdx}`;
                                   const added = isRoleAdded(startup.id, posIdx);
+                                  const maxReached = rankedRoles.length >= MAX_RANKED_ROLES;
                                   const roleExpanded = expandedRoles.has(roleKey);
 
                                   return (
@@ -587,20 +593,20 @@ export default function MatchPreferenceForm() {
                                               e.stopPropagation();
                                               addRole(startup.id, posIdx);
                                             }}
-                                            disabled={added}
+                                            disabled={added || maxReached}
                                             style={{
                                               padding: '6px 14px',
                                               border: 'none',
                                               borderRadius: '6px',
-                                              background: added ? '#e8f4ff' : '#0a468f',
-                                              color: added ? '#0a468f' : 'white',
+                                              background: added ? '#e8f4ff' : maxReached ? '#e5e7eb' : '#0a468f',
+                                              color: added ? '#0a468f' : maxReached ? '#6b7280' : 'white',
                                               fontSize: '12px',
                                               fontWeight: '600',
-                                              cursor: added ? 'default' : 'pointer',
+                                              cursor: added || maxReached ? 'default' : 'pointer',
                                               whiteSpace: 'nowrap',
                                             }}
                                           >
-                                            {added ? 'Added' : 'Add to Rankings'}
+                                            {added ? 'Added' : maxReached ? 'Max 7 Reached' : 'Add to Rankings'}
                                           </button>
                                           <span style={{
                                             fontSize: '14px',

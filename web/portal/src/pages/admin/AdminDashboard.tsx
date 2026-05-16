@@ -13,6 +13,7 @@ import {
   getInterview,
   getResumeSignedUrl,
   getStartups,
+  updateStartupStatus,
   getAllSubmittedMatchPreferences,
   getAiRecommendation,
   generateAiRecommendation,
@@ -149,6 +150,9 @@ export default function AdminDashboard() {
   const [startupSearchTerm, setStartupSearchTerm] = useState('');
   const [startupStatusFilter, setStartupStatusFilter] = useState('all');
   const [selectedStartup, setSelectedStartup] = useState<Startup | null>(null);
+  const [startupReviewStatus, setStartupReviewStatus] = useState<'submitted' | 'approved' | 'active' | 'inactive'>('submitted');
+  const [startupReviewNotes, setStartupReviewNotes] = useState('');
+  const [startupSaving, setStartupSaving] = useState(false);
   const [startupStats, setStartupStats] = useState<StartupStats>({
     total: 0,
     submitted: 0,
@@ -240,6 +244,12 @@ export default function AdminDashboard() {
     setSelectedApp(null);
     setSelectedStartup(null);
   }, [activeTab]);
+
+  useEffect(() => {
+    if (!selectedStartup) return;
+    setStartupReviewStatus((selectedStartup.status as 'submitted' | 'approved' | 'active' | 'inactive') || 'submitted');
+    setStartupReviewNotes(selectedStartup.reviewNotes || '');
+  }, [selectedStartup]);
 
   useEffect(() => {
     if (!selectedApp) return;
@@ -621,6 +631,21 @@ export default function AdminDashboard() {
       }
     } catch (err: any) {
       alert('Failed to update interview eligibility: ' + err.message);
+    }
+  }
+
+  async function handleStartupStatusSave() {
+    if (!selectedStartup) return;
+    try {
+      setStartupSaving(true);
+      const updated = await updateStartupStatus(selectedStartup.id, startupReviewStatus, startupReviewNotes || undefined);
+      setSelectedStartup(updated);
+      setStartups(prev => prev.map(startup => startup.id === updated.id ? updated : startup));
+      calculateStartupStats(startups.map(startup => startup.id === updated.id ? updated : startup));
+    } catch (err: any) {
+      alert('Failed to update startup status: ' + err.message);
+    } finally {
+      setStartupSaving(false);
     }
   }
 
@@ -2948,6 +2973,77 @@ export default function AdminDashboard() {
                 <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#0a468f', marginBottom: '15px', borderBottom: '2px solid #93c5fd', paddingBottom: '8px' }}>
                   Administrative
                 </h3>
+                <div style={{
+                  marginBottom: '20px',
+                  padding: '16px',
+                  border: '1px solid #dbeafe',
+                  borderRadius: '10px',
+                  background: '#f8fbff'
+                }}>
+                  <div style={{ fontSize: '14px', fontWeight: '600', color: '#0a468f', marginBottom: '12px' }}>
+                    Review Controls
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: '15px', alignItems: 'start' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', color: '#666', marginBottom: '6px' }}>Status</label>
+                      <select
+                        value={startupReviewStatus}
+                        onChange={(e) => setStartupReviewStatus(e.target.value as 'submitted' | 'approved' | 'active' | 'inactive')}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          border: '1px solid #d1d5db',
+                          borderRadius: '6px',
+                          fontSize: '14px',
+                          outline: 'none',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <option value="submitted">Submitted</option>
+                        <option value="approved">Approved</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', color: '#666', marginBottom: '6px' }}>Review Notes</label>
+                      <textarea
+                        value={startupReviewNotes}
+                        onChange={(e) => setStartupReviewNotes(e.target.value)}
+                        rows={3}
+                        placeholder="Add admin review notes..."
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          border: '1px solid #d1d5db',
+                          borderRadius: '6px',
+                          fontSize: '14px',
+                          outline: 'none',
+                          resize: 'vertical',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
+                    <button
+                      onClick={handleStartupStatusSave}
+                      disabled={startupSaving}
+                      style={{
+                        padding: '10px 16px',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: 'white',
+                        background: startupSaving ? '#93c5fd' : '#0a468f',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: startupSaving ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      {startupSaving ? 'Saving...' : 'Save Review'}
+                    </button>
+                  </div>
+                </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                   <div>
                     <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Term</div>
