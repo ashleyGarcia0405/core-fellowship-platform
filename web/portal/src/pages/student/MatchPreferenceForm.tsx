@@ -13,6 +13,47 @@ import {
 } from '../../lib/api';
 
 const DRAFT_KEY = `match-preference-draft:${ACTIVE_TERM}`;
+const MATCH_STATUS_OPTIONS = [
+  "I'm already matched and interviewing with a company I like",
+  "I'm already matched and plan on working with a company I like",
+] as const;
+
+function parseStoredNotes(storedNotes: string | undefined): { matchStatus: string; additionalNotes: string } {
+  const raw = (storedNotes || '').trim();
+  if (!raw) {
+    return { matchStatus: '', additionalNotes: '' };
+  }
+
+  for (const option of MATCH_STATUS_OPTIONS) {
+    if (raw === option) {
+      return { matchStatus: option, additionalNotes: '' };
+    }
+    if (raw.startsWith(`${option}\n\n`)) {
+      return {
+        matchStatus: option,
+        additionalNotes: raw.slice(option.length + 2).trim(),
+      };
+    }
+  }
+
+  return { matchStatus: '', additionalNotes: storedNotes || '' };
+}
+
+function buildStoredNotes(matchStatus: string, additionalNotes: string): string | undefined {
+  const trimmedStatus = matchStatus.trim();
+  const trimmedNotes = additionalNotes.trim();
+
+  if (trimmedStatus && trimmedNotes) {
+    return `${trimmedStatus}\n\n${trimmedNotes}`;
+  }
+  if (trimmedStatus) {
+    return trimmedStatus;
+  }
+  if (trimmedNotes) {
+    return trimmedNotes;
+  }
+  return undefined;
+}
 
 export default function MatchPreferenceForm() {
   const navigate = useNavigate();
@@ -32,6 +73,7 @@ export default function MatchPreferenceForm() {
 
   // Form state
   const [rankedRoles, setRankedRoles] = useState<RoleReference[]>([]);
+  const [matchStatus, setMatchStatus] = useState('');
   const [notes, setNotes] = useState('');
   const [expandedStartups, setExpandedStartups] = useState<Set<string>>(new Set());
   const [expandedRoles, setExpandedRoles] = useState<Set<string>>(new Set());
@@ -61,7 +103,9 @@ export default function MatchPreferenceForm() {
           const existing = await getMatchPreferences(finalistApp.id);
           setExistingPreferenceId(existing.id);
           setRankedRoles(existing.rankedRoles || []);
-          setNotes(existing.notes || '');
+          const parsedNotes = parseStoredNotes(existing.notes);
+          setMatchStatus(parsedNotes.matchStatus);
+          setNotes(parsedNotes.additionalNotes);
           setIsSubmitted(existing.submitted);
         } catch {
           // No existing preferences — check localStorage draft
@@ -77,6 +121,7 @@ export default function MatchPreferenceForm() {
                 );
                 if (shouldRestore) {
                   setRankedRoles(parsed.rankedRoles || []);
+                  setMatchStatus(parsed.matchStatus || '');
                   setNotes(parsed.notes || '');
                 }
               } catch {
@@ -100,12 +145,13 @@ export default function MatchPreferenceForm() {
     const timer = setTimeout(() => {
       localStorage.setItem(DRAFT_KEY, JSON.stringify({
         rankedRoles,
+        matchStatus,
         notes,
         savedAt: new Date().toISOString(),
       }));
     }, 1000);
     return () => clearTimeout(timer);
-  }, [rankedRoles, notes, isSubmitted, application]);
+  }, [rankedRoles, matchStatus, notes, isSubmitted, application]);
 
   const getStartupName = useCallback((startupId: string) => {
     return startups.find(startup => startup.id === startupId)?.companyName || 'Unknown Startup';
@@ -144,10 +190,11 @@ export default function MatchPreferenceForm() {
     setSaving(true);
     setError('');
     try {
+      const storedNotes = buildStoredNotes(matchStatus, notes);
       if (existingPreferenceId) {
-        await updateMatchPreferences(application.id, { rankedRoles, notes, submit: false });
+        await updateMatchPreferences(application.id, { rankedRoles, notes: storedNotes, submit: false });
       } else {
-        const created = await createMatchPreferences(application.id, { rankedRoles, notes, submit: false });
+        const created = await createMatchPreferences(application.id, { rankedRoles, notes: storedNotes, submit: false });
         setExistingPreferenceId(created.id);
       }
       localStorage.removeItem(DRAFT_KEY);
@@ -170,10 +217,11 @@ export default function MatchPreferenceForm() {
     setSaving(true);
     setError('');
     try {
+      const storedNotes = buildStoredNotes(matchStatus, notes);
       if (existingPreferenceId) {
-        await updateMatchPreferences(application.id, { rankedRoles, notes, submit: true });
+        await updateMatchPreferences(application.id, { rankedRoles, notes: storedNotes, submit: true });
       } else {
-        await createMatchPreferences(application.id, { rankedRoles, notes, submit: true });
+        await createMatchPreferences(application.id, { rankedRoles, notes: storedNotes, submit: true });
       }
       setIsSubmitted(true);
       setShowToast(true);
@@ -334,6 +382,42 @@ export default function MatchPreferenceForm() {
             <p style={{ color: '#666', fontSize: '14px', marginBottom: '12px' }}>
               Anything you want us to know about your preferences — e.g., constraints, strong feelings about a particular role, etc.
             </p>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+              marginBottom: '16px',
+              padding: '14px 16px',
+              background: '#f8fbff',
+              border: '1px solid #dbeafe',
+              borderRadius: '8px',
+            }}>
+              <div style={{ fontSize: '14px', fontWeight: '600', color: '#0a468f' }}>
+                Match Status
+              </div>
+              <label style={{ fontSize: '14px', color: '#333', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <input
+                  type="radio"
+                  name="matchStatus"
+                  value=""
+                  checked={matchStatus === ''}
+                  onChange={() => setMatchStatus('')}
+                />
+                None
+              </label>
+              {MATCH_STATUS_OPTIONS.map((option) => (
+                <label key={option} style={{ fontSize: '14px', color: '#333', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input
+                    type="radio"
+                    name="matchStatus"
+                    value={option}
+                    checked={matchStatus === option}
+                    onChange={() => setMatchStatus(option)}
+                  />
+                  {option}
+                </label>
+              ))}
+            </div>
             <textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
