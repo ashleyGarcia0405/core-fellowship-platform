@@ -649,6 +649,7 @@ export interface MatchPreference {
   id: string;
   applicationId: string;
   rankedRoles: RoleReference[];
+  matchStatus?: string;
   notes?: string;
   submitted: boolean;
   matchedRoles?: RoleReference[];
@@ -681,7 +682,7 @@ export async function getAvailableStartups(term: string): Promise<AvailableStart
 
 export async function createMatchPreferences(
   applicationId: string,
-  data: { rankedRoles: RoleReference[]; notes?: string; submit?: boolean }
+  data: { rankedRoles: RoleReference[]; matchStatus?: string; notes?: string; submit?: boolean }
 ): Promise<MatchPreference> {
   return postJson<MatchPreference>(`/v1/students/applications/${applicationId}/match-preferences`, data);
 }
@@ -692,7 +693,7 @@ export async function getMatchPreferences(applicationId: string): Promise<MatchP
 
 export async function updateMatchPreferences(
   applicationId: string,
-  data: { rankedRoles?: RoleReference[]; notes?: string; submit?: boolean }
+  data: { rankedRoles?: RoleReference[]; matchStatus?: string; notes?: string; submit?: boolean }
 ): Promise<MatchPreference> {
   const res = await fetch(`${API_BASE}/v1/students/applications/${applicationId}/match-preferences`, {
     method: 'PATCH',

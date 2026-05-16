@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  ACTIVE_TERM,
   getApplications,
   getAvailableStartups,
   getMatchPreferences,
@@ -11,50 +12,12 @@ import {
   type StudentApplication,
 } from '../../lib/api';
 
-const MATCH_PREFERENCE_TERM = 'Summer 2026';
-const DRAFT_KEY = `match-preference-draft:${MATCH_PREFERENCE_TERM}`;
+const DRAFT_KEY = `match-preference-draft:${ACTIVE_TERM}`;
 const MAX_RANKED_ROLES = 7;
 const MATCH_STATUS_OPTIONS = [
   "I'm already matched and interviewing with a company I like",
   "I'm already matched and plan on working with a company I like",
 ] as const;
-
-function parseStoredNotes(storedNotes: string | undefined): { matchStatus: string; additionalNotes: string } {
-  const raw = (storedNotes || '').trim();
-  if (!raw) {
-    return { matchStatus: '', additionalNotes: '' };
-  }
-
-  for (const option of MATCH_STATUS_OPTIONS) {
-    if (raw === option) {
-      return { matchStatus: option, additionalNotes: '' };
-    }
-    if (raw.startsWith(`${option}\n\n`)) {
-      return {
-        matchStatus: option,
-        additionalNotes: raw.slice(option.length + 2).trim(),
-      };
-    }
-  }
-
-  return { matchStatus: '', additionalNotes: storedNotes || '' };
-}
-
-function buildStoredNotes(matchStatus: string, additionalNotes: string): string | undefined {
-  const trimmedStatus = matchStatus.trim();
-  const trimmedNotes = additionalNotes.trim();
-
-  if (trimmedStatus && trimmedNotes) {
-    return `${trimmedStatus}\n\n${trimmedNotes}`;
-  }
-  if (trimmedStatus) {
-    return trimmedStatus;
-  }
-  if (trimmedNotes) {
-    return trimmedNotes;
-  }
-  return undefined;
-}
 
 export default function MatchPreferenceForm() {
   const navigate = useNavigate();
@@ -87,16 +50,16 @@ export default function MatchPreferenceForm() {
       try {
         // 1. Get user's application, verify finalist
         const apps = await getApplications();
-        const finalistApp = apps.find(a => a.term === MATCH_PREFERENCE_TERM && a.status === 'FINALIST');
+        const finalistApp = apps.find(a => a.term === ACTIVE_TERM && a.status === 'FINALIST');
         if (!finalistApp) {
-          setError(`Only ${MATCH_PREFERENCE_TERM} finalists can submit match preferences.`);
+          setError(`Only ${ACTIVE_TERM} finalists can submit match preferences.`);
           setLoading(false);
           return;
         }
         setApplication(finalistApp);
 
         // 2. Fetch available startups for this cohort
-        const availableStartups = await getAvailableStartups(MATCH_PREFERENCE_TERM);
+        const availableStartups = await getAvailableStartups(finalistApp.term || ACTIVE_TERM);
         setStartups(availableStartups);
 
         // 3. Check for existing preferences
@@ -104,9 +67,8 @@ export default function MatchPreferenceForm() {
           const existing = await getMatchPreferences(finalistApp.id);
           setExistingPreferenceId(existing.id);
           setRankedRoles(existing.rankedRoles || []);
-          const parsedNotes = parseStoredNotes(existing.notes);
-          setMatchStatus(parsedNotes.matchStatus);
-          setNotes(parsedNotes.additionalNotes);
+          setMatchStatus(existing.matchStatus || '');
+          setNotes(existing.notes || '');
           setIsSubmitted(existing.submitted);
         } catch {
           // No existing preferences — check localStorage draft
@@ -192,11 +154,10 @@ export default function MatchPreferenceForm() {
     setSaving(true);
     setError('');
     try {
-      const storedNotes = buildStoredNotes(matchStatus, notes);
       if (existingPreferenceId) {
-        await updateMatchPreferences(application.id, { rankedRoles, notes: storedNotes, submit: false });
+        await updateMatchPreferences(application.id, { rankedRoles, matchStatus: matchStatus || undefined, notes: notes.trim() || undefined, submit: false });
       } else {
-        const created = await createMatchPreferences(application.id, { rankedRoles, notes: storedNotes, submit: false });
+        const created = await createMatchPreferences(application.id, { rankedRoles, matchStatus: matchStatus || undefined, notes: notes.trim() || undefined, submit: false });
         setExistingPreferenceId(created.id);
       }
       localStorage.removeItem(DRAFT_KEY);
@@ -219,11 +180,10 @@ export default function MatchPreferenceForm() {
     setSaving(true);
     setError('');
     try {
-      const storedNotes = buildStoredNotes(matchStatus, notes);
       if (existingPreferenceId) {
-        await updateMatchPreferences(application.id, { rankedRoles, notes: storedNotes, submit: true });
+        await updateMatchPreferences(application.id, { rankedRoles, matchStatus: matchStatus || undefined, notes: notes.trim() || undefined, submit: true });
       } else {
-        await createMatchPreferences(application.id, { rankedRoles, notes: storedNotes, submit: true });
+        await createMatchPreferences(application.id, { rankedRoles, matchStatus: matchStatus || undefined, notes: notes.trim() || undefined, submit: true });
       }
       setIsSubmitted(true);
       setShowToast(true);
