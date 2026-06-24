@@ -5,6 +5,7 @@ import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
@@ -21,6 +22,7 @@ public class GcsConfig {
   }
 
   @Bean
+  @Lazy
   public Storage storage() throws IOException {
     GoogleCredentials credentials;
 

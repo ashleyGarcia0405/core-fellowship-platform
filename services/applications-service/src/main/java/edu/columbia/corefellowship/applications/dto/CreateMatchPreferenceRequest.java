@@ -10,6 +10,8 @@ public class CreateMatchPreferenceRequest {
   @NotNull(message = "Ranked roles list is required")
   private List<MatchPreference.RoleReference> rankedRoles;
 
+  private String matchStatus;
+
   private String notes;
 
   private Boolean submit; // true = final submission, false/null = draft
@@ -28,6 +30,14 @@ public class CreateMatchPreferenceRequest {
 
   public void setNotes(String notes) {
     this.notes = notes;
+  }
+
+  public String getMatchStatus() {
+    return matchStatus;
+  }
+
+  public void setMatchStatus(String matchStatus) {
+    this.matchStatus = matchStatus;
   }
 
   public Boolean getSubmit() {

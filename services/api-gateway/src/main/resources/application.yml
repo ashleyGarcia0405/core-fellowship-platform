@@ -1,6 +1,10 @@
 server:
   port: ${PORT:8080}
 
+spring:
+  main:
+    lazy-initialization: true
+
 services:
   identity:
     baseUrl: ${IDENTITY_BASE_URL:http://localhost:8082}
@@ -16,9 +20,3 @@ inter:
   service:
     secret: ${INTER_SERVICE_SECRET}
 
-logging:
-  level:
-    org.springframework.security: DEBUG
-    org.springframework.security.web.csrf: DEBUG
-    org.springframework.security.web.access: DEBUG
-    org.springframework.security.web.FilterChainProxy: DEBUG

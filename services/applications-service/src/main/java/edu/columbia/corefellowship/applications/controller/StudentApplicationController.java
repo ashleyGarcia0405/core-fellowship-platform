@@ -620,6 +620,7 @@ public class StudentApplicationController {
         });
 
     pref.setRankedRoles(request.getRankedRoles());
+    pref.setMatchStatus(request.getMatchStatus());
     pref.setNotes(request.getNotes());
     pref.setSubmitted(Boolean.TRUE.equals(request.getSubmit()));
     pref.setUpdatedAt(Instant.now());
@@ -684,6 +685,9 @@ public class StudentApplicationController {
 
     if (request.getRankedRoles() != null) {
       pref.setRankedRoles(request.getRankedRoles());
+    }
+    if (request.getMatchStatus() != null) {
+      pref.setMatchStatus(request.getMatchStatus());
     }
     if (request.getNotes() != null) {
       pref.setNotes(request.getNotes());

@@ -8,6 +8,8 @@ public class UpdateMatchPreferenceRequest {
 
   private List<MatchPreference.RoleReference> rankedRoles;
 
+  private String matchStatus;
+
   private String notes;
 
   private Boolean submit; // true = finalize submission
@@ -26,6 +28,14 @@ public class UpdateMatchPreferenceRequest {
 
   public void setNotes(String notes) {
     this.notes = notes;
+  }
+
+  public String getMatchStatus() {
+    return matchStatus;
+  }
+
+  public void setMatchStatus(String matchStatus) {
+    this.matchStatus = matchStatus;
   }
 
   public Boolean getSubmit() {

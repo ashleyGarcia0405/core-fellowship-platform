@@ -20,6 +20,8 @@ public class MatchPreference {
   // Each entry references a specific position within a startup
   private List<RoleReference> rankedRoles;
 
+  private String matchStatus;
+
   private String notes;
 
   private boolean submitted;
@@ -91,6 +93,14 @@ public class MatchPreference {
 
   public void setNotes(String notes) {
     this.notes = notes;
+  }
+
+  public String getMatchStatus() {
+    return matchStatus;
+  }
+
+  public void setMatchStatus(String matchStatus) {
+    this.matchStatus = matchStatus;
   }
 
   public boolean isSubmitted() {

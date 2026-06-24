@@ -2,6 +2,8 @@ server:
   port: ${PORT:8080}
 
 spring:
+  main:
+    lazy-initialization: true
   data:
     mongodb:
       uri: ${SPRING_DATA_MONGODB_URI:mongodb://root:example@localhost:27017/applications?authSource=admin}

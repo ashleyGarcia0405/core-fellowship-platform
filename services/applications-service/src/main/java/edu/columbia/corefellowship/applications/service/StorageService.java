@@ -1,6 +1,5 @@
 package edu.columbia.corefellowship.applications.service;
 
-import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
@@ -63,13 +62,8 @@ public class StorageService {
    */
   public String getSignedUrl(String blobName) {
     BlobId blobId = BlobId.of(gcsProperties.getBucketName(), blobName);
-    Blob blob = storage.get(blobId);
-
-    if (blob == null) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "File not found");
-    }
-
-    return blob.signUrl(15, TimeUnit.MINUTES).toString();
+    BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
+    return storage.signUrl(blobInfo, 15, TimeUnit.MINUTES).toString();
   }
 
   /**
